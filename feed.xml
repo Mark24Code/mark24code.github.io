@@ -1,0 +1,1403 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mark24</title>
+    <description>记录灵感、技术、思考</description>
+    <link>https://mark24code.github.io/</link>
+    <atom:link href="https://mark24code.github.io/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Tue, 09 Mar 2021 22:53:33 +0800</pubDate>
+    <lastBuildDate>Tue, 09 Mar 2021 22:53:33 +0800</lastBuildDate>
+    <generator>Jekyll v4.1.1</generator>
+    
+      <item>
+        <title>翻译:理解作用域和作用域链</title>
+        <description>&lt;h1 id=&quot;翻译说明&quot;&gt;翻译说明&lt;/h1&gt;
+
+&lt;p&gt;很多资料都没有接清楚作用域和作用域链。今天参考 &lt;a href=&quot;https://blog.bitsrc.io/understanding-scope-and-scope-chain-in-javascript-f6637978cf53&quot;&gt;understanding-scope-and-scope-chain-in-javascript&lt;/a&gt; 简单翻译了一下文章。&lt;/p&gt;
+
+&lt;p&gt;版权属于作者。&lt;/p&gt;
+
+&lt;h1 id=&quot;什么是作用域&quot;&gt;什么是作用域&lt;/h1&gt;
+
+&lt;p&gt;作用域的作用是控制程序中变量是否可见和可使用。&lt;/p&gt;
+
+&lt;h2 id=&quot;为什么作用域很重要&quot;&gt;为什么作用域很重要&lt;/h2&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;最主要是安全性： 作用域让变量在不同程序块直接隔离，减少混乱。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;减少名字空间冲突，我们可以在不同作用域使用相同变量名。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&quot;作用域类型&quot;&gt;作用域类型&lt;/h1&gt;
+
+&lt;p&gt;有三种类中， 全局作用域、函数作用域、块作用域。&lt;/p&gt;
+
+&lt;h2 id=&quot;1-全局作用域&quot;&gt;1. 全局作用域&lt;/h2&gt;
+
+&lt;p&gt;那些不在块作用域或者函数作用域的变量，就在全局作用域里。&lt;/p&gt;
+
+&lt;p&gt;全局作用域里的变量，可以在程序的任何地方访问。&lt;/p&gt;
+
+&lt;div class=&quot;language-jsx highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Hello World!&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;greet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;// Prints 'Hello World!'&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;greet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h1 id=&quot;本地作用域local-scope-或-函数作用域function-scope&quot;&gt;本地作用域（Local Scope) 或 函数作用域（Function Scope)&lt;/h1&gt;
+
+&lt;p&gt;函数中声明的变量就在本地作用域中。他只能在函数内部访问，无法在外部访问。&lt;/p&gt;
+
+&lt;div class=&quot;language-jsx highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;greet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Hello World!&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;// Prints 'Hello World!'&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;greet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;// Uncaught ReferenceError: greeting is not defined&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h1 id=&quot;3-块作用域&quot;&gt;3. 块作用域&lt;/h1&gt;
+
+&lt;p&gt;ES6引入了 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;let const&lt;/code&gt;关键字，不像&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;var&lt;/code&gt; ，他们可以和最近的大括号形成块作用域。块作用域的变量，在大括号外不可见。&lt;/p&gt;
+
+&lt;div class=&quot;language-jsx highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Hello World!&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;lang&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;English&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Prints 'Hello World!'&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;// Prints 'English'&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;lang&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;// Uncaught ReferenceError: greeting is not defined&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;我们可以看到，var声明的变量在块外部可以访问，即var变量不在 块作用域中。&lt;/p&gt;
+
+&lt;h1 id=&quot;嵌套作用域&quot;&gt;嵌套作用域&lt;/h1&gt;
+
+&lt;p&gt;就像JavaScript中的函数，作用域也可以被嵌套。&lt;/p&gt;
+
+&lt;div class=&quot;language-jsx highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Peter&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;greet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Hello&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;lang&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;English&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;lang&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;: &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;greet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;这里有三个彼此嵌套的作用域。&lt;/p&gt;
+
+&lt;p&gt;全局作用域，函数作用域，以及函数内的块作用域（let关键字声明）。&lt;/p&gt;
+
+&lt;h1 id=&quot;词法作用域&quot;&gt;词法作用域&lt;/h1&gt;
+
+&lt;p&gt;词法作用域（Lexial Scope）也叫静态作用域。从字面上讲是指作用域是在词法化时间（通常称为编译）而不是在运行时确定的。&lt;/p&gt;
+
+&lt;p&gt;注：简单理解为书写代码决定。&lt;/p&gt;
+
+&lt;div class=&quot;language-jsx highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;number&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;42&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;printNumber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;number&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;number&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;54&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;printNumber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;// Prints 42&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;这里 console.log(number) 将会打印42 不论 printNumber在何处调用。这个不同于一些使用动态作用域的编程语言，其中printNumber打印值依赖于在哪里调用它。&lt;/p&gt;
+
+&lt;p&gt;如果上面的代码是动态作用域语言写的， console.log(number)打印的结果将会是54。&lt;/p&gt;
+
+&lt;p&gt;使用词法作用域，我们只要通过看代码，就可以确定一个变量的作用域。&lt;/p&gt;
+
+&lt;p&gt;大多数编程语言支持词法作用域（静态作用域）比如 C/C++/Java/JavaScript。 Perl支持静态作用域和动态作用域。&lt;/p&gt;
+
+&lt;h1 id=&quot;作用域链&quot;&gt;作用域链&lt;/h1&gt;
+
+&lt;p&gt;当一个变量在JS中被调用，JS引擎就会尝试在 变量的当前作用域中寻找他。如果没有找到，他就会进入外部作用域去找，如此往复，直到找到或者到全局作用域。&lt;/p&gt;
+
+&lt;p&gt;如果它仍然找不到变量，它将在全局作用域内隐式声明变量（如果不是严格模式）或返回错误。&lt;/p&gt;
+
+&lt;p&gt;例如：&lt;/p&gt;
+
+&lt;div class=&quot;language-jsx highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;foo&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;foo&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;bar&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;baz&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;baz&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// Prints 'baz'&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;baz&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// Prints 'foo'&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;foo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;  
+  &lt;span class=&quot;nx&quot;&gt;number&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;42&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;number&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// Prints 42&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;nx&quot;&gt;bar&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;当函数 bar被执行，JS引擎会在当前作用中 查找 baz变量。
+接着，它会继续找 foo变量，foo找不到，他将会在外部作用域查找（这里是全局作用域）。&lt;/p&gt;
+
+&lt;p&gt;接着，我们把42赋值给number，JS引擎在当前作用域查找number，然后在外部查找。&lt;/p&gt;
+
+&lt;p&gt;如果不是严格模式，JS引擎会创建一个number变量把42赋值给它或者返回一个报错。&lt;/p&gt;
+
+&lt;p&gt;所以，当使用一个变量，JS引擎会沿着作用域链，直到查找到它。&lt;/p&gt;
+
+&lt;h1 id=&quot;作用域-和-作用域链-如何工作的&quot;&gt;作用域 和 作用域链 如何工作的？&lt;/h1&gt;
+
+&lt;p&gt;到目前为止，我们已经讨论作用域以及他的类型。 现在让我们了解JavaScript引擎如何确定变量作用域，以及如何进行变量查找。&lt;/p&gt;
+
+&lt;p&gt;在理解JS引擎如何查找变量，我们需要先理解词法环境的概念。&lt;/p&gt;
+
+&lt;h1 id=&quot;什么是词法环境lexical-environment&quot;&gt;什么是词法环境（Lexical Environment)?&lt;/h1&gt;
+
+&lt;p&gt;词法环境是一个存储 标识符和变量映射的数据结构。这里的标识符指 变量/函数名称。并且变量是那些实际对象包括函数对象、数组对象或者原始值的引用。&lt;/p&gt;
+
+&lt;p&gt;注：必要把 词法作用域、词法环境 搞混淆。&lt;/p&gt;
+
+&lt;p&gt;词法作用域是代码决定了。 词法环境是程序执行期间存储变量的地方。&lt;/p&gt;
+
+&lt;p&gt;概念上，词法环境看起来就像：&lt;/p&gt;
+
+&lt;div class=&quot;language-jsx highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;lexicalEnvironment&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;25&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;obj&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;ref&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;代码执行的过程中，代码的每一个词法作用域，都会创建一个新的词法环境。&lt;/p&gt;
+
+&lt;p&gt;词法环境还拥有一个 outer属性，指向它外部的词法环境。&lt;/p&gt;
+
+&lt;p&gt;例如：&lt;/p&gt;
+
+&lt;div class=&quot;language-jsx highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;nx&quot;&gt;lexicalEnvironment&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;25&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;obj&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;ref&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt;  outer: &lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;outer&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;lexical&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;environemt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h1 id=&quot;js引起如何实现变量查找&quot;&gt;JS引起如何实现变量查找？&lt;/h1&gt;
+
+&lt;p&gt;现在我们知道了作用域、作用域链、词法环境。&lt;/p&gt;
+
+&lt;p&gt;让我们来学习JS引擎如何使用词法环境来确定作用域和作用域链。&lt;/p&gt;
+
+&lt;p&gt;通过下面例子说明：&lt;/p&gt;
+
+&lt;div class=&quot;language-jsx highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Hello&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;greet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Peter&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;greet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Hello World!&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;当上面的脚本被加载，全局的词法环境被创建。&lt;/p&gt;
+
+&lt;p&gt;全局词法环境包括变量、全局作用域中定义的函数, 就像下面:&lt;/p&gt;
+&lt;div class=&quot;language-jsx highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;nx&quot;&gt;globalLexicalEnvironment&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Hello&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;greet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;ref&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;greet&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt;  outer: &lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;这里 outer属性 设置为null，因为全局作用域没有外部作用域。&lt;/p&gt;
+
+&lt;p&gt;接着，geet函数指向，并且创建词法环境。如下:&lt;/p&gt;
+
+&lt;div class=&quot;language-jsx highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;functionLexicalEnvironment&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Peter&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;  
+  &lt;span class=&quot;na&quot;&gt;outer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;globalLexicalEnvironment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt;
+}
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;这里outer词法环境被设置为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;globalLexicalEnvironment &lt;/code&gt; 因为他的外部作用域是 全局作用域。&lt;/p&gt;
+
+&lt;p&gt;接着，JS引擎执行&lt;/p&gt;
+
+&lt;div class=&quot;language-jsx highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;JS引擎尝试在 函数的词法环境中查找 greeting、name变量。&lt;/p&gt;
+
+&lt;p&gt;JS引擎在当前词法环境中找到name，但是没有找到greeting。&lt;/p&gt;
+
+&lt;p&gt;于是它顺着 outer指向的 词法环境继续查找 greeting变量，然后找到了。&lt;/p&gt;
+
+&lt;p&gt;接着，JS执行块中的代码。他创建了一个块的词法环境。&lt;/p&gt;
+
+&lt;div class=&quot;language-jsx highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;blockLexicalEnvironment&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Hello World&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;na&quot;&gt;outer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;globalLexicalEnvironment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt;
+}
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;接着 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;console.log(greeting)&lt;/code&gt; 执行，JS因为在当前词法环境中找到变量并使用，所以没有再进入outer中查找。&lt;/p&gt;
+
+&lt;p&gt;注： let和const会创建新的词法环境， var不会。var声明会被加入到当前的词法环境（即 全局或者函数词法环境）。&lt;/p&gt;
+
+&lt;p&gt;译者注：也就是说，var声明的都绑定在 function的词法环境中。而let、const会在内部创建新的块词法环境，块中的变量查找，优先块中。 块引用了外部环境，查找不到的情况下会进入外部函数的词法环境中查找。&lt;/p&gt;
+
+&lt;p&gt;因此，再程序中使用变量时，JS引擎会尝试在当前词法环境中查找变量，它无法找到时会在outer指向的外部词法环境中查找。&lt;/p&gt;
+
+&lt;p&gt;这就是JS引擎查找变量的工作原理。&lt;/p&gt;
+
+&lt;h1 id=&quot;总结&quot;&gt;总结&lt;/h1&gt;
+
+&lt;p&gt;简单讲，作用域是变量是否可见、可获得的区域。和函数类似，作用域可以被嵌套，JS引起会顺着作用域链查找变量。&lt;/p&gt;
+
+&lt;p&gt;JS使用词法作用域（静态作用域），也就是代码决定了变量作用域。代码执行过程中，JS使用词法环境存储变量。&lt;/p&gt;
+
+&lt;p&gt;作用域和作用域链是JS的基础概念，每一个JS开发者应该理解。对这些概念理解，能帮助你称为更优秀的JS开发者。&lt;/p&gt;
+
+&lt;h1 id=&quot;参考&quot;&gt;参考：&lt;/h1&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bitsrc.io/understanding-scope-and-scope-chain-in-javascript-f6637978cf53&quot;&gt;understanding-scope-and-scope-chain-in-javascript&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        <pubDate>Tue, 09 Mar 2021 21:12:44 +0800</pubDate>
+        <link>https://mark24code.github.io/%E5%89%8D%E7%AB%AF/javascript/%E7%BF%BB%E8%AF%91/2021/03/09/JavaScript%E4%B9%8B%E7%90%86%E8%A7%A3%E4%BD%9C%E7%94%A8%E5%9F%9F%E5%92%8C%E4%BD%9C%E7%94%A8%E5%9F%9F%E9%93%BE.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E5%89%8D%E7%AB%AF/javascript/%E7%BF%BB%E8%AF%91/2021/03/09/JavaScript%E4%B9%8B%E7%90%86%E8%A7%A3%E4%BD%9C%E7%94%A8%E5%9F%9F%E5%92%8C%E4%BD%9C%E7%94%A8%E5%9F%9F%E9%93%BE.html</guid>
+        
+        
+        <category>前端</category>
+        
+        <category>JavaScript</category>
+        
+        <category>翻译</category>
+        
+      </item>
+    
+      <item>
+        <title>JavaScript之重新谈谈继承</title>
+        <description>&lt;h1 id=&quot;javascript中继承的方法&quot;&gt;JavaScript中继承的方法&lt;/h1&gt;
+
+&lt;p&gt;今天简单的总结下JavaScript中的继承，很多人的博客来自于红宝书、抑或是其他资料。把JavaScript的继承总结出了很多方法，比如：&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;原型法&lt;/li&gt;
+  &lt;li&gt;类抄写法&lt;/li&gt;
+  &lt;li&gt;组合法&lt;/li&gt;
+  &lt;li&gt;组合寄生法&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;我一直觉得很莫名其妙，然后各种技术博客开始对 1~4的各种方法谈论他的利弊。&lt;/p&gt;
+
+&lt;p&gt;实际上呢，我认为 1~3这种就不算是完整的解决方案，不明白他们为什么要把简单的事情讲的那么复杂。&lt;/p&gt;
+
+&lt;h1 id=&quot;原型链&quot;&gt;原型链&lt;/h1&gt;
+
+&lt;p&gt;讲继承就先要讲JavaScript中继承使用的底层原理，就是原型链。原型链的设计可以用4句话概括：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;构造函数，可以 new 一个对象的实例。构造函数相当于类。实例就是类生成的具体实例对象。&lt;/li&gt;
+  &lt;li&gt;每一个构造函数拥有， &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.prototype&lt;/code&gt;属性（显式属性），即原型对象，用来保留方法或属性&lt;/li&gt;
+  &lt;li&gt;每一个实例对象，拥有 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;__proto__&lt;/code&gt;属性（隐式属性），指向构造函数的原型对象。&lt;/li&gt;
+  &lt;li&gt;当实例对象无法在自身寻找到方法，即去 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;__proto__&lt;/code&gt;上寻找，找不到就再去 对象的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;__proto__&lt;/code&gt;上寻找，即原型链寻找&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&quot;继承&quot;&gt;继承&lt;/h1&gt;
+
+&lt;p&gt;当子类希望构建的实例，找不到属性方法，可以顺着原型链，从父类的原型上寻找方法，以此类推。如此就实现了继承。
+一切方法都是围绕着这个来的。&lt;/p&gt;
+
+&lt;p&gt;Child 继承 Parent，如下面代码所示，即完成了符合要求的继承:&lt;/p&gt;
+
+&lt;div class=&quot;language-jsx highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Parent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// ....&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Child&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(...&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nx&quot;&gt;Parent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;call&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// ....&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;nx&quot;&gt;Child&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;prototype&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Parent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;prototype&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;Child&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;prototype&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;constructor&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Child&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;解释：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;获得父类的属性&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Child的构造函数中，运营了Parent的构造函数，改变了this，传参初始化。
+    这样Child得到了Parent的属性。&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;设置原型和构造器&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Object.create(A)&lt;/code&gt;的作用是，创建以A作为 原型的一个对象实例。&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Child.prototype = Object.new(Parent.prototype);&lt;/code&gt; 的作用是创建了以 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Parent.prototype&lt;/code&gt;为原型的一个实例对象，并且作为 Child的原型。这样相当于  建立了 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Child.prototype 对象--- Parent.prototype&lt;/code&gt;的关系。&lt;/p&gt;
+
+&lt;p&gt;按照原型的要求，正确的给原型对象设置构造器属性，以让原型对象可以找到构造函数。
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Child.prototype.constructor = Child;&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;这样就完成了。&lt;/p&gt;
+
+&lt;p&gt;当 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;const child1 = new Child()&lt;/code&gt; 时，child1 实例的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;__proto__&lt;/code&gt;指向 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Child.prototype&lt;/code&gt;。
+当child1找不到方法，就会查找  &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Child.prototype&lt;/code&gt;， 而  &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Child.prototype&lt;/code&gt; 也找不到就会找他的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;__proto__&lt;/code&gt;也就是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Parent.prototype&lt;/code&gt;。&lt;/p&gt;
+
+&lt;p&gt;这样就符合要求的串联起来。&lt;/p&gt;
+
+&lt;p&gt;至于其他的各种方法，首先残缺的方法，根本不够完整，不应该作为方法记忆。&lt;/p&gt;
+
+&lt;p&gt;其次，更高级的变种方法，就是将这种基本方法进行工厂式或者其他形式封装，本质上不变。&lt;/p&gt;
+
+&lt;h1 id=&quot;参考&quot;&gt;参考&lt;/h1&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://developer.mozilla.org/zh-CN/docs/Learn/JavaScript/Objects/Inheritance&quot;&gt;JavaScript 中的继承&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        <pubDate>Tue, 09 Mar 2021 18:58:19 +0800</pubDate>
+        <link>https://mark24code.github.io/%E5%89%8D%E7%AB%AF/javascript/2021/03/09/JavaScript%E4%B9%8B%E7%BB%A7%E6%89%BF.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E5%89%8D%E7%AB%AF/javascript/2021/03/09/JavaScript%E4%B9%8B%E7%BB%A7%E6%89%BF.html</guid>
+        
+        
+        <category>前端</category>
+        
+        <category>JavaScript</category>
+        
+      </item>
+    
+      <item>
+        <title>关于软件的稳定性思考</title>
+        <description>&lt;p&gt;2010年的macbook pro 即使过去10年了，安装上Linux一切工作正常除了网卡。即使是博通官方的闭源驱动，工作依然不正常。&lt;/p&gt;
+
+&lt;p&gt;2016年的小米随身wifi，他的驱动加入了Linux，工作起来却格外稳定。&lt;/p&gt;
+
+&lt;p&gt;软件的自由度相当大。&lt;/p&gt;
+
+&lt;p&gt;软件工程采用了结果测试的方式来验证软件工作的正常性，一切的保证都是“认为”。软件在开发和工作的过程中涉及到的变量数不胜数。&lt;/p&gt;
+
+&lt;p&gt;不论是Windows、Linux、MacOS 他们的背后一定是修不完的BUG。 所有系统、软件就像在玩一个极度危险的叠罗汉，岌岌可危却没有倒。&lt;/p&gt;
+
+&lt;p&gt;一旦遇到那个不按套路出牌的，就会整体哗啦的塌掉。&lt;/p&gt;
+
+&lt;p&gt;站在这个角度，更加佩服Linux和Windows他们驱动着数以亿计的设备，设备之所以可以工作都是某种约定和优秀设计的功劳。&lt;/p&gt;
+
+&lt;p&gt;MacOS只兼容自己家的设备，控制软件和硬件，他们的工作简化了许多，但是MacOS依然问题多多。&lt;/p&gt;
+
+&lt;p&gt;永远没有稳定的软件。只是恰好工作的软件罢了。&lt;/p&gt;
+
+&lt;p&gt;一个软件在他有限的生命周期里，一定是不断的完善弥补自身或者修复问题或者增加新功能，于是他永远在被修改那就意味着永远不是稳定的。稳定只是一个表象 —— 只是暂时不出问题。
+当没有用户或者有更好的替代品出现，没有用户、没有维护者，一个软件就走到了生命的终结。&lt;/p&gt;
+
+</description>
+        <pubDate>Sat, 06 Feb 2021 22:17:53 +0800</pubDate>
+        <link>https://mark24code.github.io/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2021/02/06/%E5%85%B3%E4%BA%8E%E8%BD%AF%E4%BB%B6%E7%9A%84%E7%A8%B3%E5%AE%9A%E6%80%A7%E6%80%9D%E8%80%83.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2021/02/06/%E5%85%B3%E4%BA%8E%E8%BD%AF%E4%BB%B6%E7%9A%84%E7%A8%B3%E5%AE%9A%E6%80%A7%E6%80%9D%E8%80%83.html</guid>
+        
+        
+        <category>编程思考</category>
+        
+      </item>
+    
+      <item>
+        <title>ubuntu应对卡死存档重启桌面技巧</title>
+        <description>&lt;p&gt;理论上桌面gnome shell只是 Linux上正在运行的一个程序，不存在真正意义上的桌面死机。因为系统本身并没有真正的挂掉。&lt;/p&gt;
+
+&lt;p&gt;觉得系统卡顿，大多是内存+SWAP分配到上限导致的。想要避免可以用一个办法，主动分配不低于8G，最好2倍于内存的SWAP分区，可以有效的减少卡顿的现象。&lt;/p&gt;
+
+&lt;p&gt;方法一&lt;/p&gt;
+
+&lt;p&gt;假设界面意外出现卡死，没必要像Windows，Mac一样去重启电脑。&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Alt+F2&lt;/code&gt; 呼唤出类似于一个快捷命令窗口。&lt;/p&gt;
+
+&lt;p&gt;然后输入 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;r&lt;/code&gt; 回车。整个桌面会在记住当前浏览状态下，重启桌面。&lt;/p&gt;
+
+&lt;p&gt;方法二&lt;/p&gt;
+
+&lt;p&gt;Ctrl+Alt+F*&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;可以是 F1、F2 ……&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;切换 tty 尝试杀死桌面 xorg进程。&lt;/p&gt;
+
+&lt;p&gt;这是网上的一般做法。&lt;/p&gt;
+
+&lt;p&gt;方法三&lt;/p&gt;
+
+&lt;p&gt;由于Gnome控制了 xorg和按键，当以上两种方法都无法工作。&lt;/p&gt;
+
+&lt;p&gt;安全牌是，ssh连接电脑进行进程杀死。&lt;/p&gt;
+
+&lt;p&gt;enjoy～&lt;/p&gt;
+
+&lt;h1 id=&quot;参考&quot;&gt;参考&lt;/h1&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;a href=&quot;https://wiki.archlinux.org/index.php/GNOME_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)#%E6%B5%8F%E8%A7%88&quot;&gt;GNOME_(简体中文)#浏览&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;a href=&quot;https://wiki.gnome.org/Projects/GnomeShell/CheatSheet&quot;&gt;GnomeShell/CheatSheet&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        <pubDate>Sat, 06 Feb 2021 20:07:48 +0800</pubDate>
+        <link>https://mark24code.github.io/ubuntu/linux/%E6%95%99%E7%A8%8B/2021/02/06/ubuntu%E5%BA%94%E5%AF%B9%E5%8D%A1%E6%AD%BB%E5%AD%98%E6%A1%A3%E9%87%8D%E5%90%AF%E6%A1%8C%E9%9D%A2%E6%8A%80%E5%B7%A7.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ubuntu/linux/%E6%95%99%E7%A8%8B/2021/02/06/ubuntu%E5%BA%94%E5%AF%B9%E5%8D%A1%E6%AD%BB%E5%AD%98%E6%A1%A3%E9%87%8D%E5%90%AF%E6%A1%8C%E9%9D%A2%E6%8A%80%E5%B7%A7.html</guid>
+        
+        
+        <category>Ubuntu</category>
+        
+        <category>Linux</category>
+        
+        <category>教程</category>
+        
+      </item>
+    
+      <item>
+        <title>2021年给你的MacbookPro安装Ubuntu</title>
+        <description>&lt;h1 id=&quot;一前面的话&quot;&gt;一、前面的话&lt;/h1&gt;
+
+&lt;p&gt;我的MacBookPro2010(后面称呼为mbp)之前不能用了。usb口接触不良，我以为就是永久了坏了。开机就非常卡，app一个没开风扇就呼呼的，MacOS也对他停止更新了。&lt;/p&gt;
+
+&lt;p&gt;我以为这台设备就次废掉了。&lt;/p&gt;
+
+&lt;p&gt;这里引入一个概念 &lt;a href=&quot;https://baike.baidu.com/item/%E8%AE%A1%E5%88%92%E6%8A%A5%E5%BA%9F/8582720?fr=aladdin&quot;&gt;计划性报废&lt;/a&gt; 就是为了企业的可持续发展，让你的老设备越来越慢，然后你会买新的 :D。&lt;/p&gt;
+
+&lt;p&gt;好吧，这些都是铺垫。&lt;/p&gt;
+
+&lt;p&gt;最重要是当你愿意折腾给他换个系统比如Ubuntu，他的一切毛病都消失了。这就是计划性报废。&lt;/p&gt;
+
+&lt;p&gt;这里记录以下2021年，首装Ubuntu踩下的坑。如果你恰巧也有一个同样的设备，在这里也能帮助到你。变“废”为宝。&lt;/p&gt;
+
+&lt;h2 id=&quot;1-看完这部分记录-你将会获得&quot;&gt;1. 看完这部分记录 你将会获得&lt;/h2&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;合理的分区:系统、数据分离，可以后期安装任意版本系统不影响数据&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;手动SWAP： 将会比你选择默认安装的方式快很多&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;稳定的wifi的新选择： 探索新的方式解决wifi不稳定的问题&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;学会新的方式安装软件：除了apt还有更多选择&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;默认的多媒体将会工作：也许你一直奇怪为什么默认的视频无法工作。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;开机莫名其妙的报错将会被修复：看不懂的报错也会被消灭。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;一些IDE似乎不正常，帮你踩坑：帮助你恢复生产力&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;2-设备参考&quot;&gt;2. 设备参考&lt;/h2&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;参数表：
+Intel® Core™ i5-2415M CPU @ 2.30GHz × 4 
+3.8 GB 
+Intel® HD Graphics 3000 (SNB GT2)
+SSD:  Sandisk 240G
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;备注： 我自己更换了一个SSD, 机械硬盘在swap部分的提速效果会大大打折扣。&lt;/p&gt;
+
+&lt;h2 id=&quot;3-目标系统-ubuntu2010&quot;&gt;3. 目标系统 Ubuntu20.10&lt;/h2&gt;
+
+&lt;p&gt;我将会安装 &lt;a href=&quot;https://ubuntu.com/download/desktop&quot;&gt;Ubuntu 20.10&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;使用 Ubuntu 20.10 的原因是 他包含了 &lt;a href=&quot;https://discourse.ubuntu.com/t/groovy-gorilla-release-notes/15533&quot;&gt;相较于Ubuntu20.04诸多改进&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;二安装&quot;&gt;二、安装&lt;/h1&gt;
+
+&lt;h2 id=&quot;1-制作启动盘&quot;&gt;1. 制作启动盘&lt;/h2&gt;
+
+&lt;p&gt;不多赘述 官方页面里面有不同系统下的 &lt;a href=&quot;https://ubuntu.com/download/desktop&quot;&gt;制作指导&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h2 id=&quot;2-分区&quot;&gt;2. 分区&lt;/h2&gt;
+
+&lt;p&gt;Windows XP的时代经常把硬盘分为若干个区，不过现在不论是Windows10、MacOSX都是一个分区了，原因就是现在的系统逐渐稳定了，并且他们也会存在一些云盘、NAS等同步备份数据的外设。所以这部分逐渐不是问题了。&lt;/p&gt;
+
+&lt;p&gt;系统和数据隔离还是有好处的，系统破坏了，不影响数据本身。&lt;/p&gt;
+
+&lt;h3 id=&quot;21-优点&quot;&gt;2.1 优点：&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;系统被破坏，数据不会被影响&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;可以任何时候安装新系统尝鲜，不会影响数据&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;22-缺点&quot;&gt;2.2 缺点：&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;系统被局限在一个固定大小的分区里，太小会限制系统后期。&lt;/p&gt;
+
+    &lt;p&gt;不过这个无所谓，因为Linux的大小十分的有限。并且安装软件的方式可以灵活的选择 apt（这就是安装在系统分区）或者 snap、flatpak他们都是在用户分区。所以这个缺点理论上不算个缺点。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;分区导致一部分内存浪费&lt;/p&gt;
+
+    &lt;p&gt;这个是事实。但是现在的硬盘也没那么窘迫。后面会建议给系统 50-64G 的空间。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;23-分区教程&quot;&gt;2.3 分区教程&lt;/h3&gt;
+
+&lt;p&gt;安装时候选择自定义分区。 实际上我们只需要自定义三个分区，也就是删除硬盘空间，新建出三个。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;/EFI&lt;/p&gt;
+
+    &lt;p&gt;新的电脑采用UEFI启动方式，必须设置一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/EFI&lt;/code&gt; 分区 建议分配大一点，256M 左右。&lt;/p&gt;
+
+    &lt;p&gt;Mac采用的就是UEFI 所以我们确保安装成功必须建立一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/EFI&lt;/code&gt; 分区。&lt;/p&gt;
+
+    &lt;p&gt;可以分配 256M 实际上可能占用就 33M 左右。多与的空间留给未来升级或者其他情况的缓冲。&lt;/p&gt;
+
+    &lt;blockquote&gt;
+      &lt;p&gt;参考&lt;/p&gt;
+    &lt;/blockquote&gt;
+
+    &lt;p&gt;如果是UEFI+GPT分区表模式，那么给ubuntu分区的时候不用设置/boot分区，设置efi系统分区；如果是legacy+MBR分区表那么就要设置/boot分区。&lt;/p&gt;
+
+    &lt;p&gt;&lt;a href=&quot;https://blog.csdn.net/wangyuankl123/article/details/100532620&quot;&gt;Ubuntu 经验 ：设置EFI分区&lt;/a&gt;&lt;/p&gt;
+
+    &lt;p&gt;会生成 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/dev/sda1&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;我们不会特别设置swap分区虽然老的一些wiki里都会这里让你设置没必要在这里设定死&quot;&gt;我们不会特别设置SWAP分区，虽然老的一些wiki里都会这里让你设置。没必要在这里设定死。&lt;/h4&gt;
+
+&lt;p&gt;swap分区可以没有，进入系统后，灵活的通过swapfile的方式加入SWAP ,这里分配死不好变化了。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;/ 根 分区，这里用来存放系统。&lt;/p&gt;
+
+    &lt;p&gt;目录建议 50～64G&lt;/p&gt;
+
+    &lt;p&gt;必须是 primary 分区类型。主分区（Primary）用来安装系统,并且个数有限制。&lt;/p&gt;
+
+    &lt;p&gt;精简系统安装在 9G左右，全部安装大概在 17G，后期即使安装文件，也极其有限，64G足够了。&lt;/p&gt;
+
+    &lt;p&gt;会生成 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/dev/sda2&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;/home 家目录，用户数据所在&lt;/p&gt;
+
+    &lt;p&gt;类型可以是 Primary分区或者Logic分区，建议Logic。&lt;/p&gt;
+
+    &lt;p&gt;剩余的内存全部分配给 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/home&lt;/code&gt; 分区&lt;/p&gt;
+
+    &lt;p&gt;会生成 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/dev/sda4&lt;/code&gt; (可能我编辑又删除了。应该是递增的。)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;booter安装选择 /EFI的分区 即 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/dev/sda1&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://i.loli.net/2021/02/06/Dpu4L5IGNlH3gdt.jpg&quot; alt=&quot;IMG_20210204_175214.jpg&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;这样就可以正常安装了。&lt;/p&gt;
+
+&lt;h2 id=&quot;3-我想重装&quot;&gt;3. 我想重装&lt;/h2&gt;
+
+&lt;p&gt;按照 2 的分区方式。假设我因为更新内核系统崩溃了，或者想要换个发行版怎么办？&lt;/p&gt;
+
+&lt;p&gt;没关系，最好保留一个 USB的启动盘。插入电脑重新进入安装流程。在分区的环节，依然选择单独自己设置分区。&lt;/p&gt;
+
+&lt;p&gt;你会看到电脑的分区表。和安装时候一样的分布。这里可以通过 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/dev/sda1&lt;/code&gt; 等标号对应起来，或者根据大小判断。&lt;/p&gt;
+
+&lt;p&gt;需要做的就是把对应的分区设置，挂载。 比如：单独对 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/EFI&lt;/code&gt;  &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/ &lt;/code&gt; 两个分区删除，并且 change 选择 format（其实就是格式化，会出现打钩）。&lt;/p&gt;
+
+&lt;h3 id=&quot;注意&quot;&gt;注意&lt;/h3&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/home&lt;/code&gt; 挂在上 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/home&lt;/code&gt; 分区，但是不要勾选format，也就是不格式化。&lt;/p&gt;
+
+&lt;p&gt;然后要注意的是，用户名 即 /home/&lt;xxxx&gt;  这里的xxxx要设置成一样的名字。&lt;/xxxx&gt;&lt;/p&gt;
+
+&lt;p&gt;重新安装完系统后，数据保持，系统更新了。&lt;/p&gt;
+
+&lt;h1 id=&quot;三配置&quot;&gt;三、配置&lt;/h1&gt;
+
+&lt;h2 id=&quot;1-swap-分区&quot;&gt;1. SWAP 分区&lt;/h2&gt;
+
+&lt;p&gt;SWAP分区是当年因为设备内存太小，分出一部分硬盘空间用来当内存以此来提高性能的技术。SSD比机械硬盘快，所以这部分如果机器是SSD，效果是更好一点。&lt;/p&gt;
+
+&lt;p&gt;Ubuntu安装系统默认的 Swap 分区是 2G，也就是内存的一半。&lt;/p&gt;
+
+&lt;p&gt;网上总流传一个 swap 的配置：&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    如果内存很小 (&amp;lt;4GB)，设为内存大小
+
+    如果内存很大（&amp;gt;=4GB)，设置为内存的一半
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;实际上时过境迁了，现在随便浏览器开一个标签浏览一个视频网站，你的内存就快速增长。&lt;/p&gt;
+
+&lt;p&gt;我这台设备是4G内存，日常使用的时候内存永远是满的状态，然后SWAP也会被塞满。这时候，我猜想Linux会花大量的时间在不断的GC, 当你感觉到系统很卡，应该就是内存分配不过来了。&lt;/p&gt;
+
+&lt;p&gt;而且Linux在内存分配产生边界的时候也会产生各种边界问题。&lt;/p&gt;
+
+&lt;p&gt;这里建议&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;4G 内存，建议分配 8G SWAP
+
+8G 内存，建议 8G SWAP
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;分配SWAP的方式参考 &lt;a href=&quot;https://linuxhint.com/change_swap_size_ubuntu/&quot;&gt;change_swap_size_ubuntu&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;简述步骤&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;step1 切换为root用户&lt;/p&gt;
+
+    &lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sudo -s&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;step2 列出 可用的 SWAP&lt;/p&gt;
+
+    &lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;swapon -s&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://linuxhint.com/wp-content/uploads/2018/11/2-39.png&quot; alt=&quot;展示可以用的SWAP&quot; /&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;step3 停用 SWAP&lt;/p&gt;
+
+    &lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;swapoff -a&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;step4 生成一个8G的文件&lt;/p&gt;
+
+    &lt;p&gt;bs就是一个单元，1M&lt;/p&gt;
+
+    &lt;p&gt;count 是 大小，实际大小是 ` bs* count`&lt;/p&gt;
+
+    &lt;p&gt;所以我们需要 8G 是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;1M*1024 * 8 = 8192&lt;/code&gt;&lt;/p&gt;
+
+    &lt;p&gt;所以应该输入命令&lt;/p&gt;
+
+    &lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;dd if=/dev/zero of=/swapfile bs=1M count=8192&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;step5&lt;/p&gt;
+
+    &lt;p&gt;启用刚才的swap&lt;/p&gt;
+
+    &lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;mkswap /swapfile&lt;/code&gt;&lt;/p&gt;
+
+    &lt;p&gt;会生成一个随机ID&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;step6&lt;/p&gt;
+
+    &lt;p&gt;挂载swap分区&lt;/p&gt;
+
+    &lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;swapon /swapfile&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;step7&lt;/p&gt;
+
+    &lt;p&gt;最好重启系统&lt;/p&gt;
+
+    &lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sudo reboot&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;step8&lt;/p&gt;
+
+    &lt;p&gt;重启系统可以查看&lt;/p&gt;
+
+    &lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;swapon -s&lt;/code&gt;&lt;/p&gt;
+
+    &lt;p&gt;可以看到新的8G Swap已经在工作。&lt;/p&gt;
+
+    &lt;p&gt;或者通过图形软件：系统监视器&lt;/p&gt;
+
+    &lt;p&gt;里面可以看到 SWAP 交换区的工作状态&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;2-xorg--vs--wayland&quot;&gt;2. Xorg  VS  Wayland&lt;/h2&gt;
+
+&lt;p&gt;结论：&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;1. Wayland 还有待成熟。
+
+2. 日常使用他们在表现上号无差别。 虽然在原理上 wayland 应该更胜一筹，但是需要时间沉淀（已经快 10 年了）。
+
+3. Wayland 可以尝试，最后还需要 Xorg
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Wayland的优点：&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;1. 原理上，会比Xorg速度快，因为他简化了X11的模型
+
+2. 也会减少内存和CPU
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Wayland的缺点：&lt;/p&gt;
+
+&lt;p&gt;兼容性：&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;* 软件的兼容性不太好。而且在最重要的输入法会出现连击的 BUG，可以在系统设置--辅助里面，关闭掉连按按钮。但是不够好。
+
+* 录屏工具 obs-studio 在录制屏幕的时候，Wayland 下不工作，总是黑屏，因为 wayland 的 composite 缺乏一个输出图像的 api …… 总之吧，还缺失很多的细节。
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;开发人员：&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;* Wayland 的开发人员很少，obs-studio 这个 bug 上 Wayland 的解决也不够积极。这是 2018 年提出的问题，到现在也没解决。
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;实际表现：&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;* 看过游戏性/能，xorg 和 wayland 差不多。
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;切换Wayland的方法&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;. 注销系统，可以选择 wayland 登陆
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://l.ruby-china.com/photo/Mark24/2a9fcc19-b124-42bb-ab54-04d9e56c4541.jpg!large&quot; alt=&quot;change wayland&quot; /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;四硬件与驱动&quot;&gt;四、硬件与驱动&lt;/h1&gt;
+
+&lt;h2 id=&quot;1-wifi&quot;&gt;1. Wifi&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;关于主板自带 wifi Broadcom&lt;/p&gt;
+
+    &lt;p&gt;Broadcom 的无线网卡是很多主板上的选择，他虽然在 Ubuntu 上有闭源驱动，可是表现不尽人意。wifi 总是工作一段时间断掉，总让人有一种 Linux 很不稳定的感觉。我因为丢失 wifi 信号重启系统。&lt;/p&gt;
+
+    &lt;p&gt;尝试解决方案：&lt;/p&gt;
+
+    &lt;p&gt;1.把 wifi 芯片的节能模式设置为 off，永远不断开就可以工作。但是这需要芯片支持。结果不行。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;小米随身 wifi&lt;/p&gt;
+
+    &lt;p&gt;整理自己东西的时候，发现了 2016 年买的小米 wifi 。长的就像一个小的无线鼠标接受器。随身wifi当年是台式机不支持wifi，买一个这个插上去，PC就可以支持wifi了。当年刚出来，驱动都需要额外安装。新东西往往Linux不支持。&lt;/p&gt;
+
+    &lt;p&gt;小米随身 wifi, 小度 wifi，360 随身 wifi，他们的方案都一样，都是基于 MT7601U 这款芯片，对是联发科的。外国网友提交了补丁。现在 MTK7601U 这个驱动加入到内核里面了 —— 这玩意免驱的了。&lt;/p&gt;
+
+    &lt;p&gt;经过大概四五天的使用，不论是一天开机，隔夜开机，休眠，合盖子。wifi 工作都非常好，唤醒速度非常快，并且热插拔工作。当 wifi 的问题被解决后，系统的直观感受就是稳定多了，没那么多莫名其妙的信号突然丢失，网络突然减速。&lt;/p&gt;
+
+    &lt;p&gt;可以说远胜于自身主板的wifi。信号都强2格。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;可以选择其他的随身wifi&lt;/p&gt;
+
+    &lt;p&gt;淘宝上大概20～30不等，也有免驱动的兼容linux的，如果你手边有当年的随身wifi又可以使用了。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;参考&quot;&gt;参考：&lt;/h1&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;a href=&quot;https://code.woboq.org/linux/linux/drivers/net/wireless/mediatek/&quot;&gt;linux/drivers/net/wireless/mediatek&lt;/a&gt; linux中加入mtk的驱动列表&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;a href=&quot;https://github.com/kuba-moo/mt7601u/blob/master/README.md&quot;&gt;mt7601u drivers readme&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;2-显卡&quot;&gt;2. 显卡&lt;/h2&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;这台机器没有独立显卡，这部分没有折腾记录 :D&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h1 id=&quot;五软件使用&quot;&gt;五、软件使用&lt;/h1&gt;
+
+&lt;h2 id=&quot;1-安装软件的新选择&quot;&gt;1. 安装软件的新选择&lt;/h2&gt;
+
+&lt;p&gt;linux的版本众多，ubuntu这种 debian系默认的使用是apt来安装软件，如果是 Redhat系 比如 CentOS需要用 yum命令。并且两边的软件可能安装和工作的差距很大。&lt;/p&gt;
+
+&lt;p&gt;于是出现了磨平兼容性的新的打包和安装方式。&lt;/p&gt;
+
+&lt;p&gt;Ubuntu阵营的 &lt;a href=&quot;https://snapcraft.io/&quot;&gt;snap&lt;/a&gt;，如果你安装&amp;gt;=20.04,已经自带了。或者是 RedHat阵营的 &lt;a href=&quot;https://flathub.org&quot;&gt;flatpak&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;他们原理都差不多，类似docker这种，提供了虚拟环境，并且是分层构建的。&lt;/p&gt;
+
+&lt;p&gt;Ubuntu也可以安装&lt;a href=&quot;https://flatpak.org/setup/&quot;&gt;flatpak&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h3 id=&quot;11-snap&quot;&gt;1.1 Snap&lt;/h3&gt;
+
+&lt;p&gt;一但用过snap估计就会喜欢上了它。网络好的时候速度非常快。感觉snap的基础设施起来了，flatpak依然很慢。&lt;/p&gt;
+
+&lt;p&gt;snap会自动保持软件到最新。&lt;/p&gt;
+
+&lt;p&gt;你只需要把 apt替换成snap就好了。&lt;/p&gt;
+
+&lt;p&gt;在 &lt;a href=&quot;https://snapcraft.io/&quot;&gt;https://snapcraft.io/&lt;/a&gt; 上浏览软件比自带的那个应用商店（做的的是垃圾）好多了。&lt;/p&gt;
+
+&lt;h2 id=&quot;2-默认播放器缺乏编码器&quot;&gt;2. 默认播放器缺乏编码器&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;step1 勾选 multiverse 源&lt;/p&gt;
+
+    &lt;p&gt;打开 “软件和更新（Software &amp;amp; Updates）” Ubuntu软件的tab下，勾选 “有版权和合法性问题的软件（multiverse）”&lt;/p&gt;
+
+    &lt;p&gt;然后关闭之后借助图形窗口更新源。或者取消自己去终端手动更新 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sudo apt update&lt;/code&gt; 。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;step2 安装额外包&lt;/p&gt;
+
+    &lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sudo apt install ubuntu-restricted-extras&lt;/code&gt;&lt;/p&gt;
+
+    &lt;p&gt;安装过程中需要输入 两个 Y 确认阅读了一些法律然后继续。&lt;/p&gt;
+
+    &lt;p&gt;安装完毕后即可正常使用默认播放器&lt;/p&gt;
+
+    &lt;blockquote&gt;
+      &lt;p&gt;参考&lt;/p&gt;
+    &lt;/blockquote&gt;
+
+    &lt;ul&gt;
+      &lt;li&gt;&lt;a href=&quot;https://www.youtube.com/watch?v=LW8F97qQzVE&quot;&gt;Fix Ubuntu Can’t Play Video (MP4, MKV, Etc) Files&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+
+    &lt;blockquote&gt;
+      &lt;p&gt;Plan B&lt;/p&gt;
+    &lt;/blockquote&gt;
+
+    &lt;p&gt;如果你觉得麻烦，可以直接使用  vlc 它自带了编码器。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;梯子&quot;&gt;梯子&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://snapcraft.io/qv2ray&quot;&gt;qv2ray&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sudo snap install qv2ray&lt;/code&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;vscode&quot;&gt;Vscode&lt;/h2&gt;
+
+&lt;p&gt;snap安装的会出现ibus中文无法输入的情况。 这是Vscode的BUG 不过最近还没被修复。&lt;/p&gt;
+
+&lt;p&gt;官网下在deb是解决方案。&lt;/p&gt;
+
+&lt;h3 id=&quot;deb可能遇到的问题&quot;&gt;deb可能遇到的问题&lt;/h3&gt;
+
+&lt;p&gt;deb安装的报错&lt;/p&gt;
+
+&lt;p&gt;解决方法见： &lt;a href=&quot;https://blog.csdn.net/u012057432/article/details/112849575&quot;&gt;N: 鉴于仓库…不支持 ‘armhf‘ 体系结构，跳过配置文件 …的获取&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;sublime-text&quot;&gt;Sublime Text&lt;/h2&gt;
+
+&lt;p&gt;在18.04的时候，sublime无法中文输入。&lt;/p&gt;
+
+&lt;p&gt;现在不论是 deb、snap、flatpak都是可以工作的。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;自带启动命令  subl&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;subl .&lt;/code&gt; 打开目录类似于 vscode 的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;code .&lt;/code&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;jetbrain--ide&quot;&gt;JetBrain  IDE&lt;/h2&gt;
+
+&lt;p&gt;推荐 snap安装，整个过程无痛，中文输入没有问题。&lt;/p&gt;
+
+&lt;h1 id=&quot;六其他情况&quot;&gt;六、其他情况&lt;/h1&gt;
+
+&lt;h2 id=&quot;1-开机出问题failed-to-set-mocklistrt报错&quot;&gt;1. 开机出问题Failed to set MockListRT……报错&lt;/h2&gt;
+
+&lt;p&gt;解决方法&lt;/p&gt;
+
+&lt;p&gt;你必须用 grubx64.efi  替换 shimx64.efi&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sudo su -
+cd /boot/efi/EFI/ubuntu
+cp grubx64.efi shimx64.efi
+reboot
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h1 id=&quot;七&quot;&gt;七&lt;/h1&gt;
+
+&lt;p&gt;踩坑还在继续……&lt;/p&gt;
+
+&lt;p&gt;逐渐补充&lt;/p&gt;
+
+&lt;p&gt;Ruby China 讨论 https://ruby-china.org/topics/40896&lt;/p&gt;
+
+&lt;p&gt;V2EX 讨论 https://www.v2ex.com/t/751846&lt;/p&gt;
+
+&lt;p&gt;我的博客  https://mark24code.github.io/ubuntu/linux/%E6%95%99%E7%A8%8B/2021/02/06/2021%E5%B9%B4%E7%BB%99%E4%BD%A0%E7%9A%84MacbookPro%E5%AE%89%E8%A3%85Ubuntu%E8%B8%A9%E5%9D%91%E8%AE%B0%E5%BD%95.html&lt;/p&gt;
+
+&lt;h1 id=&quot;参考-1&quot;&gt;参考&lt;/h1&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;a href=&quot;https://wiki.gnome.org/Initiatives/Wayland/GnomeShell/GnomeShell4&quot;&gt;GnomeShell4&lt;/a&gt;&lt;/p&gt;
+
+    &lt;p&gt;Gnome4的说明，里面指出了Wayland存在一些问题比如输入法、图形输出的问题。而这些问题都需要重新构建Wayland和Gnome。
+  这里印证了，输入法连击BUG、OBS-studio无法正常录屏的问题。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        <pubDate>Sat, 06 Feb 2021 10:50:22 +0800</pubDate>
+        <link>https://mark24code.github.io/ubuntu/linux/%E6%95%99%E7%A8%8B/2021/02/06/2021%E5%B9%B4%E7%BB%99%E4%BD%A0%E7%9A%84MacbookPro%E5%AE%89%E8%A3%85Ubuntu%E8%B8%A9%E5%9D%91%E8%AE%B0%E5%BD%95.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ubuntu/linux/%E6%95%99%E7%A8%8B/2021/02/06/2021%E5%B9%B4%E7%BB%99%E4%BD%A0%E7%9A%84MacbookPro%E5%AE%89%E8%A3%85Ubuntu%E8%B8%A9%E5%9D%91%E8%AE%B0%E5%BD%95.html</guid>
+        
+        
+        <category>Ubuntu</category>
+        
+        <category>Linux</category>
+        
+        <category>教程</category>
+        
+      </item>
+    
+      <item>
+        <title>ubuntu20.10安装教程-数据与系统分离和分区配置</title>
+        <description>&lt;p&gt;&lt;a href=&quot;https://app.yinxiang.com/shard/s66/nl/15344178/26a95876-e508-42c5-8efe-6e87849d97ce?title=%E3%80%90%E9%AA%8C%E8%AF%81%E3%80%91Ubuntu20.10%20%E4%BF%9D%E6%8C%81%E6%95%B0%E6%8D%AE%E7%9A%84%E5%AE%89%E8%A3%85%E6%96%B9%E6%B3%95&quot;&gt;转向内部笔记&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Thu, 04 Feb 2021 19:34:46 +0800</pubDate>
+        <link>https://mark24code.github.io/ubuntu/linux/%E6%95%99%E7%A8%8B/2021/02/04/ubuntu20.10%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B-%E6%95%B0%E6%8D%AE%E4%B8%8E%E7%B3%BB%E7%BB%9F%E5%88%86%E7%A6%BB%E5%92%8C%E5%88%86%E5%8C%BA%E9%85%8D%E7%BD%AE.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ubuntu/linux/%E6%95%99%E7%A8%8B/2021/02/04/ubuntu20.10%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B-%E6%95%B0%E6%8D%AE%E4%B8%8E%E7%B3%BB%E7%BB%9F%E5%88%86%E7%A6%BB%E5%92%8C%E5%88%86%E5%8C%BA%E9%85%8D%E7%BD%AE.html</guid>
+        
+        
+        <category>Ubuntu</category>
+        
+        <category>Linux</category>
+        
+        <category>教程</category>
+        
+      </item>
+    
+      <item>
+        <title>投影仪参数学习笔记</title>
+        <description>&lt;h1 id=&quot;一构成&quot;&gt;一、构成&lt;/h1&gt;
+
+&lt;p&gt;投影仪的基本构成:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;光源： 决定亮度&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;图形芯片： 决定分辨率、色彩&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;镜头：决定投射尺寸&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;二工作原理&quot;&gt;二、工作原理&lt;/h1&gt;
+
+&lt;p&gt;光源发出光少照射图形芯片出现图像，通过折射把光线输出到镜头，镜头进行投影。&lt;/p&gt;
+
+&lt;h1 id=&quot;三关键参数&quot;&gt;三、关键参数&lt;/h1&gt;
+
+&lt;h2 id=&quot;1-光源决定亮度&quot;&gt;1. 光源：决定亮度&lt;/h2&gt;
+
+&lt;h3 id=&quot;材质&quot;&gt;材质：&lt;/h3&gt;
+
+&lt;p&gt;LED 适合晚上使用，主要优点是寿命长，缺点亮度有限，满足家用。&lt;/p&gt;
+
+&lt;p&gt;其他材料都台昂贵，或者寿命短。&lt;/p&gt;
+
+&lt;h3 id=&quot;亮度&quot;&gt;亮度：&lt;/h3&gt;
+
+&lt;p&gt;白天也想使用  2000 ANSI 流明&lt;/p&gt;
+
+&lt;p&gt;仅仅晚上追剧  1500 ANSI 皆可&lt;/p&gt;
+
+&lt;h2 id=&quot;2-显示芯片决定分辨率&quot;&gt;2. 显示芯片：决定分辨率&lt;/h2&gt;
+
+&lt;h3 id=&quot;分辨率&quot;&gt;分辨率：&lt;/h3&gt;
+
+&lt;p&gt;1080P 适用于家庭。&lt;/p&gt;
+
+&lt;p&gt;1080P 的标准尺寸是 0.47“（越接近这个越好）&lt;/p&gt;
+
+&lt;p&gt;图形芯片的尺寸越大越好同时也多金。&lt;/p&gt;
+
+&lt;p&gt;一般使用小的图形芯片，通过像素抖动来模拟高分辨率&lt;/p&gt;
+
+&lt;h3 id=&quot;类型&quot;&gt;类型&lt;/h3&gt;
+
+&lt;p&gt;追求色彩，可以  3LCD、LCos&lt;/p&gt;
+
+&lt;p&gt;一般入门性能 DLP&lt;/p&gt;
+
+&lt;h1 id=&quot;镜头-尺寸决定投射尺寸&quot;&gt;镜头 ：尺寸决定投射尺寸：&lt;/h1&gt;
+
+&lt;h2 id=&quot;1-透射比&quot;&gt;1. 透射比：&lt;/h2&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;	1：1 就是 间隔1m投射1m 
+	2：1 就是 2米距离，透射出1米画面
+
+应该尽量选择透射比小的，透射比越小越好。
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</description>
+        <pubDate>Tue, 02 Feb 2021 15:25:01 +0800</pubDate>
+        <link>https://mark24code.github.io/%E7%AC%94%E8%AE%B0/2021/02/02/%E6%8A%95%E5%BD%B1%E4%BB%AA%E5%8F%82%E6%95%B0%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E7%AC%94%E8%AE%B0/2021/02/02/%E6%8A%95%E5%BD%B1%E4%BB%AA%E5%8F%82%E6%95%B0%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0.html</guid>
+        
+        
+        <category>笔记</category>
+        
+      </item>
+    
+      <item>
+        <title>编程心得</title>
+        <description>&lt;h1 id=&quot;一程序有限性&quot;&gt;一、程序有限性&lt;/h1&gt;
+
+&lt;p&gt;程序存在一个巨大的缺点，就是其有限性。&lt;/p&gt;
+
+&lt;p&gt;程序归根结底预先准备好的东西 —— 某种确定的规则、某种特定情景规则。或者根据确定的规则，生成一些模式化的应对策略，本质上依然有限。&lt;/p&gt;
+
+&lt;p&gt;反向思考，思考程序归根结底是思考清楚每种情况，或者给出可以概括的规则。&lt;/p&gt;
+
+&lt;p&gt;也正是由于这个特点，数学具有预测性，和计算机的亲密性很高。&lt;/p&gt;
+
+&lt;h1 id=&quot;二平衡艺术&quot;&gt;二、平衡艺术&lt;/h1&gt;
+
+&lt;p&gt;很多问题不是非黑即白，而是各有优点，各有缺点。&lt;/p&gt;
+
+&lt;p&gt;解决问题的办法是平衡，不是回避。&lt;/p&gt;
+
+&lt;p&gt;组合他们，避开他们的缺点，利用他们的优点，因地制宜平衡，是编程里面的艺术。&lt;/p&gt;
+
+&lt;h1 id=&quot;三工程性&quot;&gt;三、工程性&lt;/h1&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;工程相似性&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;具有和建筑学类似的工程性。主要在于解决方案、推进方案、持续的维护、保持开发效率、保持多人共建、保持进度维护等等。&lt;/p&gt;
+
+&lt;p&gt;和一个团队，盖楼、装修很类似。&lt;/p&gt;
+
+&lt;p&gt;团队充满各个角色需要沟通和同步。&lt;/p&gt;
+
+&lt;p&gt;建造项目本身需要丰富的经验和技术，需要优秀的设计。&lt;/p&gt;
+
+&lt;p&gt;前期、中期、后期有完整的生命周期。&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;解决问题是灵魂&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;工程性解决问题，可以是优雅的方案，也可以是惯用的方案。&lt;/p&gt;
+
+&lt;p&gt;相较于学术假设、推理、论证……这种。&lt;/p&gt;
+
+&lt;p&gt;编程的工程性属性更加突出 —— 设计、实践、测试没问题即认为没问题、管用的方案就是好方案。&lt;/p&gt;
+
+&lt;h1 id=&quot;四艺术性&quot;&gt;四、艺术性&lt;/h1&gt;
+
+&lt;h2 id=&quot;1-自由的设计&quot;&gt;1. 自由的设计&lt;/h2&gt;
+
+&lt;p&gt;和盖楼、机械有相似性，但是盖楼、机械他们不会频繁的推倒已经成熟的方案。&lt;/p&gt;
+
+&lt;p&gt;但是编程不一样，编程相对来说推翻自己的成本相对低廉——就是程序员自己的时间和精力。&lt;/p&gt;
+
+&lt;p&gt;现实中的实业偏向于保守。&lt;/p&gt;
+
+&lt;p&gt;软件工程可以相当激进。&lt;/p&gt;
+
+&lt;p&gt;软件的结构，自上向下可以看作是：&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;用户软件
+
+软件接口
+
+操作系统
+
+内核
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;每层都通过接口工作。一个成熟稳定的软件主要是接口协议。对于不同层都可以保持兼容。&lt;/p&gt;
+
+&lt;p&gt;自己的内部实现和工作模式的可以自由改变。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;接口层面上： 可以定义自己的接口，形成自己的语言、工作模型，界面上也可以有自己的交互、设计、表达。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;接口内部：可以有自己特殊实现，可以自由的使用各种工作模型，保守的、探索的、先进的等等，完全自由。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;2-自由创作&quot;&gt;2. 自由创作&lt;/h2&gt;
+
+&lt;p&gt;正是由于这个基础上，解决方案的极大自由。&lt;/p&gt;
+
+&lt;p&gt;创作软件也许不是按照施工图纸上一板一眼的进行，可以是涂涂改改，从小到大，从模糊到清晰，可以从上到下，也可以从下到上。&lt;/p&gt;
+
+&lt;p&gt;软件从一层一层的commit中逐渐被修正的清晰。&lt;/p&gt;
+
+&lt;p&gt;彷佛就是 《黑客与画家》中说的，就像画画，他是涂涂抹抹的一个创作过程。&lt;/p&gt;
+
+&lt;h1 id=&quot;五图灵完备的意义--不同语言本质上可以等效替代也可以彼此抹平差距&quot;&gt;五、图灵完备的意义 —— 不同语言本质上可以等效替代，也可以彼此抹平差距&lt;/h1&gt;
+
+&lt;p&gt;意味着可以相互弥补。&lt;/p&gt;
+
+&lt;p&gt;在一个图灵完备的内核基础上，可以通过外层的胶水逻辑向上构建，从而弥补核心层的BUG或者功能不足。&lt;/p&gt;
+
+&lt;p&gt;理论上任何语言都差不多，也都可以差不多。&lt;/p&gt;
+
+&lt;p&gt;现实中的差距只是在使用他的人，和正在给他作贡献的人，和使用他作出影响力大软件的人而已。&lt;/p&gt;
+
+&lt;p&gt;比如语言，人们与其说是偏向于某种语言来工作，不如说是依赖于某种语言上的杀手级别软件。&lt;/p&gt;
+
+&lt;p&gt;而杀手级别的软件，归根结底是这些软件作者的偏好。&lt;/p&gt;
+
+&lt;h1 id=&quot;六程序是时间的函数一切算法皆是遍历&quot;&gt;六、程序是时间的函数，一切算法皆是遍历&lt;/h1&gt;
+
+&lt;p&gt;程序换个角度，不论程序多么复杂，是串行还是并行，它归根结底可以抽象成一个关乎时间T的函数。&lt;/p&gt;
+
+&lt;p&gt;程序里面的一切都是一种遍历。&lt;/p&gt;
+
+&lt;p&gt;不论多么精妙的算法，处理问题和解决问题上，程序只能遍历。&lt;/p&gt;
+
+&lt;p&gt;只是一种傻傻的遍历，还是聪明的遍历的区别而已。&lt;/p&gt;
+
+&lt;p&gt;傻的遍历，就是N重循环。&lt;/p&gt;
+
+&lt;p&gt;聪明的遍历：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;带笔记本的遍历&lt;/li&gt;
+  &lt;li&gt;不重复的遍历&lt;/li&gt;
+  &lt;li&gt;根据一些规则可以提前去掉不必要的遍历&lt;/li&gt;
+  &lt;li&gt;可以利用目标算出一些数值，有选择的遍历
+……&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;无非是根据问题特征减少一些遍历。&lt;/p&gt;
+
+&lt;p&gt;但是想要解决问题，归根结底就是遍历。&lt;/p&gt;
+
+&lt;p&gt;所以程序、算法不是万能的。
+他只能解决，能被计算所描述，并且可以在有限步骤下被计算出的问题。
+（图灵停机问题就是为了证明这个）&lt;/p&gt;
+
+&lt;p&gt;我特别想关联的一个点是：
+如果看过网上一个黏菌实验的科普视频。将的是把食物按照东京重点城市分布，然后撒上黏菌，最后黏菌在食物之间联络的路线和今天东京的主要干路的结构一样。&lt;/p&gt;
+
+&lt;p&gt;也许你以为黏菌有智能。会寻找到路线。&lt;/p&gt;
+
+&lt;p&gt;其实无非是黏菌释放了大量的孢子，覆盖了培养皿的空间，那些有食物联络的孢子都或活下来了，而远的都死掉了。而其中留存下来的就是最短的路线。&lt;/p&gt;
+
+&lt;p&gt;这样就完成了寻路。&lt;/p&gt;
+
+&lt;p&gt;你会发现，生命发现“真理”的过程，也就是一种遍历，也就是去全部试错罢了。&lt;/p&gt;
+
+&lt;p&gt;对于“不可知”只能去探索（遍历）。&lt;/p&gt;
+
+&lt;p&gt;这和DFS、BFS寻路算法也没有本质区别。只能通过 探索去对抗未知。&lt;/p&gt;
+
+&lt;p&gt;写道此我更惊叹于计算机的神奇。图灵、冯·诺伊曼 计算机的缔造者们真的是神奇。&lt;/p&gt;
+
+</description>
+        <pubDate>Mon, 01 Feb 2021 01:16:25 +0800</pubDate>
+        <link>https://mark24code.github.io/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2021/02/01/%E7%BC%96%E7%A8%8B%E5%BF%83%E5%BE%97.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2021/02/01/%E7%BC%96%E7%A8%8B%E5%BF%83%E5%BE%97.html</guid>
+        
+        
+        <category>编程思考</category>
+        
+      </item>
+    
+      <item>
+        <title>用Swap加速你的Ubuntu</title>
+        <description>&lt;h1 id=&quot;背景&quot;&gt;背景&lt;/h1&gt;
+
+&lt;p&gt;10 年的 MacBookPro 2010  (4G 内存，2 代 i5，换过 SSD)
+还是 MacOSX 时候接口接触不良，开机就卡死。风扇呼呼，非常非常卡。而且 MacOS 已经对它停止支持了。一度想扔掉。然后突发奇想安装了 Ubuntu20.10 ，结果所有毛病都消失了。。。。&lt;/p&gt;
+
+&lt;p&gt;原来这就是“计划性报废”。&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;参数表：
+Intel® Core™ i5-2415M CPU @ 2.30GHz × 4 
+3.8 GB 
+Intel® HD Graphics 3000 (SNB GT2)
+SSD:  Sandisk 240G
+
+Ubuntu 20.10
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h1 id=&quot;安装-ubuntu-之后&quot;&gt;安装 Ubuntu 之后&lt;/h1&gt;
+
+&lt;p&gt;接口能用了，不再接触不良，拷贝速度 30-40M/s 。一切工作正常，驱动也没问题——硬件足够老了可能。&lt;/p&gt;
+
+&lt;p&gt;但是就是有一个问题。电脑的内存太小了 4G,开个 IDE （ Pycharm 、Rubymine ）就吃力了，作为生产力差点意思。&lt;/p&gt;
+
+&lt;h1 id=&quot;swap-分区的问题&quot;&gt;Swap 分区的问题&lt;/h1&gt;
+
+&lt;p&gt;安装系统默认的 Swap 分区是 2G，也就是内存的一半。网上总流传一个 swap 的配置：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;如果内存很小(&amp;lt;4GB)，设为内存大小&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;如果内存很大（&amp;gt;=4GB)，设置为内存的一半&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;多多少少大家都能搜到。其实这个很有问题—— 这个可能是作为服务器来思考的。有的文章甚至提倡直接下掉 swap 分区来减少 swap 降低的速度带来的副作用。&lt;/p&gt;
+
+&lt;p&gt;但是多年前的文章怎么能指导今天的情况。我这台老电脑，我试着把电脑 swap 分成 8G （内存的 2 倍）。结果很有趣。粗略狂开了一下，同时运行这些程序&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Thunderbird （更新邮件） x1
+终端 x2
+火狐 13 个 tab
+sublime x1 项目
+bt 下载 x2
+vscodex1 项目
+pycharm pro ide x2 项目
+ruby mine ide x1 
+pdf 文档 x4 本书
+wordx3 文档
+emacs x1
+ppt x1 文档
+数据库图形 x1
+表格 x1
+vlc 播放电影(不卡)
+Chromex1  2 个 tab
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;&lt;img src=&quot;https://i.loli.net/2021/01/30/aGyX4Az3YJ2NvZF.png&quot; alt=&quot;2021-01-30 15-48-49 屏幕截图.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://i.loli.net/2021/01/30/9WI7VFGJoaqYd2k.png&quot; alt=&quot;2021-01-30 15-42-45 屏幕截图.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;8G 的 swap 分区才被占据了一半。&lt;/p&gt;
+
+&lt;p&gt;依然可以正常运行。CPU 远远不到瓶颈，因为 CPU 跑满顶多是多等一会，一切都不会失去响应。内存才是瓶颈。&lt;/p&gt;
+
+&lt;p&gt;侧面印证一些文章里提到的 Linux 在内存被塞满会报错，出现一些异常，系统会变慢。我猜测，其中内存和 swap 分区都满了之后，频繁的 GC(垃圾回收）其实是系统卡的重要原因。&lt;/p&gt;
+
+&lt;p&gt;作为桌面 ，即使程序都经过 swap 慢一点也无所谓，庞杂的 app 跑在机器上，频繁的 GC 才是灾难。和跑单一服务的服务器有些不同。内存如果可以，尽量给多，空间换时间。&lt;/p&gt;
+
+&lt;p&gt;如此这般作为生产力也可以顶一阵子了。&lt;/p&gt;
+
+&lt;h1 id=&quot;设置-swap-的方法&quot;&gt;设置 swap 的方法&lt;/h1&gt;
+
+&lt;p&gt;可以参考  &lt;a href=&quot;https://linuxhint.com/change_swap_size_ubuntu/&quot;&gt;change_swap_size_ubuntu&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;我后来 SWAP 设置为 16G 准备起飞。本身就是 SSD，这样省买内存了。非常惊喜。&lt;/p&gt;
+
+&lt;p&gt;感兴趣的小伙伴可以把你手里的旧电脑变废为宝。&lt;/p&gt;
+
+&lt;h1 id=&quot;补充&quot;&gt;补充&lt;/h1&gt;
+
+&lt;p&gt;还有一些文章，提到了多硬盘可以设置 swap 阵列，优先级以来提高性能。&lt;/p&gt;
+</description>
+        <pubDate>Sat, 30 Jan 2021 16:33:37 +0800</pubDate>
+        <link>https://mark24code.github.io/linux/%E6%95%99%E7%A8%8B/2021/01/30/%E7%94%A8Swap%E5%8A%A0%E9%80%9F%E4%BD%A0%E7%9A%84Ubuntu.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/linux/%E6%95%99%E7%A8%8B/2021/01/30/%E7%94%A8Swap%E5%8A%A0%E9%80%9F%E4%BD%A0%E7%9A%84Ubuntu.html</guid>
+        
+        
+        <category>Linux</category>
+        
+        <category>教程</category>
+        
+      </item>
+    
+      <item>
+        <title>Ubuntu桌面卡死</title>
+        <description>&lt;p&gt;这里也就是Linux很有趣的部分。Linux的世界里可能不存在真正的死机。&lt;/p&gt;
+
+&lt;p&gt;Windows、MacOS 他们不具有透明性，出现问题的时候可能被迫重启。&lt;/p&gt;
+
+&lt;p&gt;Ubuntu可以切换控制台，通过关闭桌面程序进程进而重启桌面。&lt;/p&gt;
+
+&lt;p&gt;解决方法：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;通过ctrl+art+F1(1-6),启动本地终端&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;看看自己的桌面在几，比如是 7 即 tty7&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;table&gt;
+      &lt;tbody&gt;
+        &lt;tr&gt;
+          &lt;td&gt;查询进程，ps -e&lt;/td&gt;
+          &lt;td&gt;grep tty7&lt;/td&gt;
+        &lt;/tr&gt;
+      &lt;/tbody&gt;
+    &lt;/table&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;可以看到&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜  ~ ps -e | grep tty2                                      
+   1169 tty2     00:00:00 gdm-x-session
+   1172 tty2     00:04:40 Xorg
+   1301 tty2     00:00:00 gnome-session-b
+➜  ~ 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;杀死tty7的进程 ， kill 9 pid&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;// 这里杀死 Xorg进程即可
+
+sudo kill -9 1172
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;系统会重新进入登陆&lt;/p&gt;
+
+</description>
+        <pubDate>Thu, 28 Jan 2021 18:23:12 +0800</pubDate>
+        <link>https://mark24code.github.io/ubuntu/linux/2021/01/28/Ubuntu%E6%A1%8C%E9%9D%A2%E5%8D%A1%E6%AD%BB.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ubuntu/linux/2021/01/28/Ubuntu%E6%A1%8C%E9%9D%A2%E5%8D%A1%E6%AD%BB.html</guid>
+        
+        
+        <category>Ubuntu</category>
+        
+        <category>Linux</category>
+        
+      </item>
+    
+  </channel>
+</rss>
