@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>从SEO再谈前后端分离</title>
+  <meta name="description" content="SPA与SEO的矛盾。再谈前后端分离。我以前抱着一个观点就是技术应该避免复杂。我是反对前后端分离的。甚至一段时间对单体应用抱有一种坚持。今天觉得前后端应该分离。我想表达出一些个人的观点。在Web中，前后端是否分离，不应该站在单一技术角度思考，也不应该站在分工角度思考。他们都不是稳定因素。我想从一个例子出发，就是一...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E9%9A%8F%E7%AC%94/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2021/06/25/%E5%86%8D%E8%B0%88%E5%89%8D%E5%90%8E%E7%AB%AF%E5%88%86%E7%A6%BB.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">从SEO再谈前后端分离</h1>
+    <p class="artilce_meta"><time datetime="2021-06-25T10:58:47+08:00" itemprop="datePublished">Jun 25, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="spa与seo的矛盾">SPA与SEO的矛盾。</h1>
+
+<p>再谈前后端分离。我以前抱着一个观点就是技术应该避免复杂。我是反对前后端分离的。甚至一段时间对单体应用抱有一种坚持。</p>
+
+<p>今天觉得前后端应该分离。我想表达出一些个人的观点。在Web中，前后端是否分离，不应该站在单一技术角度思考，也不应该站在分工角度思考。他们都不是稳定因素。</p>
+
+<p>我想从一个例子出发，就是一个网站如何做SEO？ 这个例子就很能说明是否应该前后端分离。</p>
+
+<p>现在的Web其实已经开始非常注重交互性。前端的框架从React到Vue本质上就是解决交互性问题。他们让Web从静态模板套数据，到jQuery用面条式代码操控DOM，终于进入可以通过数据驱动页面变化。这种页面技术方案也叫SPA。单页面应用，页面不用刷新，一直在本地工作。</p>
+
+<p>这就带来了一个问题，SEO不友好。SEO涉及到爬虫程序，它通过HTTP请求获得页面，其实就是一段HTML字符串，然后从中提取数据。这就是爬虫的工作。自动前端使用交互性的框架，一切的DOM都是JavaScript动态生成的。而爬虫自己一般是不带运行JS的环境的。爬虫失效了。</p>
+
+<p>如果一个网页，他对SEO不友好，基本上也关闭了自己的大门。这个矛盾应该如何解决？</p>
+
+<p>我们能想出几各维度：</p>
+
+<h3 id="1-拒绝动态性还是保持静态网页">1. 拒绝动态性，还是保持静态网页</h3>
+
+<p>这里有一些例子，比如Github，使用Pajax来优化页面跳转的体验。保持了页面的克制。</p>
+
+<p>但是实际上它具有特殊性，就是他的版面设计就是围绕这个而来。</p>
+
+<p>实际上Gitlab作为Github更加激进，他的页面交互部分也更加复杂，于是他们逐渐引入了Vue。</p>
+
+<h3 id="2-动态性编译成静态性-ssr">2. 动态性编译成静态性 SSR</h3>
+
+<p>SSR就是这种思考，通过Node的环境结合前端框架的特点，实现一个把动态框架编译成模板的一个技术。
+但是它存在一些问题。</p>
+
+<p>由于网站是动态的，而SSR是一次编译的他是静态的。本质上他在做一个后端做的事情。</p>
+
+<p>会因为引入SSR，前端的写法，用法，组件可能不支持。要因此而妥协而降低自己在前端做事情的表达上。</p>
+
+<p>SSR缩短了首屏呈现的时间，可是交互的时间并没有改变依然需要加载JavaScript然后重载整个页面，用户才能交互。首屏的时间其实没那么重要。相反，可以通过PWA，本地化等方式来改进首屏时间，我觉得这个更加靠谱和彻底。</p>
+
+<p>SSR的思路保有着美好的幻想，可惜他没有想到，浏览器和一个Node注定是不同的东西，而这种努力其实是一种徒劳。因为你解决了一时无法解决一世。而那些混合起来的代码最终会被替换掉，被人丢弃。生命周期就此终结。我个人觉得SSR是个思维上省事的方案。实际上他是一个非常愚蠢的方案。他是另一个极端，就是在后端模板字符串李非要嵌入式写 Vue或者jQuery式的极端。这两种极端其实毫无差别。</p>
+
+<p>我们应该相信Web是要取代本地App的，Web他本来就是作为一个快速构建应用程序的技术而产生。未来的程序绝对不是静态的，他一定是一个动态的。如果我们的前端技术是Canvas呢？SVG呢？</p>
+
+<p>我们是不是要开发出一个所有东西都变成字符串的一个技术？</p>
+
+<p>从这里我们应该明白，web他只是刚出来的时候暂时像一个模板字符串，而后端刚好能支持。而未来的web不会是这样。更不可能因为要给SEO而妥协交互性。</p>
+
+<p>SEO和交互性，他是一对矛盾。一个是静态字符串，一个是高动态的东西。所以本质上他们是两件事。</p>
+
+<p>为什么他们是两件事，他们从表现上是两个样子，解读他们的——解释器也是两个东西。SEO归根结底是面向一个读字符串的爬虫写的程序。而Web是面向浏览器的一个程序。</p>
+
+<p>他们在某个情况下是重合的，不代表他们在任意情况下都是一个东西。</p>
+
+<p>所以SSR的方案其实是愚蠢的。为了SEO妥协互动性的表达和技术选型。</p>
+
+<p>好的技术一定是带来更多自由的，而不是带来更多的约束。</p>
+
+<h3 id="3-单独生成seo服务">3. 单独生成SEO服务</h3>
+
+<p>如果能接受上面的设定。应该想清楚。</p>
+
+<p>构建可交互的Web，本身就是一个非常独立的事情。</p>
+
+<p>构建SEO有好的Web，本身也是一个非常独立的事情。</p>
+
+<p>他们独立在于解读方不同，于是他们变成两件事情。</p>
+
+<p>于是我的思考是，前端应该保持自己独立的技术栈，Vue也好，React也罢，总之不应该考虑SEO。更不应该用SSR这种愚蠢的方案。他最终会被抛弃。</p>
+
+<p>SEO这件事情，又要输出模板，又要做站点地图，未来可能会给更多的搜索引擎生成个性化的配置。所以SEO这件事，可以交给后端来做。后端通过数据注入不同的模板，生成不同的面向SEO的文本上传到不同平台。这个应该单独做出一个服务。</p>
+
+<p>SPA是一个服务，SEO也是一个单独的服务。</p>
+
+<h1 id="前后端应该分离么">前后端应该分离么？</h1>
+
+<p>前后端应该分离么？</p>
+
+<p>是应该的。因为随着情况变得越来越复杂。他们面向的东西不同，决定了他们是不同的事情。</p>
+
+<p>即使是JavaScript这种，既可以在浏览器里执行，也能在服务器中执行。其实真的一样么？其实并不一样。因为他们解释器不同。浏览器里的JavaScript和Nodejs里的JavaScript 他们就算是基本语法一样，他们使用起来日积月累表达的也不会是一样的。所以这时候，仅仅语法要素相同，实际上变成了最不重要事情。</p>
+
+<p>前后端应该分离的。而思考这些事情的界限，就是在于，他们面向的是谁？他们最终是不是一回事情。</p>
+
+<p>讨论前后端分离。就仿佛讨论HTML、CSS、JavaScript他们为什么要分离。
+（这是一个类比，以前写界面是通过一个类，传输属性完成的，是三种混合在一起。Web三剑客的分离本质上就是对不同维度的拆解。拆解是有益的。降低耦合。）</p>
+
+<h1 id="如果我来做seo或者前后端会如何">如果我来做SEO或者前后端会如何？</h1>
+
+<p>前后端保持分离。</p>
+
+<h2 id="前端角色">前端角色</h2>
+
+<p>前端的角色和形态应该是多样化的，web，客户端，命令行，手表，VR，眼镜……everywhere，任何地方，只要他有屏幕。</p>
+
+<p>前端的形态最终是要面向浏览器，面向设备尺寸而决定呈现和交互。它注定是一个变化的东西。</p>
+
+<p>前端的意义是在乎通过设备提供互动的交互，把一帧一帧的数据按照时间的层次序列迭加起来。</p>
+
+<p>数据在后台一个接口是静态的。但是由于存在用户不断地追加数据，数据从而实现一个动态的变化和发展。</p>
+
+<p>前端的任务就是提供这样一个数据运动的入口。</p>
+
+<h2 id="后端角色">后端角色</h2>
+
+<p>后端的本质上是一个面向请求和数据的服务。后面要保持的是数据的完整性和提交。</p>
+
+<h2 id="seo">SEO</h2>
+
+<p>SEO就是一个典型的数据式服务，特点就是套模板，甚至就是输出数据，XML，一些爬虫的配置……
+于是，可以交给后端的一个子服务专门提供。</p>
+
+<p>这样界定才是完美的。</p>
+
+<p>预言，如果SEO未来逐渐重要，应该会存在一类SEO工程师，他们的任务是 需求来临，同样一份份数据，交给前端去做交互页面。另一份交给SEO提供给爬虫和所有搜索引擎。</p>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E9%9A%8F%E7%AC%94/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2021/06/25/再谈前后端分离';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2020 
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+ 
+    </div>
+  </body>
+</html>

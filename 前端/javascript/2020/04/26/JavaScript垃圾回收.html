@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>JavaScript垃圾回收</title>
+  <meta name="description" content="背景知识术语解释垃圾（Garbage)垃圾就是需要被回收的对象。如果可以直接或者间接引用一个对象，这个对象就被认为是“存活”，与之相反就是“死亡”。将“死亡”的对象找出来，作为垃圾回收，就是GC的本质。根 (Root)所谓的根就是判断对象是否可以被引用的起始点。至于那里是根，不同编译器、不同语言都有不同规定，但是...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E5%89%8D%E7%AB%AF/javascript/2020/04/26/JavaScript%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">JavaScript垃圾回收</h1>
+    <p class="artilce_meta"><time datetime="2020-04-26T12:07:26+08:00" itemprop="datePublished">Apr 26, 2020</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="背景知识">背景知识</h1>
+
+<h2 id="术语解释">术语解释</h2>
+
+<h3 id="垃圾garbage">垃圾（Garbage)</h3>
+
+<p>垃圾就是需要被回收的对象。</p>
+
+<p>如果可以直接或者间接引用一个对象，这个对象就被认为是“存活”，与之相反就是“死亡”。</p>
+
+<p>将“死亡”的对象找出来，作为垃圾回收，就是GC的本质。</p>
+
+<h3 id="根-root">根 (Root)</h3>
+
+<p>所谓的根就是判断对象是否可以被引用的起始点。</p>
+
+<p>至于那里是根，不同编译器、不同语言都有不同规定，但是基本上是将变量和运行栈空间作为根。</p>
+
+<h1 id="一垃圾回收的基本策略">一、垃圾回收的基本策略</h1>
+
+<h2 id="1-标记清除-mark-and-sweep">1. 标记清除 (Mark and Sweep)</h2>
+
+<p>原理：从根开始将可能被引用的对象用递归的方式进行标记，然后将没有标记到的对象作为垃圾进行回收。</p>
+
+<p><img src="https://i.loli.net/2021/01/26/Zj45bde83wHC6k2.png" alt="mark_and_sweep.png" /></p>
+
+<p>显示了标记清除算法的大致原理 (《代码的未来》P76 图1)</p>
+
+<p>缺点：</p>
+
+<p>标记清除算法有一个缺点,就是在分配了大量对象,并且其中只有一小部分存活的情况下,
+所消耗的时间会大大超过必要的值,这是因为在清除阶段还需要对大量死亡对象进行扫描。</p>
+
+<h2 id="11-标记压缩mark-and-compact">1.1 标记压缩(Mark and Compact)</h2>
+
+<p>作为标记清除的变形,还有一种叫做标记压缩(Mark and Compact)的算法,它不是将被
+标记的对象清除,而是将它们不断压缩。</p>
+
+<h2 id="2-复制收集copy-and-collection">2. 复制收集(Copy and Collection)</h2>
+
+<p>上面提到过“标记清除”算法存在一个缺点，就是存活数据很少的时候，消耗时间会非常大。</p>
+
+<p>复制收集(Copy and Collection)则试图克服这一缺点。在这种算法中,会将从根开始被引
+用的对象复制到另外的空间中,然后,再将复制的对象所能够引用的对象用递归的方式不断复
+制下去。</p>
+
+<p><img src="https://i.loli.net/2021/01/26/7J4moXCVxPTeHAu.png" alt="copy_and_collection.png" /></p>
+
+<p>(《代码的未来》P77 图2)</p>
+
+<p>优点：</p>
+
+<p>不需要像引用计数一样全部扫描对象。</p>
+
+<p>这种算法的另一个好处是它具有局部性(Locality)
+。在复制收集过程中,会按照对象被引
+用的顺序将对象复制到新空间中。于是,关系较近的对象被放在距离较近的内存空间中的可能
+性会提高,这被称为局部性。局部性高的情况下,内存缓存会更容易有效运作,程序的运行性
+能也能够得到提高。</p>
+
+<p>缺点：</p>
+
+<p>复制收集的过程中，将对象复制一遍的开销大，因此在存活比例较高的情况下反而不利。</p>
+
+<h2 id="3-引用计数-reference-count">3. 引用计数 (Reference Count)</h2>
+
+<p>它的基本原理是,在每个对象中保存该对象的引用计数,当引用发生增减时对计数进行更新。
+引用计数的增减,一般发生在变量赋值、对象内容更新、函数结束(局部变量不再被引用)
+等时间点。当一个对象的引用计数变为 0 时,则说明它将来不会再被引用,因此可以释放相应
+的内存空间。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    var obj = { a : 123 }; // 引用次数+1
+    var obj1 = { a : 123 } //引用次数+1
+    var obj = {}; //引用次数-1
+    var obj = null; //引用次数为0
+</code></pre></div></div>
+
+<p>当声明了一个变量并将一个引用类型值赋值该变量时，则这个值的引用次数就是1.如果同一个值又被赋给另外一个变量，则该值得引用次数加1。相反，如果包含对这个值引用的变量又取 得了另外一个值，则这个值的引用次数减 1。当这个值的引用次数变成 0时，则说明没有办法再访问这个值了，因而就可以将其占用的内存空间回收回来。这样，当垃圾收集器下次再运行时，它就会释放那 些引用次数为零的值所占用的内存。</p>
+
+<p>优点：</p>
+
+<p>实现容易是引用计数算法最大的优点。标记清除和复制收集这些 GC 机制在实现上都有一
+定难度;而引用计数方式的话,凡是有些年头的 C++ 程序员(包括我在内),应该都曾经实现
+过类似的机制,可以说这种算法是相当具有普遍性的。
+除此之外,当对象不再被引用的瞬间就会被释放,这也是一个优点。其他的 GC 机制中,
+要预测一个对象何时会被释放是很困难的,而在引用计数方式中则是立即被释放的。而且,由
+于释放操作是针对每个对象个别执行的,因此和其他算法相比,由 GC 而产生的中断时间(Pause
+time)就比较短,这也是一个优点。</p>
+
+<p>缺点：</p>
+
+<ol>
+  <li>无法克服循环引用。</li>
+</ol>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    function fn () {
+      const objectA = { a : 123 };
+      const objectB = { b : 10 };
+      objectA.c = objectA;
+      objectB.b = objectB;
+      };
+</code></pre></div></div>
+<p>objectA和objectB这两个对象通过各自的属性相互引用，引用次数都为2，永远不会为0，永远得不到回收。如果这个方法多调用几次。会导致大量的内存得不到释放。</p>
+
+<ol>
+  <li>
+    <p>引用计数的第二个缺点,就是必须在引用发生增减时对引用计数做出正确的增减,而如果漏掉了某个增减的话,就会引发很难找到原因的内存错误。</p>
+  </li>
+  <li>
+    <p>引用计数管理并不适合并行处理。如果多个线程同时对引用计数进行
+增减的话,引用计数的值就可能会产生不一致的问题(结果则会导致内存错误)。为了避免这种
+情况的发生,对引用计数的操作必须采用独占的方式来进行。如果引用操作频繁发生,每次都
+要使用加锁等并发控制机制的话,其开销也是不可小觑的。</p>
+  </li>
+</ol>
+
+<h1 id="二进一步改良">二、进一步改良</h1>
+
+<p>GC 的基本算法,大体上都逃不出上述三种方式以及它们的衍生品。现在,通过对这三种方
+式进行融合,出现了一些更加高级的方式。</p>
+
+<p>其中最有代表性的三种,即分代回收、增量回收和并行回收。有些情况下,也可以对这些方法中的几种进行组合使用。</p>
+
+<h1 id="三v8中垃圾回收">三、V8中垃圾回收</h1>
+
+<p>垃圾回收并不是语言的一部分，没有硬性标准。不同解释器实现的不一。这里说下Chrome V8引擎使用的方式。</p>
+
+<p>v8采用的是一种分代回收的策略，将内存分为两个生代：新生代和老生代,v8针对新生代和老生代使用不同的垃圾回收算法来提升垃圾回收效率。</p>
+
+<p>新生代中存放的是生存时间短的对象,老生代中存放生存时间久的对象。新生代通常只支持1~8M的容量,而老生代支持的容量就大很多了。对于这两块区域,V8分
+别使用两个不同的垃圾回收器,以便更高效地实施垃圾回收。</p>
+
+<p>副垃圾回收器-Minor GC (Scavenger),主要负责新生代的垃圾回收。
+主垃圾回收器-Major GC,主要负责老生代的垃圾回收。</p>
+
+<h2 id="副垃圾回收器">副垃圾回收器</h2>
+
+<p>副垃圾回收器主要负责新生代的垃圾回收。通常情况下,大多数小的对象都会被分配到新生
+代,所以说这个区域虽然不大,但是垃圾回收还是比较频繁的。
+新生代中的垃圾数据用Scavenge算法来处理。所谓Scavenge算法,是把新生代空间对半划
+分为两个区域,一半是对象区域(from-space),一半是空闲区域(to-space),如下图所示</p>
+
+<p><img src="https://i.loli.net/2021/01/26/ehmMRTqbwyHQfuG.png" alt="v8_gc_01.png" /></p>
+
+<p>新加入的对象都会存放到对象区域,当对象区域快被写满时,就需要执行一次垃圾清理操作。在垃圾回收过程中,首先要对对象区域中的垃圾做标记;标记完成之后,就进入垃圾清理阶段。副垃圾回收器会把这些存活的对象复制到空闲区域中,同时它还会把这些对象有序地排列起来,所以这个复制过程,也就相当于完成了内存整理操作,复制后空闲区域就没有内存碎片了。</p>
+
+<p><img src="https://i.loli.net/2021/01/26/TbjyDuCvqOI39Uf.png" alt="v8_gc_02.png" /></p>
+
+<p>成复制后,对象区域与空闲区域进行⻆色翻转,也就是原来的对象区域变成空闲区域,原
+来的空闲区域变成了对象区域。这样就完成了垃圾对象的回收操作,同时,这种⻆色翻转的操作还能让新生代中的这两块区域无限重复使用下去。</p>
+
+<p><img src="https://i.loli.net/2021/01/26/Q7eso8dUNjzH1YM.png" alt="v8_gc_03.png" /></p>
+
+<p>不过,副垃圾回收器每次执行清理操作时,都需要将存活的对象从对象区域复制到空闲区域,复制操作需要时间成本,如果新生区空间设置得太大了,那么每次清理的时间就会过久,所以为了执行效率,一般新生区的空间会被设置得比较小。也正是因为新生区的空间不大,所以很容易被存活的对象装满整个区域,副垃圾回收器一旦监控对象装满了,便执行垃圾回收。同时,副垃圾回收器还会采用对象晋升策略,也就是移动那些经过两次垃圾回收依然还存活的对象到老生代中。</p>
+
+<h2 id="主垃圾回收器">主垃圾回收器</h2>
+
+<p>主垃圾回收器主要负责老生代中的垃圾回收。除了新生代中晋升的对象,一些大的对象会直接被分配到老生代里。因此,老生代中的对象有两个特点:</p>
+
+<ul>
+  <li>一个是对象占用空间大;</li>
+  <li>另一个是对象存活时间⻓。</li>
+</ul>
+
+<p>由于老生代的对象比较大,若要在老生代中使用Scavenge算法进行垃圾回收,复制这些大的对象将会花费比较多的时间,从而导致回收执行效率不高,同时还会浪费一半的空间。所以,主垃圾回收器是采用标记-清除(Mark-Sweep)的算法进行垃圾回收的。</p>
+
+<h3 id="标记清除-工作流程">标记清除 工作流程</h3>
+
+<h4 id="0-v8中对-根的定义">0. V8中对 根的定义</h4>
+
+<p>在浏览器环境中,GC Root有很多,通常包括了以下几种(但是不止于这几种):</p>
+
+<p>全局的window 对象(位于每个 iframe 中);
+文档 DOM 树,由可以通过遍历文档到达的所有原生 DOM 节点组成;
+存放栈上变量。</p>
+
+<h4 id="1-标记阶段">1. 标记阶段</h4>
+
+<p>首先是标记过程阶段。标记阶段就是从一组根元素开始,递归遍历这组根元素,在这个遍历
+过程中,能到达的元素称为活动对象,没有到达的元素就可以判断为垃圾数据。</p>
+
+<h4 id="2-清除过错">2. 清除过错</h4>
+
+<p>接下来就是垃圾的清除过程。它和副垃圾回收器的垃圾清除过程完全不同,主垃圾回收器会
+直接将标记为垃圾的数据清理掉。</p>
+
+<h1 id="参考">参考</h1>
+
+<ul>
+  <li>
+    <p>《代码的未来》 2.4章 内存管理</p>
+  </li>
+  <li>
+    <p><a href="https://time.geekbang.org/column/intro/100033601">极客时间-浏览器工作原理与实践</a></p>
+  </li>
+</ul>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E5%89%8D%E7%AB%AF/javascript/2020/04/26/JavaScript垃圾回收';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2020 
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+ 
+    </div>
+  </body>
+</html>

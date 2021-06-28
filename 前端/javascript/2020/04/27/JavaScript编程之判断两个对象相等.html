@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>JavaScript编程之判断两个对象相等</title>
+  <meta name="description" content="要做到判断两个对象相等，必然会涉及到多个类型的判断。相等什么是相等呢？ JavaScript中存在 ==、=== 的概念。抛开JS的问题，一般我们认为的相等是如下：NaN 和 NaN 是相等[1] 和 [1] 是相等{value: 1} 和 {value: 1} 是相等不仅仅是这些长得一样的，还有1 和 new ...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E5%89%8D%E7%AB%AF/javascript/2020/04/27/JavaScript%E7%BC%96%E7%A8%8B%E4%B9%8B%E5%88%A4%E6%96%AD%E4%B8%A4%E4%B8%AA%E5%AF%B9%E8%B1%A1%E7%9B%B8%E7%AD%89.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">JavaScript编程之判断两个对象相等</h1>
+    <p class="artilce_meta"><time datetime="2020-04-27T20:21:53+08:00" itemprop="datePublished">Apr 27, 2020</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <p>要做到判断两个对象相等，必然会涉及到多个类型的判断。</p>
+
+<h1 id="相等">相等</h1>
+
+<p>什么是相等呢？ JavaScript中存在 ==、=== 的概念。抛开JS的问题，</p>
+
+<p>一般我们认为的相等是如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>NaN 和 NaN 是相等
+[1] 和 [1] 是相等
+{value: 1} 和 {value: 1} 是相等
+</code></pre></div></div>
+
+<p>不仅仅是这些长得一样的，还有</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1 和 new Number(1) 是相等
+'Curly' 和 new String('Curly') 是相等
+true 和 new Boolean(true) 是相等
+</code></pre></div></div>
+
+<p>更复杂的我们会在接下来的内容中看到。</p>
+
+<h1 id="目标">目标</h1>
+
+<p>目标是写一个这样子的函数</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">))</span> <span class="c1">// true</span>
+</code></pre></div></div>
+
+<p>看似很简单，需要了解一些情况下是如何判断的。</p>
+
+<h1 id="0与-0">+0与-0</h1>
+
+<p>如果是 a===b 的结果为true，那么a和b就是相等的么？一般情况下，当然是这样的，但是有一个特殊的例子就是 +0和-0。</p>
+
+<p>以下认为 -0 和 +0 不相等。</p>
+
+<p>JavaScript 处心积虑的想抹平两者的差异：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 表现1</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="o">+</span><span class="mi">0</span> <span class="o">===</span> <span class="o">-</span><span class="mi">0</span><span class="p">);</span> <span class="c1">// true</span>
+
+<span class="c1">// 表现2</span>
+<span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">).</span><span class="nx">toString</span><span class="p">()</span> <span class="c1">// '0'</span>
+<span class="p">(</span><span class="o">+</span><span class="mi">0</span><span class="p">).</span><span class="nx">toString</span><span class="p">()</span> <span class="c1">// '0'</span>
+
+<span class="c1">// 表现3</span>
+<span class="o">-</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="o">+</span><span class="mi">0</span> <span class="c1">// false</span>
+<span class="o">+</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">0</span> <span class="c1">// false</span>
+</code></pre></div></div>
+<p>即便如此两者依然是不同的：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="mi">1</span> <span class="o">/</span> <span class="o">+</span><span class="mi">0</span> <span class="c1">// Infinity</span>
+<span class="mi">1</span> <span class="o">/</span> <span class="o">-</span><span class="mi">0</span> <span class="c1">// -Infinity</span>
+
+<span class="mi">1</span> <span class="o">/</span> <span class="o">+</span><span class="mi">0</span> <span class="o">===</span> <span class="mi">1</span> <span class="o">/</span> <span class="o">-</span><span class="mi">0</span> <span class="c1">// false</span>
+</code></pre></div></div>
+
+<p>也许你会好奇为什么要有 +0 和 -0 呢？</p>
+
+<p>这是因为 JavaScript 采用了IEEE_754 浮点数表示法(几乎所有现代编程语言所采用)，这是一种二进制表示法，按照这个标准，最高位是符号位(0 代表正，1 代表负)，剩下的用于表示大小。而对于零这个边界值 ，1000(-0) 和 0000(0)都是表示 0 ，这才有了正负零的区别。</p>
+
+<p>也许你会好奇什么时候会产生 -0 呢？</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">Math</span><span class="p">.</span><span class="nx">round</span><span class="p">(</span><span class="o">-</span><span class="mf">0.1</span><span class="p">)</span> <span class="c1">// -0</span>
+</code></pre></div></div>
+
+<p>那么我们又该如何在 === 结果为 true 的时候，区别 0 和 -0 得出正确的结果呢？我们可以这样做：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">){</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">a</span> <span class="o">===</span> <span class="nx">b</span><span class="p">)</span> <span class="k">return</span> <span class="nx">a</span> <span class="o">!==</span> <span class="mi">0</span> <span class="o">||</span> <span class="mi">1</span> <span class="o">/</span> <span class="nx">a</span> <span class="o">===</span> <span class="mi">1</span> <span class="o">/</span> <span class="nx">b</span><span class="p">;</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">eq</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="c1">// true</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">eq</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">0</span><span class="p">))</span> <span class="c1">// false</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">a === b</code>已经默认相等，然后进入 <code class="language-plaintext highlighter-rouge">a !== 0 || 1 / a === 1 / b</code>判断。这是一个短路判断。</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>第一个</th>
+      <th>第二个</th>
+      <th>结果</th>
+      <th>情况</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>true</td>
+      <td>false</td>
+      <td>true</td>
+      <td>非0的ab,相等进入，不等于0 就结束返回true</td>
+    </tr>
+    <tr>
+      <td>false</td>
+      <td>true</td>
+      <td>true</td>
+      <td>ab相等但是 a==0 说明 ab可能是 -0、+0 这时候进入判断</td>
+    </tr>
+    <tr>
+      <td>true</td>
+      <td>true</td>
+      <td>true</td>
+      <td>短路计算，a!==0 直接返回</td>
+    </tr>
+    <tr>
+      <td>false</td>
+      <td>false</td>
+      <td>false</td>
+      <td>a!==0 说明可能是 -0 +0, 后者也是false说明就是 -0 +0</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="objectis">Object.is</h2>
+
+<p>Object.is() 方法判断两个值是否为同一个值。如果满足以下条件则两个值相等:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>都是 undefined
+都是 null
+都是 true 或 false
+都是相同长度的字符串且相同字符按相同顺序排列
+都是相同对象（意味着每个对象有同一个引用）
+都是数字且
+    都是 +0
+    都是 -0
+    都是 NaN
+    或都是非零而且非 NaN 且为同一个值
+</code></pre></div></div>
+
+<p>Object.is 可以单独来判断 正负0。</p>
+
+<h2 id="除零法">除零法</h2>
+
+<p>就是上面例子里展示的。这是js特有的：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">isNegativeZero</span> <span class="o">=</span> <span class="nx">num</span> <span class="o">=&gt;</span> <span class="nx">num</span> <span class="o">===</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="mi">1</span><span class="o">/</span><span class="nx">num</span> <span class="o">===</span> <span class="o">-</span><span class="kc">Infinity</span><span class="p">;</span>
+</code></pre></div></div>
+
+<h2 id="其他语言的其他方法">其他语言的其他方法</h2>
+
+<p>JavaScript 里面 <code class="language-plaintext highlighter-rouge">1/0 =&gt; Infinity , 1/-0 =&gt; -Infinity</code>,
+会有人发现他是不会报错的！</p>
+
+<p>比如Python、Ruby 他们会报 <code class="language-plaintext highlighter-rouge">ZeroDivisionError: division by zero</code> 像这样的如何界定呢？</p>
+
+<h2 id="python--ruby-里的--00">Python &amp; Ruby 里的 -0、+0</h2>
+
+<p>Python 和 Ruby里面 <code class="language-plaintext highlighter-rouge">-0 == +0 </code> 返回true（他们 == 就是严格等于）</p>
+
+<p>如何区分 -0 和 +0 呢？</p>
+
+<p>可以使用对于 符号敏感的函数，比如 atan2 反余弦函数。</p>
+
+<h2 id="反余弦-atan2">反余弦 atan2</h2>
+
+<p>atan2() 函数的功能是求 y/x 的反正切值。atan2() 是 atan() 的增强版，能够确定角度所在的象限。</p>
+
+<p>反正切函数 atan2() 和正切函数 tan() 的功能恰好相反：tan() 是已知一个角的弧度值，求该角的正切值；而 atan2() 是已知一个角的正切值（也就是 y/x），求该角的弧度值。</p>
+
+<p>参数</p>
+
+<ul>
+  <li>y：表示位于 Y 轴上的值。</li>
+  <li>x：表示位于 X 轴上的值。</li>
+</ul>
+
+<p><img src="http://c.biancheng.net/uploads/allimg/180807/1-1PPG54505417.png" alt="atan2示意图" /></p>
+
+<p>返回 y/x 的反正切值，以弧度表示，取值范围为(-π,π]。如上图所示，tan(θ) = y/x，θ = atan2(y, x)。</p>
+
+<p>当 (x, y) 在象限中时：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>当 (x, y) 在第一象限，0 &lt; θ &lt; π/2
+当 (x, y) 在第二象限，π/2 &lt; θ ≤ π
+当 (x, y) 在第三象限，-π &lt; θ &lt; -π/2
+当 (x, y) 在第四象限，-π/2 &lt; θ &lt; 0
+</code></pre></div></div>
+
+<p>当 (x, y) 在象限的边界（也就是坐标轴）上时：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>当 y 是 0，且 x 为非负值，θ = 0
+当 y 是 0，且 x 是负值，θ = π
+当 y 是正值，且 x 是 0，θ = π/2
+当 y 是负值，且 x 是 0，θ = -π/2
+</code></pre></div></div>
+
+<p>所以利用这个函数对符号的敏感性，可以进行区分：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt;&gt;&gt; math.atan2(-0.0,0.0)
+-0.0
+&gt;&gt;&gt; math.atan2(0.0,-0.0)
+3.141592653589793
+</code></pre></div></div>
+
+<h2 id="字符串">字符串</h2>
+
+<p>ruby,python也可以通过格式化字符串简单判断</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">printf</span><span class="p">(</span><span class="s2">"%+f"</span><span class="p">,</span><span class="o">-</span><span class="mf">0.0</span><span class="p">)</span>
+</code></pre></div></div>
+
+<pre><code class="language-python3">&gt;&gt;&gt; "{:+}".format(-0.0)
+'-0.0'
+</code></pre>
+
+<h2 id="总结">总结</h2>
+
+<p>总之，方法可能非常多，只要掌握住寻找 符号敏感的差异化计算，根据结果区分就好了。</p>
+
+<p>这就是这道题目的主要思想。</p>
+
+<h1 id="nan">NaN</h1>
+
+<p>如何判断是 NaN 呢？</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="kc">NaN</span> <span class="o">===</span> <span class="kc">NaN</span><span class="p">);</span> <span class="c1">// false</span>
+</code></pre></div></div>
+
+<p>利用 NaN 不等于自身的特性，我们可以区别出 NaN，那么这个 eq 函数又该怎么写呢？</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="kd">function</span> <span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">a</span> <span class="o">!==</span> <span class="nx">a</span><span class="p">)</span> <span class="k">return</span> <span class="nx">b</span> <span class="o">!==</span> <span class="nx">b</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">eq</span><span class="p">(</span><span class="kc">NaN</span><span class="p">,</span> <span class="kc">NaN</span><span class="p">));</span> <span class="c1">// true</span>
+
+</code></pre></div></div>
+
+<h1 id="eq函数">eq函数</h1>
+
+<p>可以写 eq的第一版</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// eq 第一版</span>
+<span class="c1">// 用来过滤掉简单的类型比较，复杂的对象使用 deepEq函数进行处理</span>
+
+<span class="kd">function</span> <span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// === 结果为 true 的区别出 +0 和 -0</span>
+	<span class="k">if</span> <span class="p">(</span><span class="nx">a</span><span class="o">===</span><span class="nx">b</span><span class="p">)</span> <span class="k">return</span>  <span class="nx">a</span><span class="o">!==</span><span class="mi">0</span> <span class="o">||</span> <span class="mi">1</span><span class="o">/</span><span class="nx">a</span> <span class="o">===</span> <span class="mi">1</span><span class="o">/</span><span class="nx">b</span><span class="p">;</span>
+
+	<span class="c1">// typeof null的结果为object，这里作判断是为了让有null的情况尽早推出函数</span>
+	<span class="k">if</span><span class="p">(</span><span class="nx">a</span><span class="o">==</span><span class="kc">null</span> <span class="o">||</span> <span class="nx">b</span><span class="o">==</span><span class="kc">null</span><span class="p">)</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+
+	<span class="c1">// 判断 NaN</span>
+	<span class="k">if</span><span class="p">(</span><span class="nx">a</span><span class="o">!==</span><span class="nx">a</span><span class="p">)</span> <span class="k">return</span> <span class="nx">b</span><span class="o">!==</span><span class="nx">b</span><span class="p">;</span>
+
+	<span class="c1">// 判断参数 a类型，如果是基本嫩类型，在这里可以直接返回 false</span>
+	<span class="kd">var</span> <span class="nx">type</span> <span class="o">=</span> <span class="k">typeof</span> <span class="nx">a</span><span class="p">;</span>
+	<span class="k">if</span><span class="p">(</span><span class="nx">type</span> <span class="o">!==</span> <span class="dl">'</span><span class="s1">function</span><span class="dl">'</span> <span class="o">&amp;&amp;</span> <span class="nx">type</span> <span class="o">!==</span> <span class="dl">'</span><span class="s1">object</span><span class="dl">'</span> <span class="o">&amp;&amp;</span> <span class="k">typeof</span> <span class="nx">b</span> <span class="o">!=</span> <span class="dl">'</span><span class="s1">object</span><span class="dl">'</span><span class="p">)</span> <span class="k">return</span> <span class="nx">deepEq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="nx">b</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>也许你会好奇是不是少了一个 <code class="language-plaintext highlighter-rouge">typeof b!== function</code> ?</p>
+
+<p>试想如果我们添加上了这句，当 a 是基本类型，而 b 是函数的时候，就会进入 deepEq 函数，而去掉这一句，就会进入直接进入 false，实际上 基本类型和函数肯定是不会相等的，所以这样做代码又少，又可以让一种情况更早退出。</p>
+
+<h1 id="string-对象">String 对象</h1>
+
+<p>现在我们开始写 deepEq 函数，一个要处理的重大难题就是 ‘Curly’ 和 new String(‘Curly’) 如何判断成相等？</p>
+
+<p>两者的类型都不一样呐！不信我们看 typeof 的操作结果：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="k">typeof</span> <span class="dl">'</span><span class="s1">Curly</span><span class="dl">'</span><span class="p">);</span> <span class="c1">// string</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="k">typeof</span> <span class="k">new</span> <span class="nb">String</span><span class="p">(</span><span class="dl">'</span><span class="s1">Curly</span><span class="dl">'</span><span class="p">));</span> <span class="c1">// object</span>
+</code></pre></div></div>
+
+<p>但是在判断类型的那篇文章里</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="kd">var</span> <span class="nx">toString</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">toString</span><span class="p">;</span>
+<span class="nx">toString</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="dl">'</span><span class="s1">Curly</span><span class="dl">'</span><span class="p">);</span> <span class="c1">// "[object String]"</span>
+<span class="nx">toString</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">new</span> <span class="nb">String</span><span class="p">(</span><span class="dl">'</span><span class="s1">Curly</span><span class="dl">'</span><span class="p">));</span> <span class="c1">// "[object String]"</span>
+
+</code></pre></div></div>
+<p>神奇的是使用 toString 方法两者判断的结果却是一致的，可是就算知道了这一点，还是不知道如何判断字符串和字符串包装对象是相等的呢？</p>
+
+<p>那我们利用隐式类型转换呢？</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">Curly</span><span class="dl">'</span> <span class="o">+</span> <span class="dl">''</span> <span class="o">===</span> <span class="k">new</span> <span class="nb">String</span><span class="p">(</span><span class="dl">'</span><span class="s1">Curly</span><span class="dl">'</span><span class="p">)</span> <span class="o">+</span> <span class="dl">''</span><span class="p">);</span> <span class="c1">// true</span>
+
+</code></pre></div></div>
+<p>看来我们已经有了思路：如果 a 和 b 的 Object.prototype.toString的结果一致，并且都是”[object String]”，那我们就使用 ‘’ + a === ‘’ + b 进行判断。</p>
+
+<p>可是不止有 String 对象呐，Boolean、Number、RegExp、Date呢？</p>
+
+<h1 id="更多对象">更多对象</h1>
+
+<p>跟 String 同样的思路，利用隐式类型转换。</p>
+
+<h2 id="boolean">Boolean</h2>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Boolean</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="o">+</span><span class="nx">a</span> <span class="o">===</span> <span class="o">+</span><span class="nx">b</span><span class="p">)</span> <span class="c1">// true</span>
+</code></pre></div></div>
+
+<h2 id="date">Date</h2>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span><span class="mi">2009</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">25</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span><span class="mi">2009</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">25</span><span class="p">);</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="o">+</span><span class="nx">a</span> <span class="o">===</span> <span class="o">+</span><span class="nx">b</span><span class="p">)</span> <span class="c1">// true</span>
+</code></pre></div></div>
+
+<h2 id="regexp">RegExp</h2>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="sr">/a/i</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">RegExp</span><span class="p">(</span><span class="sr">/a/i</span><span class="p">);</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">''</span> <span class="o">+</span> <span class="nx">a</span> <span class="o">===</span> <span class="dl">''</span> <span class="o">+</span> <span class="nx">b</span><span class="p">)</span> <span class="c1">// true</span>
+</code></pre></div></div>
+
+<h2 id="number">Number</h2>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Number</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="o">+</span><span class="nx">a</span> <span class="o">===</span> <span class="o">+</span><span class="nx">b</span><span class="p">)</span> <span class="c1">// true</span>
+</code></pre></div></div>
+<p>嗯哼？你确定 Number 能这么简单的判断？</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nb">Number</span><span class="p">(</span><span class="kc">NaN</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="nb">Number</span><span class="p">(</span><span class="kc">NaN</span><span class="p">);</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="o">+</span><span class="nx">a</span> <span class="o">===</span> <span class="o">+</span><span class="nx">b</span><span class="p">);</span> <span class="c1">// false</span>
+</code></pre></div></div>
+
+<p>可是 a 和 b 应该被判断成 true 的呐~</p>
+
+<p>那么我们就改成这样：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nb">Number</span><span class="p">(</span><span class="kc">NaN</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="nb">Number</span><span class="p">(</span><span class="kc">NaN</span><span class="p">);</span>
+
+<span class="kd">function</span> <span class="nx">eq</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 判断 Number(NaN) Object(NaN) 等情况</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">+</span><span class="nx">a</span> <span class="o">!==</span> <span class="o">+</span><span class="nx">a</span><span class="p">)</span> <span class="k">return</span> <span class="o">+</span><span class="nx">b</span> <span class="o">!==</span> <span class="o">+</span><span class="nx">b</span><span class="p">;</span>
+    <span class="c1">// 其他判断 ...</span>
+<span class="p">}</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">));</span> <span class="c1">// true</span>
+</code></pre></div></div>
+
+<h1 id="deepeq-函数">deepEq 函数</h1>
+
+<p>现在我们可以写一点 deepEq 函数了。</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">toString</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">toString</span><span class="p">;</span>
+
+<span class="kd">function</span> <span class="nx">deepEq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">className</span> <span class="o">=</span> <span class="nx">toString</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">a</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">className</span> <span class="o">!==</span> <span class="nx">toString</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">b</span><span class="p">))</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+
+    <span class="k">switch</span> <span class="p">(</span><span class="nx">className</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="dl">'</span><span class="s1">[object RegExp]</span><span class="dl">'</span><span class="p">:</span>
+        <span class="k">case</span> <span class="dl">'</span><span class="s1">[object String]</span><span class="dl">'</span><span class="p">:</span>
+            <span class="k">return</span> <span class="dl">''</span> <span class="o">+</span> <span class="nx">a</span> <span class="o">===</span> <span class="dl">''</span> <span class="o">+</span> <span class="nx">b</span><span class="p">;</span>
+        <span class="k">case</span> <span class="dl">'</span><span class="s1">[object Number]</span><span class="dl">'</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">+</span><span class="nx">a</span> <span class="o">!==</span> <span class="o">+</span><span class="nx">a</span><span class="p">)</span> <span class="k">return</span> <span class="o">+</span><span class="nx">b</span> <span class="o">!==</span> <span class="o">+</span><span class="nx">b</span><span class="p">;</span>
+            <span class="k">return</span> <span class="o">+</span><span class="nx">a</span> <span class="o">===</span> <span class="mi">0</span> <span class="p">?</span> <span class="mi">1</span> <span class="o">/</span> <span class="o">+</span><span class="nx">a</span> <span class="o">===</span> <span class="mi">1</span> <span class="o">/</span> <span class="nx">b</span> <span class="p">:</span> <span class="o">+</span><span class="nx">a</span> <span class="o">===</span> <span class="o">+</span><span class="nx">b</span><span class="p">;</span>
+      <span class="k">case</span> <span class="dl">'</span><span class="s1">[object Date]</span><span class="dl">'</span><span class="p">:</span>
+      <span class="k">case</span> <span class="dl">'</span><span class="s1">[object Boolean]</span><span class="dl">'</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">+</span><span class="nx">a</span> <span class="o">===</span> <span class="o">+</span><span class="nx">b</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 其他判断</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h1 id="构造函数实例">构造函数实例</h1>
+
+<p>例子</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">Person</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">name</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">Animal</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">name</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">person</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Person</span><span class="p">(</span><span class="dl">'</span><span class="s1">Kevin</span><span class="dl">'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">animal</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Animal</span><span class="p">(</span><span class="dl">'</span><span class="s1">Kevin</span><span class="dl">'</span><span class="p">);</span>
+
+<span class="nx">eq</span><span class="p">(</span><span class="nx">person</span><span class="p">,</span> <span class="nx">animal</span><span class="p">)</span> <span class="c1">// ???</span>
+</code></pre></div></div>
+
+<p>虽然 person 和 animal 都是 {name: ‘Kevin’}，但是 person 和 animal 属于不同构造函数的实例，为了做出区分，我们认为是不同的对象。</p>
+
+<p>如果两个对象所属的构造函数对象不同，两个对象就一定不相等吗？</p>
+
+<p>并不一定，我们再举个例子：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">attrs</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">create</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+<span class="nx">attrs</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">Bob</span><span class="dl">"</span><span class="p">;</span>
+<span class="nx">eq</span><span class="p">(</span><span class="nx">attrs</span><span class="p">,</span> <span class="p">{</span><span class="na">name</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Bob</span><span class="dl">"</span><span class="p">});</span> <span class="c1">// ???</span>
+</code></pre></div></div>
+
+<p>尽管 attrs 没有原型，{name: “Bob”} 的构造函数是 Object，但是在实际应用中，只要他们有着相同的键值对，我们依然认为是相等。</p>
+
+<p>从函数设计的角度来看，我们不应该让他们相等，但是从实践的角度，我们让他们相等，所以相等就是一件如此随意的事情吗？！对啊，我也在想：undersocre，你怎么能如此随意呢！！！</p>
+
+<p>哎，吐槽完了，我们还是要接着写这个相等函数，我们可以先做个判断，对于不同构造函数下的实例直接返回 false。</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">isFunction</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">toString</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span> <span class="o">===</span> <span class="dl">'</span><span class="s1">[object Function]</span><span class="dl">'</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">deepEq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 接着上面的内容</span>
+    <span class="kd">var</span> <span class="nx">areArrays</span> <span class="o">=</span> <span class="nx">className</span> <span class="o">===</span> <span class="dl">'</span><span class="s1">[object Array]</span><span class="dl">'</span><span class="p">;</span>
+    <span class="c1">// 不是数组</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">areArrays</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 过滤掉两个函数的情况</span>
+        <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">a</span> <span class="o">!=</span> <span class="dl">'</span><span class="s1">object</span><span class="dl">'</span> <span class="o">||</span> <span class="k">typeof</span> <span class="nx">b</span> <span class="o">!=</span> <span class="dl">'</span><span class="s1">object</span><span class="dl">'</span><span class="p">)</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+
+        <span class="kd">var</span> <span class="nx">aCtor</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="kd">constructor</span><span class="p">,</span> <span class="nx">bCtor</span> <span class="o">=</span> <span class="nx">b</span><span class="p">.</span><span class="kd">constructor</span><span class="p">;</span>
+        <span class="c1">// aCtor 和 bCtor 必须都存在并且都不是 Object 构造函数的情况下，aCtor 不等于 bCtor， 那这两个对象就真的不相等啦</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">aCtor</span> <span class="o">!==</span> <span class="nx">bCtor</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="p">(</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">aCtor</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">aCtor</span> <span class="k">instanceof</span> <span class="nx">aCtor</span> <span class="o">&amp;&amp;</span> <span class="nx">isFunction</span><span class="p">(</span><span class="nx">bCtor</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">bCtor</span> <span class="k">instanceof</span> <span class="nx">bCtor</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="dl">'</span><span class="s1">constructor</span><span class="dl">'</span> <span class="k">in</span> <span class="nx">a</span> <span class="o">&amp;&amp;</span> <span class="dl">'</span><span class="s1">constructor</span><span class="dl">'</span> <span class="k">in</span> <span class="nx">b</span><span class="p">))</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 下面还有好多判断</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h1 id="数组相等">数组相等</h1>
+
+<p>现在终于可以进入我们期待已久的数组和对象的判断，不过其实这个很简单，就是递归遍历一遍……</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">deepEq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 再接着上面的内容</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">areArrays</span><span class="p">)</span> <span class="p">{</span>
+
+        <span class="nx">length</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">length</span> <span class="o">!==</span> <span class="nx">b</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+
+        <span class="k">while</span> <span class="p">(</span><span class="nx">length</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="nx">length</span><span class="p">],</span> <span class="nx">b</span><span class="p">[</span><span class="nx">length</span><span class="p">]))</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+         <span class="p">}</span>
+    <span class="p">}</span> 
+    <span class="k">else</span> <span class="p">{</span>
+
+        <span class="kd">var</span> <span class="nx">keys</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">a</span><span class="p">),</span> <span class="nx">key</span><span class="p">;</span>
+        <span class="nx">length</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">b</span><span class="p">).</span><span class="nx">length</span> <span class="o">!==</span> <span class="nx">length</span><span class="p">)</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+
+        <span class="k">while</span> <span class="p">(</span><span class="nx">length</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">key</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">[</span><span class="nx">length</span><span class="p">];</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="nx">b</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="nx">key</span><span class="p">],</span> <span class="nx">b</span><span class="p">[</span><span class="nx">key</span><span class="p">])))</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h1 id="循环引用">循环引用</h1>
+
+<p>如果觉得这就结束了，简直是太天真，因为最难的部分才终于要开始，这个问题就是循环引用！</p>
+
+<p>举个简单的例子：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">a</span> <span class="o">=</span> <span class="p">{</span><span class="na">abc</span><span class="p">:</span> <span class="kc">null</span><span class="p">};</span>
+<span class="nx">b</span> <span class="o">=</span> <span class="p">{</span><span class="na">abc</span><span class="p">:</span> <span class="kc">null</span><span class="p">};</span>
+<span class="nx">a</span><span class="p">.</span><span class="nx">abc</span> <span class="o">=</span> <span class="nx">a</span><span class="p">;</span>
+<span class="nx">b</span><span class="p">.</span><span class="nx">abc</span> <span class="o">=</span> <span class="nx">b</span><span class="p">;</span>
+
+<span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>再复杂一点的，比如：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">a</span> <span class="o">=</span> <span class="p">{</span><span class="na">foo</span><span class="p">:</span> <span class="p">{</span><span class="na">b</span><span class="p">:</span> <span class="p">{</span><span class="na">foo</span><span class="p">:</span> <span class="p">{</span><span class="na">c</span><span class="p">:</span> <span class="p">{</span><span class="na">foo</span><span class="p">:</span> <span class="kc">null</span><span class="p">}}}}};</span>
+<span class="nx">b</span> <span class="o">=</span> <span class="p">{</span><span class="na">foo</span><span class="p">:</span> <span class="p">{</span><span class="na">b</span><span class="p">:</span> <span class="p">{</span><span class="na">foo</span><span class="p">:</span> <span class="p">{</span><span class="na">c</span><span class="p">:</span> <span class="p">{</span><span class="na">foo</span><span class="p">:</span> <span class="kc">null</span><span class="p">}}}}};</span>
+<span class="nx">a</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">b</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">c</span><span class="p">.</span><span class="nx">foo</span> <span class="o">=</span> <span class="nx">a</span><span class="p">;</span>
+<span class="nx">b</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">b</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">c</span><span class="p">.</span><span class="nx">foo</span> <span class="o">=</span> <span class="nx">b</span><span class="p">;</span>
+
+<span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>为了给大家演示下循环引用，大家可以把下面这段已经精简过的代码复制到浏览器中尝试：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c1">// demo</span>
+<span class="kd">var</span> <span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">;</span>
+
+<span class="nx">a</span> <span class="o">=</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="p">{</span> <span class="na">b</span><span class="p">:</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="p">{</span> <span class="na">c</span><span class="p">:</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="kc">null</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span> <span class="p">};</span>
+<span class="nx">b</span> <span class="o">=</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="p">{</span> <span class="na">b</span><span class="p">:</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="p">{</span> <span class="na">c</span><span class="p">:</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="kc">null</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span> <span class="p">};</span>
+<span class="nx">a</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">b</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">c</span><span class="p">.</span><span class="nx">foo</span> <span class="o">=</span> <span class="nx">a</span><span class="p">;</span>
+<span class="nx">b</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">b</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">c</span><span class="p">.</span><span class="nx">foo</span> <span class="o">=</span> <span class="nx">b</span><span class="p">;</span>
+
+<span class="kd">function</span> <span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">,</span> <span class="nx">aStack</span><span class="p">,</span> <span class="nx">bStack</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">a</span> <span class="o">==</span> <span class="dl">'</span><span class="s1">number</span><span class="dl">'</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">a</span> <span class="o">===</span> <span class="nx">b</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nx">deepEq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">deepEq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="kd">var</span> <span class="nx">keys</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">a</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">length</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">key</span><span class="p">;</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="nx">length</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">key</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">[</span><span class="nx">length</span><span class="p">]</span>
+
+        <span class="c1">// 这是为了让你看到代码其实一直在执行</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="nx">key</span><span class="p">],</span> <span class="nx">b</span><span class="p">[</span><span class="nx">key</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="nx">key</span><span class="p">],</span> <span class="nx">b</span><span class="p">[</span><span class="nx">key</span><span class="p">]))</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+
+<span class="p">}</span>
+
+<span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>嗯，以上的代码是死循环。</p>
+
+<p>那么，我们又该如何解决这个问题呢？underscore 的思路是 eq 的时候，多传递两个参数为 aStack 和 bStack，用来储存 a 和 b 递归比较过程中的 a 和 b 的值，咋说的这么绕口呢？
+我们直接看个精简的例子：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">;</span>
+
+<span class="nx">a</span> <span class="o">=</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="p">{</span> <span class="na">b</span><span class="p">:</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="p">{</span> <span class="na">c</span><span class="p">:</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="kc">null</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span> <span class="p">};</span>
+<span class="nx">b</span> <span class="o">=</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="p">{</span> <span class="na">b</span><span class="p">:</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="p">{</span> <span class="na">c</span><span class="p">:</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="kc">null</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span> <span class="p">};</span>
+<span class="nx">a</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">b</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">c</span><span class="p">.</span><span class="nx">foo</span> <span class="o">=</span> <span class="nx">a</span><span class="p">;</span>
+<span class="nx">b</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">b</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">c</span><span class="p">.</span><span class="nx">foo</span> <span class="o">=</span> <span class="nx">b</span><span class="p">;</span>
+
+<span class="kd">function</span> <span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">,</span> <span class="nx">aStack</span><span class="p">,</span> <span class="nx">bStack</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">a</span> <span class="o">==</span> <span class="dl">'</span><span class="s1">number</span><span class="dl">'</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">a</span> <span class="o">===</span> <span class="nx">b</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nx">deepEq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">,</span> <span class="nx">aStack</span><span class="p">,</span> <span class="nx">bStack</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">deepEq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">,</span> <span class="nx">aStack</span><span class="p">,</span> <span class="nx">bStack</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="nx">aStack</span> <span class="o">=</span> <span class="nx">aStack</span> <span class="o">||</span> <span class="p">[];</span>
+    <span class="nx">bStack</span> <span class="o">=</span> <span class="nx">bStack</span> <span class="o">||</span> <span class="p">[];</span>
+
+    <span class="kd">var</span> <span class="nx">length</span> <span class="o">=</span> <span class="nx">aStack</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="nx">length</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">aStack</span><span class="p">[</span><span class="nx">length</span><span class="p">]</span> <span class="o">===</span> <span class="nx">a</span><span class="p">)</span> <span class="p">{</span>
+              <span class="k">return</span> <span class="nx">bStack</span><span class="p">[</span><span class="nx">length</span><span class="p">]</span> <span class="o">===</span> <span class="nx">b</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="nx">aStack</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">a</span><span class="p">);</span>
+    <span class="nx">bStack</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">b</span><span class="p">);</span>
+
+    <span class="kd">var</span> <span class="nx">keys</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">a</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">length</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">key</span><span class="p">;</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="nx">length</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">key</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">[</span><span class="nx">length</span><span class="p">]</span>
+
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="nx">key</span><span class="p">],</span> <span class="nx">b</span><span class="p">[</span><span class="nx">key</span><span class="p">],</span> <span class="nx">aStack</span><span class="p">,</span> <span class="nx">bStack</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="nx">key</span><span class="p">],</span> <span class="nx">b</span><span class="p">[</span><span class="nx">key</span><span class="p">],</span> <span class="nx">aStack</span><span class="p">,</span> <span class="nx">bStack</span><span class="p">))</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// aStack.pop();</span>
+    <span class="c1">// bStack.pop();</span>
+    <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+
+<span class="p">}</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">))</span>
+</code></pre></div></div>
+<p>之所以注释掉 aStack.pop()和bStack.pop()这两句，是为了方便大家查看 aStack bStack的值。</p>
+
+<h1 id="最终的eq函数">最终的eq函数</h1>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="kd">var</span> <span class="nx">toString</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">toString</span><span class="p">;</span>
+
+<span class="kd">function</span> <span class="nx">isFunction</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">toString</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span> <span class="o">===</span> <span class="dl">'</span><span class="s1">[object Function]</span><span class="dl">'</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">,</span> <span class="nx">aStack</span><span class="p">,</span> <span class="nx">bStack</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="c1">// === 结果为 true 的区别出 +0 和 -0</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">a</span> <span class="o">===</span> <span class="nx">b</span><span class="p">)</span> <span class="k">return</span> <span class="nx">a</span> <span class="o">!==</span> <span class="mi">0</span> <span class="o">||</span> <span class="mi">1</span> <span class="o">/</span> <span class="nx">a</span> <span class="o">===</span> <span class="mi">1</span> <span class="o">/</span> <span class="nx">b</span><span class="p">;</span>
+
+    <span class="c1">// typeof null 的结果为 object ，这里做判断，是为了让有 null 的情况尽早退出函数</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">a</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="nx">b</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+
+    <span class="c1">// 判断 NaN</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">a</span> <span class="o">!==</span> <span class="nx">a</span><span class="p">)</span> <span class="k">return</span> <span class="nx">b</span> <span class="o">!==</span> <span class="nx">b</span><span class="p">;</span>
+
+    <span class="c1">// 判断参数 a 类型，如果是基本类型，在这里可以直接返回 false</span>
+    <span class="kd">var</span> <span class="nx">type</span> <span class="o">=</span> <span class="k">typeof</span> <span class="nx">a</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">type</span> <span class="o">!==</span> <span class="dl">'</span><span class="s1">function</span><span class="dl">'</span> <span class="o">&amp;&amp;</span> <span class="nx">type</span> <span class="o">!==</span> <span class="dl">'</span><span class="s1">object</span><span class="dl">'</span> <span class="o">&amp;&amp;</span> <span class="k">typeof</span> <span class="nx">b</span> <span class="o">!=</span> <span class="dl">'</span><span class="s1">object</span><span class="dl">'</span><span class="p">)</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+
+    <span class="c1">// 更复杂的对象使用 deepEq 函数进行深度比较</span>
+    <span class="k">return</span> <span class="nx">deepEq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">,</span> <span class="nx">aStack</span><span class="p">,</span> <span class="nx">bStack</span><span class="p">);</span>
+<span class="p">};</span>
+
+<span class="kd">function</span> <span class="nx">deepEq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">,</span> <span class="nx">aStack</span><span class="p">,</span> <span class="nx">bStack</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="c1">// a 和 b 的内部属性 [[class]] 相同时 返回 true</span>
+    <span class="kd">var</span> <span class="nx">className</span> <span class="o">=</span> <span class="nx">toString</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">a</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">className</span> <span class="o">!==</span> <span class="nx">toString</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">b</span><span class="p">))</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+
+    <span class="k">switch</span> <span class="p">(</span><span class="nx">className</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="dl">'</span><span class="s1">[object RegExp]</span><span class="dl">'</span><span class="p">:</span>
+        <span class="k">case</span> <span class="dl">'</span><span class="s1">[object String]</span><span class="dl">'</span><span class="p">:</span>
+            <span class="k">return</span> <span class="dl">''</span> <span class="o">+</span> <span class="nx">a</span> <span class="o">===</span> <span class="dl">''</span> <span class="o">+</span> <span class="nx">b</span><span class="p">;</span>
+        <span class="k">case</span> <span class="dl">'</span><span class="s1">[object Number]</span><span class="dl">'</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">+</span><span class="nx">a</span> <span class="o">!==</span> <span class="o">+</span><span class="nx">a</span><span class="p">)</span> <span class="k">return</span> <span class="o">+</span><span class="nx">b</span> <span class="o">!==</span> <span class="o">+</span><span class="nx">b</span><span class="p">;</span>
+            <span class="k">return</span> <span class="o">+</span><span class="nx">a</span> <span class="o">===</span> <span class="mi">0</span> <span class="p">?</span> <span class="mi">1</span> <span class="o">/</span> <span class="o">+</span><span class="nx">a</span> <span class="o">===</span> <span class="mi">1</span> <span class="o">/</span> <span class="nx">b</span> <span class="p">:</span> <span class="o">+</span><span class="nx">a</span> <span class="o">===</span> <span class="o">+</span><span class="nx">b</span><span class="p">;</span>
+        <span class="k">case</span> <span class="dl">'</span><span class="s1">[object Date]</span><span class="dl">'</span><span class="p">:</span>
+        <span class="k">case</span> <span class="dl">'</span><span class="s1">[object Boolean]</span><span class="dl">'</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">+</span><span class="nx">a</span> <span class="o">===</span> <span class="o">+</span><span class="nx">b</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kd">var</span> <span class="nx">areArrays</span> <span class="o">=</span> <span class="nx">className</span> <span class="o">===</span> <span class="dl">'</span><span class="s1">[object Array]</span><span class="dl">'</span><span class="p">;</span>
+    <span class="c1">// 不是数组</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">areArrays</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 过滤掉两个函数的情况</span>
+        <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">a</span> <span class="o">!=</span> <span class="dl">'</span><span class="s1">object</span><span class="dl">'</span> <span class="o">||</span> <span class="k">typeof</span> <span class="nx">b</span> <span class="o">!=</span> <span class="dl">'</span><span class="s1">object</span><span class="dl">'</span><span class="p">)</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+
+        <span class="kd">var</span> <span class="nx">aCtor</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="kd">constructor</span><span class="p">,</span>
+            <span class="nx">bCtor</span> <span class="o">=</span> <span class="nx">b</span><span class="p">.</span><span class="kd">constructor</span><span class="p">;</span>
+        <span class="c1">// aCtor 和 bCtor 必须都存在并且都不是 Object 构造函数的情况下，aCtor 不等于 bCtor， 那这两个对象就真的不相等啦</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">aCtor</span> <span class="o">!==</span> <span class="nx">bCtor</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="p">(</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">aCtor</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">aCtor</span> <span class="k">instanceof</span> <span class="nx">aCtor</span> <span class="o">&amp;&amp;</span> <span class="nx">isFunction</span><span class="p">(</span><span class="nx">bCtor</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">bCtor</span> <span class="k">instanceof</span> <span class="nx">bCtor</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="dl">'</span><span class="s1">constructor</span><span class="dl">'</span> <span class="k">in</span> <span class="nx">a</span> <span class="o">&amp;&amp;</span> <span class="dl">'</span><span class="s1">constructor</span><span class="dl">'</span> <span class="k">in</span> <span class="nx">b</span><span class="p">))</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+
+    <span class="nx">aStack</span> <span class="o">=</span> <span class="nx">aStack</span> <span class="o">||</span> <span class="p">[];</span>
+    <span class="nx">bStack</span> <span class="o">=</span> <span class="nx">bStack</span> <span class="o">||</span> <span class="p">[];</span>
+    <span class="kd">var</span> <span class="nx">length</span> <span class="o">=</span> <span class="nx">aStack</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+
+    <span class="c1">// 检查是否有循环引用的部分</span>
+    <span class="k">while</span> <span class="p">(</span><span class="nx">length</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">aStack</span><span class="p">[</span><span class="nx">length</span><span class="p">]</span> <span class="o">===</span> <span class="nx">a</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">bStack</span><span class="p">[</span><span class="nx">length</span><span class="p">]</span> <span class="o">===</span> <span class="nx">b</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="nx">aStack</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">a</span><span class="p">);</span>
+    <span class="nx">bStack</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">b</span><span class="p">);</span>
+
+    <span class="c1">// 数组判断</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">areArrays</span><span class="p">)</span> <span class="p">{</span>
+
+        <span class="nx">length</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">length</span> <span class="o">!==</span> <span class="nx">b</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+
+        <span class="k">while</span> <span class="p">(</span><span class="nx">length</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="nx">length</span><span class="p">],</span> <span class="nx">b</span><span class="p">[</span><span class="nx">length</span><span class="p">],</span> <span class="nx">aStack</span><span class="p">,</span> <span class="nx">bStack</span><span class="p">))</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="c1">// 对象判断</span>
+    <span class="k">else</span> <span class="p">{</span>
+
+        <span class="kd">var</span> <span class="nx">keys</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">a</span><span class="p">),</span>
+            <span class="nx">key</span><span class="p">;</span>
+        <span class="nx">length</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">b</span><span class="p">).</span><span class="nx">length</span> <span class="o">!==</span> <span class="nx">length</span><span class="p">)</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        <span class="k">while</span> <span class="p">(</span><span class="nx">length</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+
+            <span class="nx">key</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">[</span><span class="nx">length</span><span class="p">];</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="nx">b</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="nx">key</span><span class="p">],</span> <span class="nx">b</span><span class="p">[</span><span class="nx">key</span><span class="p">],</span> <span class="nx">aStack</span><span class="p">,</span> <span class="nx">bStack</span><span class="p">)))</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="nx">aStack</span><span class="p">.</span><span class="nx">pop</span><span class="p">();</span>
+    <span class="nx">bStack</span><span class="p">.</span><span class="nx">pop</span><span class="p">();</span>
+    <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+
+<span class="p">}</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">eq</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="c1">// true</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">eq</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">0</span><span class="p">))</span> <span class="c1">// false</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">eq</span><span class="p">(</span><span class="kc">NaN</span><span class="p">,</span> <span class="kc">NaN</span><span class="p">));</span> <span class="c1">// true</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">eq</span><span class="p">(</span><span class="nb">Number</span><span class="p">(</span><span class="kc">NaN</span><span class="p">),</span> <span class="nb">Number</span><span class="p">(</span><span class="kc">NaN</span><span class="p">)));</span> <span class="c1">// true</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">eq</span><span class="p">(</span><span class="dl">'</span><span class="s1">Curly</span><span class="dl">'</span><span class="p">,</span> <span class="k">new</span> <span class="nb">String</span><span class="p">(</span><span class="dl">'</span><span class="s1">Curly</span><span class="dl">'</span><span class="p">)));</span> <span class="c1">// true</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">eq</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">]));</span> <span class="c1">// true</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">eq</span><span class="p">({</span> <span class="na">value</span><span class="p">:</span> <span class="mi">1</span> <span class="p">},</span> <span class="p">{</span> <span class="na">value</span><span class="p">:</span> <span class="mi">1</span> <span class="p">}));</span> <span class="c1">// true</span>
+
+<span class="kd">var</span> <span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">;</span>
+
+<span class="nx">a</span> <span class="o">=</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="p">{</span> <span class="na">b</span><span class="p">:</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="p">{</span> <span class="na">c</span><span class="p">:</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="kc">null</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span> <span class="p">};</span>
+<span class="nx">b</span> <span class="o">=</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="p">{</span> <span class="na">b</span><span class="p">:</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="p">{</span> <span class="na">c</span><span class="p">:</span> <span class="p">{</span> <span class="na">foo</span><span class="p">:</span> <span class="kc">null</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span> <span class="p">};</span>
+<span class="nx">a</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">b</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">c</span><span class="p">.</span><span class="nx">foo</span> <span class="o">=</span> <span class="nx">a</span><span class="p">;</span>
+<span class="nx">b</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">b</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">c</span><span class="p">.</span><span class="nx">foo</span> <span class="o">=</span> <span class="nx">b</span><span class="p">;</span>
+
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">eq</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">))</span> <span class="c1">// true</span>
+</code></pre></div></div>
+<p>真让人感叹一句：eq 不愧是 underscore 中实现代码行数最多的函数了！</p>
+
+<h1 id="方案2">方案2</h1>
+
+<p>TODO</p>
+
+<p>基本类型其实可以  toString 统一解决掉</p>
+
+<ol>
+  <li>
+    <p>判断不同类型 123和‘123’会失效</p>
+  </li>
+  <li>
+    <p>其他通过转字符串来比较</p>
+  </li>
+</ol>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>function eq2(a,b) { return String(a) === String(b)}
+</code></pre></div></div>
+
+<h1 id="总结-1">总结</h1>
+
+<p>这篇是笔记，主要在于参考目录。
+学习的过程中加入了一些自己的实验。</p>
+
+<p>有空我重新整理一遍。</p>
+
+<p>比较两个对象相等，发挥出那么多。其中可以看到研究方法:</p>
+
+<ol>
+  <li>
+    <p>通过差异化的运算值、api、函数接口进行区分对象</p>
+  </li>
+  <li>
+    <p>工程性思考</p>
+  </li>
+</ol>
+
+<p>编程是一种平衡艺术，在 -0、+0的部分尤其。不同语言给出了不同的定义。但是在我们制作 eq的时候，是站在上面进行思考，思考一个新的api，这时候也要开始平衡。</p>
+
+<p>工程性的思考：</p>
+
+<ul>
+  <li>
+    <p>平衡</p>
+  </li>
+  <li>
+    <p>解决问题</p>
+  </li>
+</ul>
+
+<p>正面、侧面、曲线只要可以解决问题，就可以。这就是工程性的思考，利用已知信息巧妙组合，合理解决问题。</p>
+
+<ol>
+  <li>全面思考情况</li>
+</ol>
+
+<p>思考、列举各种情况细节。</p>
+
+<p>额外思考：</p>
+
+<p>需要明白一种边界和能力的存在。</p>
+
+<p>就是JavaScript相对来说把类型设计的太复杂了，还有历史问题，制造了各种情况。但是即使是这样，JS有千万个问题。本质上也可以根据其提供的特点在后期“圆”回来。</p>
+
+<p>这也就是现实中为什么JS会出现那么多的“框架”，jquery、underscore、backbone、react、vue、ember……</p>
+
+<p>这些本质上都是在JS的基础上构建一种新的DSL去工作，弥补JS的问题，并且建立一种更简单的工作模型。</p>
+
+<p>这些框架不会是最后一个。</p>
+
+<h1 id="参考">参考</h1>
+
+<ul>
+  <li>
+    <p><a href="http://c.biancheng.net/ref/atan2.html">atan2</a></p>
+  </li>
+  <li>
+    <p><a href="https://github.com/mqyqingfeng/Blog/issues/41">JavaScript专题之如何判断两个对象相等</a></p>
+  </li>
+</ul>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E5%89%8D%E7%AB%AF/javascript/2020/04/27/JavaScript编程之判断两个对象相等';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2020 
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+ 
+    </div>
+  </body>
+</html>

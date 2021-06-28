@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>编程心得</title>
+  <meta name="description" content="一、程序有限性程序存在一个巨大的缺点，就是其有限性。程序归根结底预先准备好的东西 —— 某种确定的规则、某种特定情景规则。或者根据确定的规则，生成一些模式化的应对策略，本质上依然有限。反向思考，思考程序归根结底是思考清楚每种情况，或者给出可以概括的规则。也正是由于这个特点，数学具有预测性，和计算机的亲密性很高。二...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2021/02/01/%E7%BC%96%E7%A8%8B%E5%BF%83%E5%BE%97.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">编程心得</h1>
+    <p class="artilce_meta"><time datetime="2021-02-01T01:16:25+08:00" itemprop="datePublished">Feb 1, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="一程序有限性">一、程序有限性</h1>
+
+<p>程序存在一个巨大的缺点，就是其有限性。</p>
+
+<p>程序归根结底预先准备好的东西 —— 某种确定的规则、某种特定情景规则。或者根据确定的规则，生成一些模式化的应对策略，本质上依然有限。</p>
+
+<p>反向思考，思考程序归根结底是思考清楚每种情况，或者给出可以概括的规则。</p>
+
+<p>也正是由于这个特点，数学具有预测性，和计算机的亲密性很高。</p>
+
+<h1 id="二平衡艺术">二、平衡艺术</h1>
+
+<p>很多问题不是非黑即白，而是各有优点，各有缺点。</p>
+
+<p>解决问题的办法是平衡，不是回避。</p>
+
+<p>组合他们，避开他们的缺点，利用他们的优点，因地制宜平衡，是编程里面的艺术。</p>
+
+<h1 id="三工程性">三、工程性</h1>
+
+<ol>
+  <li>工程相似性</li>
+</ol>
+
+<p>具有和建筑学类似的工程性。主要在于解决方案、推进方案、持续的维护、保持开发效率、保持多人共建、保持进度维护等等。</p>
+
+<p>和一个团队，盖楼、装修很类似。</p>
+
+<p>团队充满各个角色需要沟通和同步。</p>
+
+<p>建造项目本身需要丰富的经验和技术，需要优秀的设计。</p>
+
+<p>前期、中期、后期有完整的生命周期。</p>
+
+<ol>
+  <li>解决问题是灵魂</li>
+</ol>
+
+<p>工程性解决问题，可以是优雅的方案，也可以是惯用的方案。</p>
+
+<p>相较于学术假设、推理、论证……这种。</p>
+
+<p>编程的工程性属性更加突出 —— 设计、实践、测试没问题即认为没问题、管用的方案就是好方案。</p>
+
+<h1 id="四艺术性">四、艺术性</h1>
+
+<h2 id="1-自由的设计">1. 自由的设计</h2>
+
+<p>和盖楼、机械有相似性，但是盖楼、机械他们不会频繁的推倒已经成熟的方案。</p>
+
+<p>但是编程不一样，编程相对来说推翻自己的成本相对低廉——就是程序员自己的时间和精力。</p>
+
+<p>现实中的实业偏向于保守。</p>
+
+<p>软件工程可以相当激进。</p>
+
+<p>软件的结构，自上向下可以看作是：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>用户软件
+
+软件接口
+
+操作系统
+
+内核
+
+</code></pre></div></div>
+
+<p>每层都通过接口工作。一个成熟稳定的软件主要是接口协议。对于不同层都可以保持兼容。</p>
+
+<p>自己的内部实现和工作模式的可以自由改变。</p>
+
+<ul>
+  <li>
+    <p>接口层面上： 可以定义自己的接口，形成自己的语言、工作模型，界面上也可以有自己的交互、设计、表达。</p>
+  </li>
+  <li>
+    <p>接口内部：可以有自己特殊实现，可以自由的使用各种工作模型，保守的、探索的、先进的等等，完全自由。</p>
+  </li>
+</ul>
+
+<h2 id="2-自由创作">2. 自由创作</h2>
+
+<p>正是由于这个基础上，解决方案的极大自由。</p>
+
+<p>创作软件也许不是按照施工图纸上一板一眼的进行，可以是涂涂改改，从小到大，从模糊到清晰，可以从上到下，也可以从下到上。</p>
+
+<p>软件从一层一层的commit中逐渐被修正的清晰。</p>
+
+<p>彷佛就是 《黑客与画家》中说的，就像画画，他是涂涂抹抹的一个创作过程。</p>
+
+<h1 id="五图灵完备的意义--不同语言本质上可以等效替代也可以彼此抹平差距">五、图灵完备的意义 —— 不同语言本质上可以等效替代，也可以彼此抹平差距</h1>
+
+<p>意味着可以相互弥补。</p>
+
+<p>在一个图灵完备的内核基础上，可以通过外层的胶水逻辑向上构建，从而弥补核心层的BUG或者功能不足。</p>
+
+<p>理论上任何语言都差不多，也都可以差不多。</p>
+
+<p>现实中的差距只是在使用他的人，和正在给他作贡献的人，和使用他作出影响力大软件的人而已。</p>
+
+<p>比如语言，人们与其说是偏向于某种语言来工作，不如说是依赖于某种语言上的杀手级别软件。</p>
+
+<p>而杀手级别的软件，归根结底是这些软件作者的偏好。</p>
+
+<h1 id="六程序是时间的函数一切算法皆是遍历">六、程序是时间的函数，一切算法皆是遍历</h1>
+
+<p>程序换个角度，不论程序多么复杂，是串行还是并行，它归根结底可以抽象成一个关乎时间T的函数。</p>
+
+<p>程序里面的一切都是一种遍历。</p>
+
+<p>不论多么精妙的算法，处理问题和解决问题上，程序只能遍历。</p>
+
+<p>只是一种傻傻的遍历，还是聪明的遍历的区别而已。</p>
+
+<p>傻的遍历，就是N重循环。</p>
+
+<p>聪明的遍历：</p>
+
+<ol>
+  <li>带笔记本的遍历</li>
+  <li>不重复的遍历</li>
+  <li>根据一些规则可以提前去掉不必要的遍历</li>
+  <li>可以利用目标算出一些数值，有选择的遍历
+……</li>
+</ol>
+
+<p>无非是根据问题特征减少一些遍历。</p>
+
+<p>但是想要解决问题，归根结底就是遍历。</p>
+
+<p>所以程序、算法不是万能的。
+他只能解决，能被计算所描述，并且可以在有限步骤下被计算出的问题。
+（图灵停机问题就是为了证明这个）</p>
+
+<p>我特别想关联的一个点是：
+如果看过网上一个黏菌实验的科普视频。将的是把食物按照东京重点城市分布，然后撒上黏菌，最后黏菌在食物之间联络的路线和今天东京的主要干路的结构一样。</p>
+
+<p>也许你以为黏菌有智能。会寻找到路线。</p>
+
+<p>其实无非是黏菌释放了大量的孢子，覆盖了培养皿的空间，那些有食物联络的孢子都或活下来了，而远的都死掉了。而其中留存下来的就是最短的路线。</p>
+
+<p>这样就完成了寻路。</p>
+
+<p>你会发现，生命发现“真理”的过程，也就是一种遍历，也就是去全部试错罢了。</p>
+
+<p>对于“不可知”只能去探索（遍历）。</p>
+
+<p>这和DFS、BFS寻路算法也没有本质区别。只能通过 探索去对抗未知。</p>
+
+<p>写道此我更惊叹于计算机的神奇。图灵、冯·诺伊曼 计算机的缔造者们真的是神奇。</p>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2021/02/01/编程心得';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2020 
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+ 
+    </div>
+  </body>
+</html>

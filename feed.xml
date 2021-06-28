@@ -1,0 +1,638 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mark24</title>
+    <description>记录灵感、技术、思考</description>
+    <link>https://mark24code.github.io/</link>
+    <atom:link href="https://mark24code.github.io/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Mon, 28 Jun 2021 11:27:42 +0800</pubDate>
+    <lastBuildDate>Mon, 28 Jun 2021 11:27:42 +0800</lastBuildDate>
+    <generator>Jekyll v4.1.1</generator>
+    
+      <item>
+        <title>研究方法</title>
+        <description>&lt;ol&gt;
+  &lt;li&gt;与人交流&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;每一个人都是一个独特的切面和视角。和他人交流什么呢？
+自己的思考，自己的猜想，对于一个基础问题的更多理解途径。&lt;/p&gt;
+
+&lt;p&gt;和更多的人交流，知识的理解会变得立体。兼听则明，偏听则暗。&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;与书本交流&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;前期不论多慢，要建立笔记，mind map最佳。提纲掣领。第一天看完，第二天回顾。边实践边记录，记录的实践的。手写也尚可。&lt;/p&gt;
+
+&lt;p&gt;这个过程是要有的。因为，这个比较缓慢的速度是一个理解和记忆的过程。&lt;/p&gt;
+
+&lt;p&gt;囫囵吞枣的速度，不适合，因为记不住。那种方式只适合快速的提取信息即用即抛。&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;学会后，模仿制造轮子&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;这时候会面对很对细节，对细节知识进行把握，对前人的作品进行思考。&lt;/p&gt;
+
+&lt;p&gt;为什么说模仿本质上是有益的呢？可能小说，艺术作品可能有抄袭之嫌。&lt;/p&gt;
+
+&lt;p&gt;但是工程性、科学性的作品，内部的细节是一种技术方法是完全可以学习和借鉴的。这个是一种可以复用的技术细节。&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;学会后教别人&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;如果能把一件事情讲明白，往往就懂了。
+如果是照搬他人口舌或者书本说明缺乏理解，尤其是理解到本质。&lt;/p&gt;
+
+&lt;p&gt;娓娓道来的基础是知道解构、核心原理和比喻。&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;第一性原理思考&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;学习本质上就是一种外部和内部交互的过程。盲从无法得到真理，尽信书不如无书。任何媒介的交流，本质上都是要在内部做一个思考。&lt;/p&gt;
+
+&lt;p&gt;在各种思考的方式里面，第一性原理思考是比较本质的。&lt;/p&gt;
+
+&lt;p&gt;就是从最朴素的现象，道理开始出发，能否推理到眼前的这些结论。从而逐步建立可行性分析。甚至是还原出更加本质的思考。&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;分而治之&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;分而治之是一个算法思想。把复杂问题拆分，进而变成小问题可解决。&lt;/p&gt;
+
+&lt;p&gt;这里我想说的是，分而治之的方向是什么？这可能是一个新的。&lt;/p&gt;
+
+&lt;p&gt;我理解应该也是第一性原理。拆解的方向是一些已经证明的原子性问题，符合第一性原理。&lt;/p&gt;
+
+&lt;p&gt;只有那些落实到已经存在的基本原理、基本问题、基本单元场景…… 问题才可能被解决。&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;辩证、兼容思考&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;这里指的是复杂问题是混沌的，并不是非黑即白。平衡策略在计算机里处处皆是。没有完美的方案，也没有完美的东西。万事万物皆是一种平衡。一种看待问题的方式。&lt;/p&gt;
+
+&lt;p&gt;不钻牛角尖，就能少走弯路。&lt;/p&gt;
+
+&lt;p&gt;辩证思考问题，兼容多个角度思考问题看待问题。&lt;/p&gt;
+
+&lt;p&gt;比如，不要成为编程语言的狂热粉、编辑器的圣战战士，那是一种脑残行为，那是一种活在偏见的幻想里。&lt;/p&gt;
+
+&lt;p&gt;现存在的软件并不完美，他们都有怪异的规则。&lt;/p&gt;
+
+&lt;p&gt;要理解底层的原理，善用工具的优点，避开缺点，然后奔向目标。&lt;/p&gt;
+
+&lt;p&gt;目标是所有技术的意义，目标是重要的。&lt;/p&gt;
+</description>
+        <pubDate>Mon, 28 Jun 2021 11:16:13 +0800</pubDate>
+        <link>https://mark24code.github.io/%E7%AC%94%E8%AE%B0/2021/06/28/%E7%A0%94%E7%A9%B6%E6%96%B9%E6%B3%95.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E7%AC%94%E8%AE%B0/2021/06/28/%E7%A0%94%E7%A9%B6%E6%96%B9%E6%B3%95.html</guid>
+        
+        
+        <category>笔记</category>
+        
+      </item>
+    
+      <item>
+        <title>技术栈的选择</title>
+        <description>&lt;p&gt;技术栈的选择，应该是每个人都会遇到的。&lt;/p&gt;
+
+&lt;p&gt;技术框架产品的包装，一般就是两种形式&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;微框架流派&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;提供一个小小的core，一切通过插件围绕产生。
+他比较纯粹，工作原理也简单明了。&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;大而全保姆式框架流派&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;提供从零到一的技术方案，方方面面照顾周全。&lt;/p&gt;
+
+&lt;p&gt;这两种流派都各有拥趸，实际上也难分伯仲。技术不能以此届划分好坏。&lt;/p&gt;
+
+&lt;p&gt;我们的脑袋里不应该总是想象出一本武学秘籍，类似《葵花宝典》《九阳神功》，只要得到他学会它就万事皆休。没有这样子的事情。&lt;/p&gt;
+
+&lt;p&gt;要看我们要解决的事情。&lt;/p&gt;
+
+&lt;p&gt;微框架的特点就是微小，可控。它提供一个最终的基础。这里往往适合去搭建一些轻量级需求，亦或者是短频快的小需求服务。未来也不会更复杂。&lt;/p&gt;
+
+&lt;p&gt;还有一种情况是，未来会特别复杂。也适合。有人会问了为啥未来特别复杂也选这个？因为特别复杂的业务，存在大量定制性。而一个简单的基础意味着稳定、可靠，即使出问题也可以自己debug找出来，看源码也能解决。&lt;/p&gt;
+
+&lt;p&gt;所以也适合长线构建的超复杂的程序。&lt;/p&gt;
+
+&lt;p&gt;这个思路也不是空吹牛。 像React、Vue是前端这两种流派。React是一个Core， Vue是大包大揽。实际上越来越多的商业公司逐渐转向React构建更复杂的应用。 Vue停留在中小型公司。&lt;/p&gt;
+
+&lt;p&gt;后端的框架比如Python的 Flask，和Django也是，Flask是一个Core，他也用于从零构建公司业务网站，比如国内的豆瓣就是从一个Flask的Core基础上构建出来的。Django更适合快速搭建一些定型的业务后台。&lt;/p&gt;
+
+&lt;p&gt;大而全的保姆式框架，虽然面面俱到，但是对你的束缚也是真真切切，任何一个软件都有设计目标，你在他的设计目标里使用就会如鱼得水，但是如果你超越他的设计目标，你就不得不要和这个技术框架做对抗。要去hack他的设计，组件 —— 你会发现还不如从头自己来。&lt;/p&gt;
+
+&lt;p&gt;所以大而全的东西适合构建一些中规中矩，非常规律性的东西，比如后台服务。他们很标准化。就是和这种大而全的技术服务。
+如果用微核心的框架去构建，反而是在重复劳动。&lt;/p&gt;
+
+</description>
+        <pubDate>Fri, 25 Jun 2021 13:01:03 +0800</pubDate>
+        <link>https://mark24code.github.io/%E9%9A%8F%E7%AC%94/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2021/06/25/%E6%8A%80%E6%9C%AF%E6%A0%88%E7%9A%84%E9%80%89%E6%8B%A9.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E9%9A%8F%E7%AC%94/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2021/06/25/%E6%8A%80%E6%9C%AF%E6%A0%88%E7%9A%84%E9%80%89%E6%8B%A9.html</guid>
+        
+        
+        <category>随笔</category>
+        
+        <category>编程思考</category>
+        
+      </item>
+    
+      <item>
+        <title>从SEO再谈前后端分离</title>
+        <description>&lt;h1 id=&quot;spa与seo的矛盾&quot;&gt;SPA与SEO的矛盾。&lt;/h1&gt;
+
+&lt;p&gt;再谈前后端分离。我以前抱着一个观点就是技术应该避免复杂。我是反对前后端分离的。甚至一段时间对单体应用抱有一种坚持。&lt;/p&gt;
+
+&lt;p&gt;今天觉得前后端应该分离。我想表达出一些个人的观点。在Web中，前后端是否分离，不应该站在单一技术角度思考，也不应该站在分工角度思考。他们都不是稳定因素。&lt;/p&gt;
+
+&lt;p&gt;我想从一个例子出发，就是一个网站如何做SEO？ 这个例子就很能说明是否应该前后端分离。&lt;/p&gt;
+
+&lt;p&gt;现在的Web其实已经开始非常注重交互性。前端的框架从React到Vue本质上就是解决交互性问题。他们让Web从静态模板套数据，到jQuery用面条式代码操控DOM，终于进入可以通过数据驱动页面变化。这种页面技术方案也叫SPA。单页面应用，页面不用刷新，一直在本地工作。&lt;/p&gt;
+
+&lt;p&gt;这就带来了一个问题，SEO不友好。SEO涉及到爬虫程序，它通过HTTP请求获得页面，其实就是一段HTML字符串，然后从中提取数据。这就是爬虫的工作。自动前端使用交互性的框架，一切的DOM都是JavaScript动态生成的。而爬虫自己一般是不带运行JS的环境的。爬虫失效了。&lt;/p&gt;
+
+&lt;p&gt;如果一个网页，他对SEO不友好，基本上也关闭了自己的大门。这个矛盾应该如何解决？&lt;/p&gt;
+
+&lt;p&gt;我们能想出几各维度：&lt;/p&gt;
+
+&lt;h3 id=&quot;1-拒绝动态性还是保持静态网页&quot;&gt;1. 拒绝动态性，还是保持静态网页&lt;/h3&gt;
+
+&lt;p&gt;这里有一些例子，比如Github，使用Pajax来优化页面跳转的体验。保持了页面的克制。&lt;/p&gt;
+
+&lt;p&gt;但是实际上它具有特殊性，就是他的版面设计就是围绕这个而来。&lt;/p&gt;
+
+&lt;p&gt;实际上Gitlab作为Github更加激进，他的页面交互部分也更加复杂，于是他们逐渐引入了Vue。&lt;/p&gt;
+
+&lt;h3 id=&quot;2-动态性编译成静态性-ssr&quot;&gt;2. 动态性编译成静态性 SSR&lt;/h3&gt;
+
+&lt;p&gt;SSR就是这种思考，通过Node的环境结合前端框架的特点，实现一个把动态框架编译成模板的一个技术。
+但是它存在一些问题。&lt;/p&gt;
+
+&lt;p&gt;由于网站是动态的，而SSR是一次编译的他是静态的。本质上他在做一个后端做的事情。&lt;/p&gt;
+
+&lt;p&gt;会因为引入SSR，前端的写法，用法，组件可能不支持。要因此而妥协而降低自己在前端做事情的表达上。&lt;/p&gt;
+
+&lt;p&gt;SSR缩短了首屏呈现的时间，可是交互的时间并没有改变依然需要加载JavaScript然后重载整个页面，用户才能交互。首屏的时间其实没那么重要。相反，可以通过PWA，本地化等方式来改进首屏时间，我觉得这个更加靠谱和彻底。&lt;/p&gt;
+
+&lt;p&gt;SSR的思路保有着美好的幻想，可惜他没有想到，浏览器和一个Node注定是不同的东西，而这种努力其实是一种徒劳。因为你解决了一时无法解决一世。而那些混合起来的代码最终会被替换掉，被人丢弃。生命周期就此终结。我个人觉得SSR是个思维上省事的方案。实际上他是一个非常愚蠢的方案。他是另一个极端，就是在后端模板字符串李非要嵌入式写 Vue或者jQuery式的极端。这两种极端其实毫无差别。&lt;/p&gt;
+
+&lt;p&gt;我们应该相信Web是要取代本地App的，Web他本来就是作为一个快速构建应用程序的技术而产生。未来的程序绝对不是静态的，他一定是一个动态的。如果我们的前端技术是Canvas呢？SVG呢？&lt;/p&gt;
+
+&lt;p&gt;我们是不是要开发出一个所有东西都变成字符串的一个技术？&lt;/p&gt;
+
+&lt;p&gt;从这里我们应该明白，web他只是刚出来的时候暂时像一个模板字符串，而后端刚好能支持。而未来的web不会是这样。更不可能因为要给SEO而妥协交互性。&lt;/p&gt;
+
+&lt;p&gt;SEO和交互性，他是一对矛盾。一个是静态字符串，一个是高动态的东西。所以本质上他们是两件事。&lt;/p&gt;
+
+&lt;p&gt;为什么他们是两件事，他们从表现上是两个样子，解读他们的——解释器也是两个东西。SEO归根结底是面向一个读字符串的爬虫写的程序。而Web是面向浏览器的一个程序。&lt;/p&gt;
+
+&lt;p&gt;他们在某个情况下是重合的，不代表他们在任意情况下都是一个东西。&lt;/p&gt;
+
+&lt;p&gt;所以SSR的方案其实是愚蠢的。为了SEO妥协互动性的表达和技术选型。&lt;/p&gt;
+
+&lt;p&gt;好的技术一定是带来更多自由的，而不是带来更多的约束。&lt;/p&gt;
+
+&lt;h3 id=&quot;3-单独生成seo服务&quot;&gt;3. 单独生成SEO服务&lt;/h3&gt;
+
+&lt;p&gt;如果能接受上面的设定。应该想清楚。&lt;/p&gt;
+
+&lt;p&gt;构建可交互的Web，本身就是一个非常独立的事情。&lt;/p&gt;
+
+&lt;p&gt;构建SEO有好的Web，本身也是一个非常独立的事情。&lt;/p&gt;
+
+&lt;p&gt;他们独立在于解读方不同，于是他们变成两件事情。&lt;/p&gt;
+
+&lt;p&gt;于是我的思考是，前端应该保持自己独立的技术栈，Vue也好，React也罢，总之不应该考虑SEO。更不应该用SSR这种愚蠢的方案。他最终会被抛弃。&lt;/p&gt;
+
+&lt;p&gt;SEO这件事情，又要输出模板，又要做站点地图，未来可能会给更多的搜索引擎生成个性化的配置。所以SEO这件事，可以交给后端来做。后端通过数据注入不同的模板，生成不同的面向SEO的文本上传到不同平台。这个应该单独做出一个服务。&lt;/p&gt;
+
+&lt;p&gt;SPA是一个服务，SEO也是一个单独的服务。&lt;/p&gt;
+
+&lt;h1 id=&quot;前后端应该分离么&quot;&gt;前后端应该分离么？&lt;/h1&gt;
+
+&lt;p&gt;前后端应该分离么？&lt;/p&gt;
+
+&lt;p&gt;是应该的。因为随着情况变得越来越复杂。他们面向的东西不同，决定了他们是不同的事情。&lt;/p&gt;
+
+&lt;p&gt;即使是JavaScript这种，既可以在浏览器里执行，也能在服务器中执行。其实真的一样么？其实并不一样。因为他们解释器不同。浏览器里的JavaScript和Nodejs里的JavaScript 他们就算是基本语法一样，他们使用起来日积月累表达的也不会是一样的。所以这时候，仅仅语法要素相同，实际上变成了最不重要事情。&lt;/p&gt;
+
+&lt;p&gt;前后端应该分离的。而思考这些事情的界限，就是在于，他们面向的是谁？他们最终是不是一回事情。&lt;/p&gt;
+
+&lt;p&gt;讨论前后端分离。就仿佛讨论HTML、CSS、JavaScript他们为什么要分离。
+（这是一个类比，以前写界面是通过一个类，传输属性完成的，是三种混合在一起。Web三剑客的分离本质上就是对不同维度的拆解。拆解是有益的。降低耦合。）&lt;/p&gt;
+
+&lt;h1 id=&quot;如果我来做seo或者前后端会如何&quot;&gt;如果我来做SEO或者前后端会如何？&lt;/h1&gt;
+
+&lt;p&gt;前后端保持分离。&lt;/p&gt;
+
+&lt;h2 id=&quot;前端角色&quot;&gt;前端角色&lt;/h2&gt;
+
+&lt;p&gt;前端的角色和形态应该是多样化的，web，客户端，命令行，手表，VR，眼镜……everywhere，任何地方，只要他有屏幕。&lt;/p&gt;
+
+&lt;p&gt;前端的形态最终是要面向浏览器，面向设备尺寸而决定呈现和交互。它注定是一个变化的东西。&lt;/p&gt;
+
+&lt;p&gt;前端的意义是在乎通过设备提供互动的交互，把一帧一帧的数据按照时间的层次序列迭加起来。&lt;/p&gt;
+
+&lt;p&gt;数据在后台一个接口是静态的。但是由于存在用户不断地追加数据，数据从而实现一个动态的变化和发展。&lt;/p&gt;
+
+&lt;p&gt;前端的任务就是提供这样一个数据运动的入口。&lt;/p&gt;
+
+&lt;h2 id=&quot;后端角色&quot;&gt;后端角色&lt;/h2&gt;
+
+&lt;p&gt;后端的本质上是一个面向请求和数据的服务。后面要保持的是数据的完整性和提交。&lt;/p&gt;
+
+&lt;h2 id=&quot;seo&quot;&gt;SEO&lt;/h2&gt;
+
+&lt;p&gt;SEO就是一个典型的数据式服务，特点就是套模板，甚至就是输出数据，XML，一些爬虫的配置……
+于是，可以交给后端的一个子服务专门提供。&lt;/p&gt;
+
+&lt;p&gt;这样界定才是完美的。&lt;/p&gt;
+
+&lt;p&gt;预言，如果SEO未来逐渐重要，应该会存在一类SEO工程师，他们的任务是 需求来临，同样一份份数据，交给前端去做交互页面。另一份交给SEO提供给爬虫和所有搜索引擎。&lt;/p&gt;
+
+</description>
+        <pubDate>Fri, 25 Jun 2021 10:58:47 +0800</pubDate>
+        <link>https://mark24code.github.io/%E9%9A%8F%E7%AC%94/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2021/06/25/%E5%86%8D%E8%B0%88%E5%89%8D%E5%90%8E%E7%AB%AF%E5%88%86%E7%A6%BB.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E9%9A%8F%E7%AC%94/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2021/06/25/%E5%86%8D%E8%B0%88%E5%89%8D%E5%90%8E%E7%AB%AF%E5%88%86%E7%A6%BB.html</guid>
+        
+        
+        <category>随笔</category>
+        
+        <category>编程思考</category>
+        
+      </item>
+    
+      <item>
+        <title>Lottie笔记</title>
+        <description>&lt;h1 id=&quot;参考&quot;&gt;参考&lt;/h1&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;http://dtysky.moe/article/Skill-2018_06_15_a&quot;&gt;Lottie源码分析&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        <pubDate>Thu, 24 Jun 2021 16:05:01 +0800</pubDate>
+        <link>https://mark24code.github.io/%E5%89%8D%E7%AB%AF%E5%B7%A5%E5%85%B7/lottie/2021/06/24/Lottie%E7%AC%94%E8%AE%B0.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E5%89%8D%E7%AB%AF%E5%B7%A5%E5%85%B7/lottie/2021/06/24/Lottie%E7%AC%94%E8%AE%B0.html</guid>
+        
+        
+        <category>前端工具</category>
+        
+        <category>Lottie</category>
+        
+      </item>
+    
+      <item>
+        <title>seo笔记</title>
+        <description>&lt;h1 id=&quot;参考&quot;&gt;参考&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://developers.google.cn/search/docs?hl=zh-cn&quot;&gt;Google SEO&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Thu, 24 Jun 2021 15:13:34 +0800</pubDate>
+        <link>https://mark24code.github.io/seo/2021/06/24/seo%E7%AC%94%E8%AE%B0.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/seo/2021/06/24/seo%E7%AC%94%E8%AE%B0.html</guid>
+        
+        
+        <category>SEO</category>
+        
+      </item>
+    
+      <item>
+        <title>铁路图(语法图)</title>
+        <description>&lt;h1 id=&quot;语法图&quot;&gt;语法图&lt;/h1&gt;
+
+&lt;p&gt;语法图（Syntax diagrams ）又叫铁路图（railroad diagrams）是描述形式文法的一种方式。它是巴科斯范式或扩展巴科斯范式的图形化表示。&lt;/p&gt;
+
+&lt;h1 id=&quot;规则&quot;&gt;规则&lt;/h1&gt;
+
+&lt;p&gt;语法图（Syntax diagrams ） / 铁路图（railroad diagram）规则：&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;1.从左边界开始沿着轨道去到右边界。
+2.沿途，你将在圆框中遇到的是字面量，在方块中遇到的是规则或者描述。
+3.任何沿着轨道能走通的序列都是合法的。
+4.任何不能沿着轨道走通的序列都是非法的。
+5.每个末端只有一个竖条的铁路图允许在任何一对标记中间插入空白。而在末端有两个竖条的铁路图是不允许的。
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;每个图都有一个起始点和一个终点。这个图通过穿过其他的非终结符和终结符描绘了这些两点之间的可能路径。终结符用圆形区域表示，同时非终结符用方形区域表示。&lt;/p&gt;
+
+&lt;h2 id=&quot;举个例子&quot;&gt;举个例子&lt;/h2&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&amp;lt;term&amp;gt;::= &amp;lt;factor&amp;gt; | &amp;lt;factor&amp;gt; &quot;*&quot; &amp;lt;term&amp;gt;  
+&amp;lt;factor&amp;gt;::= &amp;lt;constant&amp;gt; | &amp;lt;variable&amp;gt; | &quot;(&quot; &amp;lt;expression&amp;gt; &quot;)&quot;  
+&amp;lt;variable&amp;gt;::= &quot;x&quot; | &quot;y&quot; | &quot;z&quot;  
+&amp;lt;constant&amp;gt;::= &amp;lt;digit&amp;gt; | &amp;lt;digit&amp;gt; &amp;lt;constant&amp;gt;  
+&amp;lt;digit&amp;gt;::= &quot;0&quot; | &quot;1&quot; | &quot;2&quot; | &quot;3&quot; | &quot;4&quot; | &quot;5&quot; | &quot;6&quot; | &quot;7&quot; | &quot;8&quot; | &quot;9&quot; 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/blog/syntax_diagrams/railroad_diagram01.png&quot; alt=&quot;railroad_diagram01.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;这里的箭头也可简化为有弧度的线。圆角向内表示循环，向外则不循环。或者将左下弧理解为出口，右下弧理解为入口。&lt;/p&gt;
+
+&lt;p&gt;这里铁路图就很形象了，一个列车沿着线条行进，他只可能在光滑的轨迹上运行。尤其是循环处。他不可以倒车或者逆着铁轨行进。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/blog/syntax_diagrams/railroad_diagram02.png&quot; alt=&quot;railroad_diagram02.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;参考：&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://www.j语法图ianshu.com/p/aa8d3e914ab3&quot;&gt;语法图&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Thu, 24 Jun 2021 12:12:27 +0800</pubDate>
+        <link>https://mark24code.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/2021/06/24/%E9%93%81%E8%B7%AF%E5%9B%BE(%E8%AF%AD%E6%B3%95%E5%9B%BE).html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/2021/06/24/%E9%93%81%E8%B7%AF%E5%9B%BE(%E8%AF%AD%E6%B3%95%E5%9B%BE).html</guid>
+        
+        
+        <category>编程语言</category>
+        
+        <category>编译原理</category>
+        
+      </item>
+    
+      <item>
+        <title>mitmproxy光速入门&amp;获取cURL的方法</title>
+        <description>&lt;h1 id=&quot;启动&quot;&gt;启动&lt;/h1&gt;
+
+&lt;p&gt;命令行
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;mitmproxy&lt;/code&gt;
+默认端口 8080&lt;/p&gt;
+
+&lt;p&gt;web
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;mitmweb&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;默认端口8080
+web端口8081&lt;/p&gt;
+
+&lt;h1 id=&quot;安装证书&quot;&gt;安装证书&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://mitm.it&quot;&gt;http://mitm.it&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;命令行&quot;&gt;命令行&lt;/h1&gt;
+
+&lt;h2 id=&quot;过滤&quot;&gt;过滤&lt;/h2&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;f&lt;/code&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;拦截&quot;&gt;拦截&lt;/h2&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;i&lt;/code&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;拷贝curl&quot;&gt;拷贝cURL&lt;/h2&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;c&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;插件灵感来自于这里 &lt;a href=&quot;https://github.com/mitmproxy/mitmproxy/issues/2649&quot;&gt;mitmproxy/issues/2649&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;# ~/.mitmproxy/keys.yaml&lt;/span&gt;
+&lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;c&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;ctx&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;flowlist&quot;&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;]&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;cmd&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;export.clip curl @focus&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;help&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Export a flow as a curl command to the clipboard.&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</description>
+        <pubDate>Wed, 23 Jun 2021 15:12:11 +0800</pubDate>
+        <link>https://mark24code.github.io/mitmproxy/2021/06/23/mitmproxy%E5%85%89%E9%80%9F%E5%85%A5%E9%97%A8&%E8%8E%B7%E5%8F%96cURL%E7%9A%84%E6%96%B9%E6%B3%95.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/mitmproxy/2021/06/23/mitmproxy%E5%85%89%E9%80%9F%E5%85%A5%E9%97%A8&%E8%8E%B7%E5%8F%96cURL%E7%9A%84%E6%96%B9%E6%B3%95.html</guid>
+        
+        
+        <category>mitmproxy</category>
+        
+      </item>
+    
+      <item>
+        <title>解atob btoa中文乱码问题</title>
+        <description>&lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+  &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;utf8ToB64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;window&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;btoa&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;unescape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;encodeURIComponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)));&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+  &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;b64ToUtf8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;decodeURIComponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;escape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;window&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;atob&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)));&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;MDN 文档里的还是用 UTF-16 编码的，和服务端不能互相传输encodeURIComponent 其实作用是把内置的 UTF16 编码转成 UTF8 的百分号编码（传输需要），再利用 unescape 把百分号编码转成 ascii string这样就实现了内置 UTF16 编码转 UTF8 编码，虽然 JS 层面上展示的是乱码，但是编码格式已经对了，再进行 btoa 从编码层面是完全符合预期的。 —— 来自我的一位同fmfsaisai&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+        <pubDate>Mon, 21 Jun 2021 16:11:41 +0800</pubDate>
+        <link>https://mark24code.github.io/javascript/2021/06/21/%E8%A7%A3atob-btoa%E4%B8%AD%E6%96%87%E4%B9%B1%E7%A0%81%E9%97%AE%E9%A2%98.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/javascript/2021/06/21/%E8%A7%A3atob-btoa%E4%B8%AD%E6%96%87%E4%B9%B1%E7%A0%81%E9%97%AE%E9%A2%98.html</guid>
+        
+        
+        <category>JavaScript</category>
+        
+      </item>
+    
+      <item>
+        <title>细数那些一行启动一个静态web server的方法</title>
+        <description>&lt;h1 id=&quot;静态web-server&quot;&gt;静态web server&lt;/h1&gt;
+
+&lt;h2 id=&quot;1-你一定遇到过&quot;&gt;1. 你一定遇到过&lt;/h2&gt;
+
+&lt;p&gt;我们想要快速的预览一个网页的时候，有时候我们打开它，浏览器会把他当做文件打开。&lt;/p&gt;
+
+&lt;p&gt;比如 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;test/index.html&lt;/code&gt; 当我们把index.html拖动到浏览器里，他总是以 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;file://path/to/your/file.html&lt;/code&gt; 以本地文件协议形式打开。&lt;/p&gt;
+
+&lt;p&gt;如果这样我们无法让他执行javascript、css……有时候他就像一个文本。&lt;/p&gt;
+
+&lt;p&gt;这里的问题就是，我们希望他可以作为一个 web server的形式打开。&lt;/p&gt;
+
+&lt;h2 id=&quot;2-静态server有啥用&quot;&gt;2. 静态server有啥用&lt;/h2&gt;
+
+&lt;p&gt;1）快速预览前端产物&lt;/p&gt;
+
+&lt;p&gt;本文给出一些一行代码打开静态server的方法。&lt;/p&gt;
+
+&lt;p&gt;他的作用就像一个开发server，或者一个 Nginx，默认当前目录作为资源目录，首页就是返回index.html，并且以相对当前目录的形式加载资源。&lt;/p&gt;
+
+&lt;p&gt;用这种方式，可以预览构建完的 前端静态文件。&lt;/p&gt;
+
+&lt;p&gt;2）共享目录&lt;/p&gt;
+
+&lt;p&gt;当然如果你在一个有文件的目录下，启动了静态server，并且开放给局域网。别人可以从你这里下载文件，看起来就像一个提供下载的服务器。&lt;/p&gt;
+
+&lt;p&gt;好了，搓搓手，让我们开始吧&lt;/p&gt;
+
+&lt;h1 id=&quot;一细数那些一行启动静态server的方法&quot;&gt;一、细数那些一行启动静态server的方法&lt;/h1&gt;
+
+&lt;h2 id=&quot;1-nodejs&quot;&gt;1. Nodejs&lt;/h2&gt;
+
+&lt;p&gt;如果你用过 React的脚手架 create-react-app&lt;/p&gt;
+
+&lt;p&gt;在你第一次执行 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;yarn run build&lt;/code&gt; 的时候，一定看到过&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;.....
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  yarn global add serve
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+✨  Done in 17.14s.
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;这里的 serve就是一个 node的工具，&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;// 全局安装
+yarn global add serve 
+
+// 目标路径下使用
+serve -s build
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;默认打开是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;0.0.0.0:5000&lt;/code&gt; 对局域网开放访问。想了解更多可以 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;serve --help&lt;/code&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;2-python&quot;&gt;2. Python&lt;/h2&gt;
+
+&lt;p&gt;简单介绍一下 Python2的一笔带过。&lt;/p&gt;
+
+&lt;h3 id=&quot;1-python2&quot;&gt;1) Python2&lt;/h3&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;python &lt;span class=&quot;nt&quot;&gt;-m&lt;/span&gt; SimpleHTTPServer 8000 &lt;span class=&quot;nb&quot;&gt;.&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h3 id=&quot;2-python3&quot;&gt;2) Python3&lt;/h3&gt;
+
+&lt;p&gt;相信没什么人使用Python2了，还是讲讲Python3吧。&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;python &lt;span class=&quot;nt&quot;&gt;-m&lt;/span&gt; http.server
+
+python3 &lt;span class=&quot;nt&quot;&gt;-m&lt;/span&gt; http.server &lt;span class=&quot;nt&quot;&gt;-b&lt;/span&gt; 0.0.0.0 5000
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;-m 是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-m mod : run library module as a script (terminates option list)&lt;/code&gt; 启动内部的包。这里就比Node的要好一点，Node是单独去安装一个程序。如果单独安装，其实就不方便了。&lt;/p&gt;
+
+&lt;p&gt;Python3已经是大多数操作系统、发行版的标配了，我们不需要单独安装。Python3内置了很多小程序。其中 -m就是指定启动这些程序。&lt;/p&gt;
+
+&lt;p&gt;默认http://0.0.0.0:8000/ ， 可以 需要使用 -b 参数（也就是bind）手动指定一下 host，末尾跟上port。&lt;/p&gt;
+
+&lt;h2 id=&quot;3-ruby&quot;&gt;3. Ruby&lt;/h2&gt;
+
+&lt;p&gt;和Python类似，Ruby也已经是所有发行版的标配了。Ruby也有内置小程序。&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;ruby -run -ehttpd
+
+# . 就是本地目录的意思，忽视它会报错
+ruby -run -ehttpd . -p8000
+
+ruby -run -ehttpd . -b0.0.0.0 -p8000
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;ruby的命令更有趣一点，这里要解释下。ruby -r 意思是  ruby require 这里后面要跟上一个库，这样就可以导入这个库。这里是un库。连起来竟然是  -run 读起来就像是 run，有意思的巧合。&lt;/p&gt;
+
+&lt;p&gt;-e 后面跟上执行的command，也就是ruby语句。连起来就是 -r 先引入 un库 -e 接着执行 httpd . -p8000&lt;/p&gt;
+
+&lt;p&gt;un库就是  &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;un.rb&lt;/code&gt; ，这里面最有用的就是提供了一个 httpd 可以用来启动静态server&lt;/p&gt;
+
+&lt;p&gt;默认端口  port=8080&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://ruby-doc.org/stdlib-2.0.0/libdoc/un/rdoc/Object.html&quot;&gt;un.rb doc&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;ruby -run -e httpd -- [OPTION] DocumentRoot
+
+--bind-address=ADDR         address to bind
+--port=NUM                  listening port number
+--max-clients=MAX           max number of simultaneous clients
+--temp-dir=DIR              temporary directory
+--do-not-reverse-lookup     disable reverse lookup
+--request-timeout=SECOND    request timeout in seconds
+--http-version=VERSION      HTTP version
+-v  
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h1 id=&quot;二其他方式&quot;&gt;二、其他方式&lt;/h1&gt;
+
+&lt;p&gt;其他通过安装的方式就很多了。就不细细写了。几乎每个web server 都有快速启动的方法，不过有点麻烦。&lt;/p&gt;
+</description>
+        <pubDate>Fri, 18 Jun 2021 17:05:46 +0800</pubDate>
+        <link>https://mark24code.github.io/%E6%95%99%E7%A8%8B/%E5%88%86%E4%BA%AB%E5%8F%91%E7%8E%B0/ruby/python/nodejs/2021/06/18/%E7%BB%86%E6%95%B0%E9%82%A3%E4%BA%9B%E4%B8%80%E8%A1%8C%E5%90%AF%E5%8A%A8%E4%B8%80%E4%B8%AA%E9%9D%99%E6%80%81web-server%E7%9A%84%E6%96%B9%E6%B3%95.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E6%95%99%E7%A8%8B/%E5%88%86%E4%BA%AB%E5%8F%91%E7%8E%B0/ruby/python/nodejs/2021/06/18/%E7%BB%86%E6%95%B0%E9%82%A3%E4%BA%9B%E4%B8%80%E8%A1%8C%E5%90%AF%E5%8A%A8%E4%B8%80%E4%B8%AA%E9%9D%99%E6%80%81web-server%E7%9A%84%E6%96%B9%E6%B3%95.html</guid>
+        
+        
+        <category>教程</category>
+        
+        <category>分享发现</category>
+        
+        <category>Ruby</category>
+        
+        <category>Python</category>
+        
+        <category>Nodejs</category>
+        
+      </item>
+    
+      <item>
+        <title>auto-restful-mitmproxy一个自制小工具</title>
+        <description>&lt;h1 id=&quot;一背景&quot;&gt;一、背景&lt;/h1&gt;
+
+&lt;p&gt;安利团队mitmproxy。
+经过研究，mitmproxy十份的简单友好（虽然目前最新版文档写的一般）。 
+今天写了一个十分粗糙的  —— 辅助机器人。 可以做到&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;简单明了的DSL书写 API&lt;/li&gt;
+  &lt;li&gt;支持书写完热更新同步给mitmproxy， 从而实现 mitmproxy看起来像一个本地的热更新开发server，可以把 代理的请求map到本地文件中的返回。抓包QA的效率翻倍。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;项目地址 &lt;a href=&quot;https://github.com/Mark24Code/auto-restful-mitmproxy&quot;&gt;https://github.com/Mark24Code/auto-restful-mitmproxy&lt;/a&gt;&lt;br /&gt;
+（依赖python，ruby）&lt;/p&gt;
+
+&lt;p&gt;比Charles好用 :火箭: 这是最后的倔强。    初始版本欢迎反馈和喷。&lt;/p&gt;
+
+&lt;h1 id=&quot;二语法展示&quot;&gt;二、语法展示&lt;/h1&gt;
+
+&lt;p&gt;展示下简单的语法。get请求，包含关键字路径 ‘/keyword/of/path’  返回是一个JSON对象&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;get&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'/keyword/of/path'&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;s2&quot;&gt;&quot;result&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;s2&quot;&gt;&quot;errno&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;OK&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;s2&quot;&gt;&quot;errmsg&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;成功&quot;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+  &lt;span class=&quot;s2&quot;&gt;&quot;data&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;s2&quot;&gt;&quot;details&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;s2&quot;&gt;&quot;id&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;123&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;s2&quot;&gt;&quot;nick&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Hello&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</description>
+        <pubDate>Thu, 17 Jun 2021 18:01:07 +0800</pubDate>
+        <link>https://mark24code.github.io/%E5%88%86%E4%BA%AB%E4%B8%8E%E5%88%9B%E9%80%A0/ruby/mitm/2021/06/17/auto-restful-mitmproxy%E4%B8%80%E4%B8%AA%E8%87%AA%E5%88%B6%E5%B0%8F%E5%B7%A5%E5%85%B7.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E5%88%86%E4%BA%AB%E4%B8%8E%E5%88%9B%E9%80%A0/ruby/mitm/2021/06/17/auto-restful-mitmproxy%E4%B8%80%E4%B8%AA%E8%87%AA%E5%88%B6%E5%B0%8F%E5%B7%A5%E5%85%B7.html</guid>
+        
+        
+        <category>分享与创造</category>
+        
+        <category>Ruby</category>
+        
+        <category>MITM</category>
+        
+      </item>
+    
+  </channel>
+</rss>

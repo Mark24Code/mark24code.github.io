@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>浏览器渲染流程</title>
+  <meta name="description" content="渲染流水线浏览器的渲染机制很复杂，渲染模块在执行的过程中会被划分为很多个子阶段，输入html经过这些子阶段，最后输出像素。我们把这个处理流程叫做“渲染流水线”。大致表达如上图。按照渲染的时间顺序，流水线可以划分为如下几个子阶段：  构建DOM树  样式计算  布局阶段  分层  绘制  分块  光栅化合成。接下来...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E5%89%8D%E7%AB%AF/%E6%B5%8F%E8%A7%88%E5%99%A8/2020/05/21/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">浏览器渲染流程</h1>
+    <p class="artilce_meta"><time datetime="2020-05-21T15:14:26+08:00" itemprop="datePublished">May 21, 2020</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="渲染流水线">渲染流水线</h1>
+
+<p><img src="/assets/blog/browser/browser_render_pipeline.png" alt="browser_render_pipeline" /></p>
+
+<p>浏览器的渲染机制很复杂，渲染模块在执行的过程中会被划分为很多个子阶段，输入html经过这些子阶段，最后输出像素。我们把这个处理流程叫做“渲染流水线”。</p>
+
+<p>大致表达如上图。</p>
+
+<p>按照渲染的时间顺序，流水线可以划分为如下几个子阶段：</p>
+
+<ul>
+  <li>构建DOM树</li>
+  <li>样式计算</li>
+  <li>布局阶段</li>
+  <li>分层</li>
+  <li>绘制</li>
+  <li>分块</li>
+  <li>光栅化合成。</li>
+</ul>
+
+<p>接下来在介绍每个阶段的过程中，你应该关注以下三个重点：</p>
+
+<ul>
+  <li>开始每个子阶段都有其 输入的内容</li>
+  <li>然后每个子阶段都有其 处理过程</li>
+  <li>最终每个子阶段都会生成  输出内容</li>
+</ul>
+
+<h1 id="构建dom树">构建DOM树</h1>
+
+<p>为什么要构建DOM树？因为浏览器无法直接理解和使用HTML，所以需要把HTML转换为浏览器能够理解的结构——DOM树。</p>
+
+<p><img src="/assets/blog/build_dom_tree.png" alt="build_dom_tree" /></p>
+
+<p>另外打开Chrome开发者工具，选择console，控制台中输入“document” 回车，这样看到额就是完整的DOM树。</p>
+
+<h1 id="样式计算recalcuate-style">样式计算（Recalcuate Style）</h1>
+
+<p>为了计算出DOM节点每个元素的具体样式，这个阶段大概可分为散步</p>
+
+<h2 id="1-把css转换为浏览器能够理解的结构">1. 把CSS转换为浏览器能够理解的结构</h2>
+
+<p>CSS的来源主要有三种</p>
+
+<ul>
+  <li>通过link引用的外部CSS文件</li>
+  <li>
+    <style>标签内CSS
+</style>
+  </li>
+  <li>元素style属性内嵌的CSS</li>
+</ul>
+
+<p>和HTML一样，浏览器无法直接理解这些纯文本CSS样式，所以渲染引擎接收到CSS文本时，会执行一个转换动作，将CSS文本转换为浏览器可以理解的结构—— StyleSheets。</p>
+
+<p>Chrome控制台，输入 <code class="language-plaintext highlighter-rouge">document.styleSheets</code> 就可以看到。</p>
+
+<p>这个样式表已经把那三种来源的样式都包含进去了。该结构同时具备了查询和修改的功能，这会为后面的央视操作提供基础。</p>
+
+<h2 id="2转换像是表中的属性值使其标准化">2.转换像是表中的属性值，使其标准化</h2>
+
+<p>比如如下代码，其中有很多类型数值，不被浏览器理解，所以需要把所有值转换为渲染引擎理解的标准化的计算值。</p>
+
+<div class="language-css highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">body</span> <span class="p">{</span> <span class="nl">font-size</span><span class="p">:</span> <span class="m">2em</span> <span class="p">}</span>
+<span class="nt">p</span> <span class="p">{</span><span class="nl">color</span><span class="p">:</span><span class="no">blue</span><span class="p">;}</span>
+<span class="nt">span</span> <span class="p">{</span><span class="nl">display</span><span class="p">:</span> <span class="nb">none</span><span class="p">}</span>
+<span class="nt">div</span> <span class="p">{</span><span class="nl">font-weight</span><span class="p">:</span> <span class="nb">bold</span><span class="p">}</span>
+<span class="nt">div</span> <span class="nt">p</span> <span class="p">{</span><span class="nl">color</span><span class="p">:</span><span class="no">green</span><span class="p">;}</span>
+<span class="nt">div</span> <span class="p">{</span><span class="nl">color</span><span class="p">:</span><span class="no">red</span><span class="p">;</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>标准化后为</p>
+
+<div class="language-css highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">body</span> <span class="p">{</span> <span class="nl">font-size</span><span class="p">:</span> <span class="m">32px</span> <span class="p">}</span>
+<span class="nt">p</span> <span class="p">{</span><span class="nl">color</span><span class="p">:</span> <span class="nb">rgb</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">255</span><span class="p">);}</span>
+<span class="nt">span</span> <span class="p">{</span><span class="nl">display</span><span class="p">:</span> <span class="nb">none</span><span class="p">}</span>
+<span class="nt">div</span> <span class="p">{</span><span class="nl">font-weight</span><span class="p">:</span> <span class="m">700</span><span class="p">}</span>
+<span class="nt">div</span> <span class="nt">p</span> <span class="p">{</span><span class="nl">color</span><span class="p">:</span> <span class="nb">rgb</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="m">128</span><span class="p">,</span><span class="m">0</span><span class="p">);}</span>
+<span class="nt">div</span> <span class="p">{</span><span class="nl">color</span><span class="p">:</span> <span class="nb">rgb</span><span class="p">(</span><span class="m">255</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">);</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到一些值已经被替换。</p>
+
+<h2 id="3计算出dom树中每个节点的具体样式">3.计算出DOM树中每个节点的具体样式</h2>
+
+<p>样式属性已经被标准化，接下来需要计算DOM中每个节点的样式属性。</p>
+
+<p>这就涉及到CSS的继承规则和层叠规则。</p>
+
+<ol>
+  <li>
+    <p>首先是CSS继承，CSS继承就是每个DOM节点都包含有父节点的样式。计算过程中，会根据DOM节点的继承关系来合理计算节点样式。</p>
+  </li>
+  <li>
+    <p>样式计算的第二个规则是样式层叠。 层叠是CSS的一个基本特征，它是一个定义了如何合并来自多个源的属性值的算法。它在CSS处在核心的地位。CSS全称是“层叠样式表
+正是强调了这一点。</p>
+  </li>
+</ol>
+
+<h2 id="布局阶段">布局阶段</h2>
+
+<p>我们有了DOM树、DOM树中元素的样式，但是依然无法显示，因为我们还不知道DOM的几何位置信息。</p>
+
+<p>接下来就要计算DOM树中可见元素的几何位置——这个计算过程叫做“布局”。</p>
+
+<p>Chrome在布局阶段需要完成两个任务</p>
+
+<ul>
+  <li>创建布局树</li>
+  <li>布局计算</li>
+</ul>
+
+<h3 id="1创建布局树">1.创建布局树</h3>
+
+<p>DOM树还包含很多不可见元素，比如 <code class="language-plaintext highlighter-rouge">head</code>标签，<code class="language-plaintext highlighter-rouge">display:none</code>属性元素。所以在显示之前，我们需要额外的创建一颗只包含可见元素的布局树。</p>
+
+<p><img src="/assets/blog/browser/browser_build_layout_tree.png" alt="browser_build_layout_tree" /></p>
+
+<p>为了构建布局树，浏览器大概完成下面工作：</p>
+
+<ol>
+  <li>
+    <p>遍历DOM树中所有可见节点，并把这些节点加到布局树中</p>
+  </li>
+  <li>
+    <p>不可见节点会被忽略。比如head标签，比如 display：none的元素</p>
+  </li>
+</ol>
+
+<h3 id="2布局计算">2.布局计算</h3>
+
+<p>现在我们有了一颗完整的布局树，就要计算布局树节点的表坐标位置。布局计算的过程非常复杂。这里先跳过。后面再做详细介绍。</p>
+
+<p>在执行布局操作的时候，会把布局计算的结果重新写回布局树，所以布局树既是输入内容，也是输出内容。这是布局阶段一个不合理的地方。针对这个，Chrome团队正在重构布局代码，下一代布局系统叫做LayoutNG。</p>
+
+<h1 id="中间总结">中间总结</h1>
+
+<p><img src="/assets/blog/browser/browser_render_pipeline2.png" alt="browser_render_pipeline2" /></p>
+
+<p>浏览器不能直接理解HTML数据，所以第⼀步需要将其转换为浏览器能够理解的DOM树结 构；⽣成DOM树后，还需要根据CSS样式表，来计算出DOM树所有节点的样式； 最后计算DOM元素的布局信息，使其都保存在布局树中。</p>
+
+<h1 id="分层">分层</h1>
+
+<p>拥有了布局树，每个元素的具体位置都计算出来了，接下来可以绘制页面么？</p>
+
+<p>还不行。</p>
+
+<p>页面中有很多复杂的效果，比如一些3D变换，页面滚动或者z-index的z轴排序。为了方面实现这些效果，渲染引擎还需要为特定的节点生成专用的图层，并且生成一颗对应的图层树（LayerTree）。 使用过 PhotoShop，绘画软件应该很容易理解图层的概念。这些图层叠加在一起构成了最终的页面图像。</p>
+
+<p><img src="/assets/blog/browser/browser_layer_tree.png" alt="browser_layer_tree" /></p>
+
+<p>通常，并不是每个布局树的每个节点都包含一个图层，如果一个节点没有对应的层，那么这个节点就从属于父节点的图层。最终每个节点都会直接或者间接的从属于一个层。</p>
+
+<p>什么情况下会新建图层呢？</p>
+
+<h3 id="1-拥有层叠上下文属性的元素会被提升为单独一层">1. 拥有层叠上下文属性的元素会被提升为单独一层</h3>
+
+<p>页面是个二维平面，层叠上下文可以让HTML元素具有三维的概念，这些HTML按照自身属性的优先级分布在垂直于这个二维平面的z轴上</p>
+
+<p><img src="/assets/blog/browser/browser_css.png" alt="browser_css" /></p>
+
+<p>从图上可以看出，明确定位属性的元素、定义透明属性的元素、使用CSS滤镜的元素，都拥有层叠上下文属性。</p>
+
+<blockquote>
+  <p><a href="https://developer.mozilla.org/zh-CN/docs/Web/Guide/CSS/Understanding_z_index/The_stacking_context">层叠上下文参考</a></p>
+</blockquote>
+
+<h3 id="2-需要裁剪clip的地方也会被创建为图层">2. 需要裁剪（Clip）的地方也会被创建为图层</h3>
+
+<p>结合一下代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;style&gt;
+
+div {
+    width:200;
+    height:200;
+    overflow:auto;
+    background: gray;
+}
+
+&lt;/style&gt;
+
+&lt;body&gt;
+    &lt;div&gt;
+        &lt;p&gt;所以元素有了层叠上下⽂的属性或者需要被剪裁，那么就会被提升成为单独⼀层，你可以参看下图：&lt;/p&gt;
+        &lt;p&gt;从上图我们可以看到，document层上有A和B层，⽽B层之上⼜有两个图层。这些图层组织在⼀起也是⼀颗树状结
+        &lt;p&gt;图层树是基于布局树来创建的，为了找出哪些元素需要在哪些层中，渲染引擎会遍历布局树来创建层树
+    &lt;/div&gt;
+&lt;/body&gt;
+
+</code></pre></div></div>
+
+<p>在这⾥我们把div的⼤⼩限定为200 * 200像素，⽽div⾥⾯的⽂字内容⽐较多，⽂字所显示的 区域肯定会超出200 * 200的⾯积，这时候就产⽣了剪裁，渲染引擎会把裁剪⽂字内容的⼀部 分⽤于显示在div区域。出现这种裁剪情况的时候，渲染引擎会为⽂字部分单独创建⼀个层，如果出现滚动条，滚动 条也会被提升为单独的层。</p>
+
+<p>所以说，元素有了层叠上下⽂的属性或者需要被剪裁，满⾜其中任意⼀点，就会被提升成为 单独⼀层。</p>
+
+<h1 id="图层绘制">图层绘制</h1>
+
+<p>在完成图层构建之后，渲染引擎会对图层树中每个图层进行绘制，接下来看渲染器引擎怎么实现图层绘制的？</p>
+
+<p>试想一下，如果给你一张纸，让你先把纸背景涂成蓝色，然后在中间位置画一个红色圆，然后再在圆上画个绿色三角形，你会怎么操作？</p>
+
+<p>通常你会把绘制过程分解为三部：</p>
+
+<ol>
+  <li>绘制蓝色背景</li>
+  <li>在中间绘制一个红色的圆</li>
+  <li>再在圆上绘制绿色三角形</li>
+</ol>
+
+<p>渲染引擎在实现图层绘制的与这个类似，会把一个图层的绘制拆分成很多小的“绘制命令”，然后再把这些命令按照顺序组成一个待绘制列表。</p>
+
+<p><img src="/assets/blog/browser/browser_draw_queue.png" alt="browser_draw_queue" /></p>
+
+<p>也可以在开发者工具“Layers”（设置里可以勾选展示），选择“document”层，来实际体现下绘制列表。</p>
+
+<h1 id="栅格化raster-操作">栅格化（Raster） 操作</h1>
+
+<p>绘制列表只是用来标记绘制顺序和绘制指令的列表，而实际上绘制操作是由渲染引擎的合成线程来完成的，你可以接下下图来看下渲染主线程和合成线程之间的关系。</p>
+
+<p><img src="/assets/blog/browser/browser_composite_thread.png" alt="browser_composite_thread" /></p>
+
+<p>如图，当图层绘制列表准备好后，主线程会把该绘制列表提交（Commit）给合成线程，那么接下合成线程怎么工作呢？</p>
+
+<p>先来看看新的概念，视口</p>
+
+<h2 id="视口viewport">视口(ViewPort)</h2>
+
+<p>把完整的网页想象成一张长长的图片，而我们看到的只是屏幕这个矩形框里面的一部分。屏幕上页面的可见区域，就叫做 视口（ViewPort).</p>
+
+<p>有的图层可以很大，比如有的页面你需要滚动好久才能到底，但是通过视口，用户只能看到页面的很小一部分，所以这种情况下，要绘制出所有涂层的内容就会产生太大的开销，而且完全没有必要。</p>
+
+<p>基于这个原因，合成线程会将图层划分为图块（tile），这些图快的大小通常是256x256或者512x512。</p>
+
+<p>然后合成线程会按照视口附近的土块来优先合成位图，实际生成位图的操作是由栅格化来执行的。所谓栅格化，就是将图块转化为位图。</p>
+
+<p>而图块是栅格化执行的最小单位。渲染进程维护了一个栅格化的线程池，所有的图块栅格化都是在线程池内执行的。</p>
+
+<p><img src="/assets/blog/browser/browser_raster.png" alt="browser_raster" /></p>
+
+<p>通常，栅格化过程都会使用GPU来加速生成，使用GPU生成位图的过程叫做快速栅格化，或者GPU栅格化，生成的位图被保存在GPU内存中。</p>
+
+<p>GPU操作是运行在GPU进程中，如果栅格化操作使用了GPU那么最终生成位图的操作是在GPU中完成的，这就涉及到跨进程操作，可以参考下图。</p>
+
+<p><img src="/assets/blog/browser/browser_gpu_raster.png" alt="browser_gpu_raster" /></p>
+
+<p>从图中可以看出，渲染进程把生成图块指令发送给GPU然后在GPU中执行生成图块的位图并且保存在GPU的内存中。</p>
+
+<h1 id="合成composite和显示">合成(Composite)和显示</h1>
+
+<p>一旦所有图块都被栅格化，合成线程就会生成一个绘制图块的命令——“DrawQuad”，然后讲该命令提交给浏览器进程。</p>
+
+<p>浏览器进程里有一个叫做 viz的组件，用来接收合成线程发过来的 DrawQuad命令，然后根据DrawQuad命令，将其页面内容会知道内存中，最后再将内存显示在屏幕中。</p>
+
+<p>经过这一些列的阶段，编好的HTML、CSS、JavaScript 等文件，经过浏览器就会显示出漂亮的页面。</p>
+
+<p><img src="/assets/blog/browser/browser_full_render_progress.png" alt="browser_full_render_progress" /></p>
+
+<h1 id="总结">总结</h1>
+
+<ol>
+  <li>
+    <p>渲染进程将HTML内容转换为能够读懂的DOM树结构。</p>
+  </li>
+  <li>
+    <p>渲染引擎将CSS样式表转化为浏览器可以理解的styleSheets，计算出DOM节点的样式。</p>
+  </li>
+  <li>
+    <p>创建布局树，并计算元素的布局信息。</p>
+  </li>
+  <li>
+    <p>对布局树进⾏分层，并⽣成分层树。</p>
+  </li>
+  <li>
+    <p>为每个图层⽣成绘制列表，并将其提交到合成线程。</p>
+  </li>
+  <li>
+    <p>合成线程将图层分成图块，并在光栅化线程池中将图块转换成位图。</p>
+  </li>
+  <li>
+    <p>合成线程发送绘制图块命令DrawQuad给浏览器进程。</p>
+  </li>
+  <li>
+    <p>浏览器进程根据DrawQuad消息⽣成⻚⾯，并显示到显示器上。</p>
+  </li>
+</ol>
+
+<h1 id="相关概念">相关概念</h1>
+
+<p>介绍完渲染流水线基础，再来看三个和渲染流水线相关的概念—— 重排、重绘、合成</p>
+
+<h2 id="1-更新了元素几何属性重排-reflow">1. 更新了元素几何属性（重排 Reflow）</h2>
+
+<p><img src="/assets/blog/browser/browser_render_reflow.png" alt="browser_render_reflow" /></p>
+
+<p>如果你通过JavaScript或者CSS修改元素的几何位置属性，例如改变元素的宽高，那么浏览器会触发重新布局，解析之后的一系列子阶段，这个过程叫做 重排Reflow。</p>
+
+<p>无疑，重排需要更新完整的渲染流水线，所以开销是最大的。</p>
+
+<h2 id="2-更新元素的绘制重回-repaint">2. 更新元素的绘制（重回 Repaint）</h2>
+
+<p>比如通过JS更改某些元素的背景颜色渲染流水线</p>
+
+<p><img src="/assets/blog/browser/browser_render_repaint.png" alt="browser_render_repaint" /></p>
+
+<p>图中可以看到，如果修改了元素的背景颜色，那么布局阶段将不会被执行，因为没有引起几何位置变换，所以直接进入绘制阶段，然后执行之后的一些列子阶段。</p>
+
+<p>这个过程叫做 重绘。</p>
+
+<p>相较于重排，重绘操作省去了布局和分层阶段，所以执行效率比重排操作高。</p>
+
+<h2 id="3-直接合成composite阶段">3. 直接合成(Composite)阶段</h2>
+
+<p><img src="/assets/blog/browser/browser_render_composite.png" alt="browser_render_composite" /></p>
+
+<p>我们使用CSS的transform来实现动画效果，这就可以避开重排和重绘阶段。直接在非主线程上执行合成动画操作。这样效率是最高的。因为是在非主线程上合成的，并没有占用主线程的资源，另外也避开了布局、绘制两个子阶段。</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E5%89%8D%E7%AB%AF/%E6%B5%8F%E8%A7%88%E5%99%A8/2020/05/21/浏览器渲染流程';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2020 
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+ 
+    </div>
+  </body>
+</html>

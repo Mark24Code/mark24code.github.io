@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>前端的一个方案，混合rem和非rem</title>
+  <meta name="description" content="一、什么是remHybrid 的H5 需求，一般当我们面向移动端，会考虑rem布局，或者 其他等效的布局。布局的原理就是使用一个相对单位，把书写的px通过 插件编译为相对单位，比如rem。  这样当你动态的设置 rem，整个页面的尺寸都会随之变化。rem的布局特点是等比缩放，通过等比缩放来兼容各个尺寸的手机屏幕。...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E5%89%8D%E7%AB%AF/2021/05/27/%E5%89%8D%E7%AB%AF%E7%9A%84%E4%B8%80%E4%B8%AA%E6%96%B9%E6%A1%88-%E6%B7%B7%E5%90%88rem%E5%92%8C%E9%9D%9Erem.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">前端的一个方案，混合rem和非rem</h1>
+    <p class="artilce_meta"><time datetime="2021-05-27T17:37:14+08:00" itemprop="datePublished">May 27, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="一什么是rem">一、什么是rem</h1>
+
+<p>Hybrid 的H5 需求，一般当我们面向移动端，会考虑rem布局，或者 其他等效的布局。布局的原理就是使用一个相对单位，把书写的px通过 插件编译为相对单位，比如rem。  这样当你动态的设置 rem，整个页面的尺寸都会随之变化。
+rem的布局特点是等比缩放，通过等比缩放来兼容各个尺寸的手机屏幕。</p>
+
+<p>参考：<a href="https://github.com/amfe/article/issues/17">使用Flexible实现手淘H5页面的终端适配 </a></p>
+
+<h1 id="二rem的问题">二、rem的问题</h1>
+
+<p>rem的优点就是他的缺点，他通过等比缩放来实现兼容。这时候会存在一个问题。 大屏幕和小屏幕看到的内容是一样的，不会因为屏幕变大文字增多。当然你可以把字体使用 绝对单位来书写。</p>
+
+<p>rem的问题在于当我们希望 H5可以让手机和 iPad这样的中屏幕设备共用的时候，问题就会暴露出来。一些元素会变得巨大无比。显然站在这个角度是无法接受的。</p>
+
+<h1 id="三混合方案">三、混合方案</h1>
+
+<h2 id="1配置rem的方案">1.配置rem的方案</h2>
+
+<p>关于rem 推荐的方式是    监控屏幕，动态的调整 rem大小。比如如下这段代码，可以加入。在 index.html。这里把屏幕宽度 除以10，也就是平均分成10份。</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span>
+  <span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">doc</span><span class="p">,</span> <span class="nx">win</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">const</span> <span class="nx">docEl</span> <span class="o">=</span> <span class="nx">doc</span><span class="p">.</span><span class="nx">documentElement</span><span class="p">;</span>
+    <span class="kd">const</span> <span class="nx">resizeEvt</span> <span class="o">=</span> <span class="dl">'</span><span class="s1">onorientationchange</span><span class="dl">'</span> <span class="k">in</span> <span class="nb">window</span> <span class="p">?</span> <span class="dl">'</span><span class="s1">onorientationchange</span><span class="dl">'</span> <span class="p">:</span> <span class="dl">'</span><span class="s1">resize</span><span class="dl">'</span><span class="p">;</span>
+    <span class="kd">const</span> <span class="nx">recalc</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+      <span class="kd">let</span> <span class="nx">clientWidth</span> <span class="o">=</span> <span class="nx">docEl</span><span class="p">.</span><span class="nx">clientWidth</span><span class="p">;</span>
+      <span class="nx">clientWidth</span> <span class="o">=</span> <span class="nx">clientWidth</span> <span class="o">&lt;</span> <span class="mi">750</span> <span class="p">?</span> <span class="nx">clientWidth</span> <span class="p">:</span> <span class="mi">750</span><span class="p">;</span>
+      <span class="nx">docEl</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">fontSize</span> <span class="o">=</span> <span class="p">(</span><span class="nx">clientWidth</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">+</span> <span class="dl">'</span><span class="s1">px</span><span class="dl">'</span><span class="p">;</span>
+    <span class="p">};</span>
+ 
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">doc</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+    <span class="nx">win</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="nx">resizeEvt</span><span class="p">,</span> <span class="nx">recalc</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+    <span class="nx">doc</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="dl">'</span><span class="s1">DOMContentLoaded</span><span class="dl">'</span><span class="p">,</span> <span class="nx">recalc</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+  <span class="p">})(</span><span class="nb">document</span><span class="p">,</span> <span class="nb">window</span><span class="p">);</span>
+<span class="o">&lt;</span><span class="sr">/script</span><span class="err">&gt;
+</span></code></pre></div></div>
+
+<p>配合上 rem的编译方案，可以使用 postCSS插件 <a href="https://www.npmjs.com/package/postcss-plugin-px2rem">postcss-plugin-px2rem</a>。 这里推荐的postCSS插件的原因是，实现同样的效果，可以引入sass的函数，来处理计算。但是不够优雅。因为你的代码中px必然要替换成某种函数  px2rem(12px)。这种方案在rem还在朦胧的初期是被广泛使用的。这样会污染你的源代码。今天不推荐。</p>
+
+<p>使用插件，把转换过程留给编译期间。</p>
+
+<p><a href="https://www.npmjs.com/package/postcss-plugin-px2rem">postcss-plugin-px2rem</a> 可以在 webpack 的loader中像这样配置：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">{</span>
+ 
+    <span class="nl">loader</span><span class="p">:</span> <span class="nx">require</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="dl">'</span><span class="s1">postcss-loader</span><span class="dl">'</span><span class="p">),</span>
+    <span class="nx">options</span><span class="p">:</span> <span class="p">{</span>
+      <span class="c1">// Necessary for external CSS imports to work</span>
+      <span class="c1">// https://github.com/facebook/create-react-app/issues/2677</span>
+      <span class="nl">ident</span><span class="p">:</span> <span class="dl">'</span><span class="s1">postcss</span><span class="dl">'</span><span class="p">,</span>
+      <span class="nx">plugins</span><span class="p">:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">[</span>
+        <span class="nx">require</span><span class="p">(</span><span class="dl">'</span><span class="s1">postcss-flexbugs-fixes</span><span class="dl">'</span><span class="p">),</span>
+        <span class="nx">require</span><span class="p">(</span><span class="dl">'</span><span class="s1">postcss-preset-env</span><span class="dl">'</span><span class="p">)({</span>
+          <span class="na">autoprefixer</span><span class="p">:</span> <span class="p">{</span>
+            <span class="na">flexbox</span><span class="p">:</span> <span class="dl">'</span><span class="s1">no-2009</span><span class="dl">'</span><span class="p">,</span>
+          <span class="p">},</span>
+          <span class="na">stage</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="p">}),</span>
+        <span class="c1">// Adds PostCSS Normalize as the reset css with default options,</span>
+        <span class="c1">// so that it honors browserslist config in package.json</span>
+        <span class="c1">// which in turn let's users customize the target behavior as per their needs.</span>
+        <span class="nx">postcssNormalize</span><span class="p">(),</span>
+        <span class="nx">require</span><span class="p">(</span><span class="dl">'</span><span class="s1">postcss-plugin-px2rem</span><span class="dl">'</span><span class="p">)({</span>
+          <span class="na">rootValue</span><span class="p">:</span> <span class="mf">41.4</span><span class="p">,</span>
+          <span class="na">minPixelValue</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+          <span class="na">exclude</span><span class="p">:</span> <span class="sr">/</span><span class="se">(</span><span class="sr">node_modules|styles-skip-px2rem|styles_skip_px2rem</span><span class="se">)</span><span class="sr">/</span>
+        <span class="p">})</span>
+      <span class="p">],</span>
+      <span class="nx">sourceMap</span><span class="p">:</span> <span class="nx">isEnvProduction</span> <span class="p">?</span> <span class="nx">shouldUseSourceMap</span> <span class="p">:</span> <span class="nx">isEnvDevelopment</span><span class="p">,</span>
+    <span class="p">},</span>
+  <span class="p">},</span>
+<span class="p">]</span>
+</code></pre></div></div>
+
+<p>其中比较关键的是，这里是 postcss-plugin-px2rem</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">require</span><span class="p">(</span><span class="dl">'</span><span class="s1">postcss-plugin-px2rem</span><span class="dl">'</span><span class="p">)({</span>
+  <span class="na">rootValue</span><span class="p">:</span> <span class="mf">41.4</span><span class="p">,</span>
+  <span class="na">minPixelValue</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+  <span class="na">exclude</span><span class="p">:</span> <span class="sr">/</span><span class="se">(</span><span class="sr">node_modules|styles-skip-px2rem|styles_skip_px2rem</span><span class="se">)</span><span class="sr">/</span>
+<span class="p">})</span>
+</code></pre></div></div>
+
+<p>我们前面把跟字体设置成 屏幕宽度的10分之一，就是把屏幕平均分成了十份。</p>
+
+<p>这里 <code class="language-plaintext highlighter-rouge">rootValue</code> 是一个自己设置的值。这里参考你要对应的设计图标准。这里是414px的设计稿，平均分成十份就是41.4 那么根值就是41.4。</p>
+
+<p>当你按照414px的设计稿进行标注样式的时候，就会可以页面产生放缩效果。</p>
+
+<h2 id="2混合方案">2.混合方案</h2>
+
+<p>我遇到的问题是，我们的需求是混合的，一些页面是活动页面，页面设计依赖绝对定位，于是等比放缩是一个非常好的方案。 但是一些业务页面，他需要H5和iPad共用。为了使他们不要太过夸张，整个的书写方案，要采用 bootstrap那种，媒体查询+绝对单位来书写。通过自适应宽来解决问题。</p>
+
+<p>上面得代码中 起到了关键作用。</p>
+
+<p><code class="language-plaintext highlighter-rouge">exclude: /(node_modules|styles-skip-px2rem|styles_skip_px2rem)/</code></p>
+
+<p>我个人觉得，这目前算是比较优雅的方案。</p>
+
+<p>在一些临时的跳过 px2rem 可以使用  PX，因为 px2rem只会读取小写px，而PX浏览器也能接受。 但是如果你需要一个页面都跳过 px2rem 全部书写 PX无疑也是一种污染，并且在实际工作中，你无法利用figma等设计工具的粘贴值。</p>
+
+<p>这里可以使用 exclude 。 “约定大于配置”，我们可以在项目代码中，建立一个 特征styles文件夹，这里我定义为styles-skip-px2rem 名字可读性很好。这里的样式将会跳过 px2rem, 我们的源代码里，将会是px。</p>
+
+<p>源代码杜绝了污染。</p>
+
+<p>有趣的地方来了，如果我们想要突然兼容rem了。我们只需要把  css，scss 从特征文件夹移出来，修改样式的地址引用。这样px又会被重新编译成rem。 理论上我们前期足够的考虑。我们的代码可以简单修改就可以继续复用。</p>
+
+<p>混合方案归功于插件提供了丰富的配置。这里使用 execute 排除约定文件内容，实现混合。保持源码远离污染。</p>
+
+<h2 id="3混合方案的好处">3.混合方案的好处</h2>
+
+<p>页面可以局部 等比放缩，也可以绝对像素。 更理想的方案应该如此，比如文字使用绝对单位，大屏幕可以看的更多。而头图Banner 可以使用等比放缩。</p>
+
+<p>如果再去观察手淘、京东。他们已经从一个完全rem的方案中，逐渐变成了  rem混合媒体查询的混合体了。 我不清楚他们用的什么方案，但这个方案可以考虑。</p>
+
+<h1 id="四rem-vs-px-的讨论">四、rem vs px 的讨论</h1>
+
+<p>关于 rem和px的论战有很多，比如 <a href="https://www.zhihu.com/question/313971223">知乎：为什么很多web项目还是使用 px，而不是 rem？</a></p>
+
+<p>是的，这就是对一个问题，不同的公司立足业务场景，他们取舍不同。有的公司希望百分百被还原设计图，不接受任何位移。这样rem就是优秀的方案。  比如我们的设计师不在意百分百还原，他更看重，H5和宽屏设备可以共享页面，这样rem就不满足需求，媒体查询响应式更合适。  但是我们讨论之后，也觉得一些元素也可以等比放缩。甚至一些关于定位展示很强的需求，rem依然是好的方案。</p>
+
+<p>这套混合的小方案，给大家参考下。</p>
+
+<p>个人观点：技术方案不必拘泥，我甚至信丰万物皆可MIX。MIX才会产生新事物。</p>
+
+<p>这个方案，可以说的亮点，我觉得就是，可以在 —— 不污染源代码的前提下，可以提供一个页面混合 rem和px。</p>
+
+<p>可以解放设计师也可以解放前端，尤其是他的开发过程是优雅的，不必污染源代码，figma依然可以粘贴设计师的有效值。</p>
+
+<h1 id="坑">坑</h1>
+
+<ul>
+  <li><a href="https://cloud.tencent.com/developer/article/1015533">解决因为手机设置字体大小导致h5页面在webview中变形</a></li>
+  <li><a href="https://www.jianshu.com/p/c6fc2b35893a">解决因为手机设置字体大小导致h5页面在webview中变形的BUG</a></li>
+</ul>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E5%89%8D%E7%AB%AF/2021/05/27/前端的一个方案，混合rem和非rem';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2020 
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+ 
+    </div>
+  </body>
+</html>

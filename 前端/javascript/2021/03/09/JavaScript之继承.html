@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>JavaScript之重新谈谈继承</title>
+  <meta name="description" content="JavaScript中继承的方法今天简单的总结下JavaScript中的继承，很多人的博客来自于红宝书、抑或是其他资料。把JavaScript的继承总结出了很多方法，比如：  原型法  类抄写法  组合法  组合寄生法我一直觉得很莫名其妙，然后各种技术博客开始对 1~4的各种方法谈论他的利弊。实际上呢，我认为 1...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E5%89%8D%E7%AB%AF/javascript/2021/03/09/JavaScript%E4%B9%8B%E7%BB%A7%E6%89%BF.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">JavaScript之重新谈谈继承</h1>
+    <p class="artilce_meta"><time datetime="2021-03-09T18:58:19+08:00" itemprop="datePublished">Mar 9, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="javascript中继承的方法">JavaScript中继承的方法</h1>
+
+<p>今天简单的总结下JavaScript中的继承，很多人的博客来自于红宝书、抑或是其他资料。把JavaScript的继承总结出了很多方法，比如：</p>
+<ol>
+  <li>原型法</li>
+  <li>类抄写法</li>
+  <li>组合法</li>
+  <li>组合寄生法</li>
+</ol>
+
+<p>我一直觉得很莫名其妙，然后各种技术博客开始对 1~4的各种方法谈论他的利弊。</p>
+
+<p>实际上呢，我认为 1~3这种就不算是完整的解决方案，不明白他们为什么要把简单的事情讲的那么复杂。</p>
+
+<h1 id="原型链">原型链</h1>
+
+<p>讲继承就先要讲JavaScript中继承使用的底层原理，就是原型链。原型链的设计可以用4句话概括：</p>
+
+<ol>
+  <li>构造函数，可以 new 一个对象的实例。构造函数相当于类。实例就是类生成的具体实例对象。</li>
+  <li>每一个构造函数拥有， <code class="language-plaintext highlighter-rouge">.prototype</code>属性（显式属性），即原型对象，用来保留方法或属性</li>
+  <li>每一个实例对象，拥有 <code class="language-plaintext highlighter-rouge">__proto__</code>属性（隐式属性），指向构造函数的原型对象。</li>
+  <li>当实例对象无法在自身寻找到方法，即去 <code class="language-plaintext highlighter-rouge">__proto__</code>上寻找，找不到就再去 对象的 <code class="language-plaintext highlighter-rouge">__proto__</code>上寻找，即原型链寻找</li>
+</ol>
+
+<h1 id="继承">继承</h1>
+
+<p>当子类希望构建的实例，找不到属性方法，可以顺着原型链，从父类的原型上寻找方法，以此类推。如此就实现了继承。
+一切方法都是围绕着这个来的。</p>
+
+<p>Child 继承 Parent，如下面代码所示，即完成了符合要求的继承:</p>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">Parent</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// ....</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">Child</span> <span class="p">(...</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">Parent</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="p">...</span><span class="nx">args</span><span class="p">)</span>
+    <span class="c1">// ....</span>
+<span class="p">}</span>
+
+<span class="nx">Child</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="k">new</span><span class="p">(</span><span class="nx">Parent</span><span class="p">.</span><span class="nx">prototype</span><span class="p">);</span>
+<span class="nx">Child</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="kd">constructor</span> <span class="o">=</span> <span class="nx">Child</span><span class="p">;</span>
+
+</code></pre></div></div>
+
+<p>解释：</p>
+
+<ol>
+  <li>获得父类的属性</li>
+</ol>
+
+<p>Child的构造函数中，运营了Parent的构造函数，改变了this，传参初始化。
+    这样Child得到了Parent的属性。</p>
+
+<ol>
+  <li>设置原型和构造器</li>
+</ol>
+
+<p><code class="language-plaintext highlighter-rouge">Object.create(A)</code>的作用是，创建以A作为 原型的一个对象实例。</p>
+
+<p><code class="language-plaintext highlighter-rouge">Child.prototype = Object.new(Parent.prototype);</code> 的作用是创建了以 <code class="language-plaintext highlighter-rouge">Parent.prototype</code>为原型的一个实例对象，并且作为 Child的原型。这样相当于  建立了 <code class="language-plaintext highlighter-rouge">Child.prototype 对象--- Parent.prototype</code>的关系。</p>
+
+<p>按照原型的要求，正确的给原型对象设置构造器属性，以让原型对象可以找到构造函数。
+<code class="language-plaintext highlighter-rouge">Child.prototype.constructor = Child;</code></p>
+
+<p>这样就完成了。</p>
+
+<p>当 <code class="language-plaintext highlighter-rouge">const child1 = new Child()</code> 时，child1 实例的 <code class="language-plaintext highlighter-rouge">__proto__</code>指向 <code class="language-plaintext highlighter-rouge">Child.prototype</code>。
+当child1找不到方法，就会查找  <code class="language-plaintext highlighter-rouge">Child.prototype</code>， 而  <code class="language-plaintext highlighter-rouge">Child.prototype</code> 也找不到就会找他的 <code class="language-plaintext highlighter-rouge">__proto__</code>也就是 <code class="language-plaintext highlighter-rouge">Parent.prototype</code>。</p>
+
+<p>这样就符合要求的串联起来。</p>
+
+<p>至于其他的各种方法，首先残缺的方法，根本不够完整，不应该作为方法记忆。</p>
+
+<p>其次，更高级的变种方法，就是将这种基本方法进行工厂式或者其他形式封装，本质上不变。</p>
+
+<h1 id="参考">参考</h1>
+
+<ul>
+  <li><a href="https://developer.mozilla.org/zh-CN/docs/Learn/JavaScript/Objects/Inheritance">JavaScript 中的继承</a></li>
+</ul>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E5%89%8D%E7%AB%AF/javascript/2021/03/09/JavaScript之继承';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2020 
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+ 
+    </div>
+  </body>
+</html>

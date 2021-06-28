@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>对音乐的思考(一)</title>
+  <meta name="description" content="我以程序员的视角，对音乐发起类比理解。一、人是可以理解音乐的解释器人就是一个特别的存在。可以把人看作是一种机器，这个机器最重要的特性千言万语汇成一句话 —— 能接收信息，能识别信息，能处理思考信息，能创造信息。这种就是智慧。我们现在聊音乐这部分。人能区分噪音和乐音。人是一个解释器。能接收、理解音乐。或者说欣赏。二...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E9%9F%B3%E4%B9%90/%E9%9A%8F%E7%AC%94/2021/06/10/%E5%AF%B9%E9%9F%B3%E4%B9%90%E7%9A%84%E6%80%9D%E8%80%83(%E4%B8%80).html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">对音乐的思考(一)</h1>
+    <p class="artilce_meta"><time datetime="2021-06-10T11:35:07+08:00" itemprop="datePublished">Jun 10, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <p>我以程序员的视角，对音乐发起类比理解。</p>
+
+<h1 id="一人是可以理解音乐的解释器">一、人是可以理解音乐的解释器</h1>
+
+<p>人就是一个特别的存在。可以把人看作是一种机器，这个机器最重要的特性千言万语汇成一句话 —— 能接收信息，能识别信息，能处理思考信息，能创造信息。</p>
+
+<p>这种就是智慧。</p>
+
+<p>我们现在聊音乐这部分。人能区分噪音和乐音。人是一个解释器。能接收、理解音乐。或者说欣赏。</p>
+
+<h1 id="二音乐可以分解">二、音乐可以分解</h1>
+
+<p>可以参考这里 <a href="https://www.cnblogs.com/devymex/p/3385179.html">写给理工科人看的乐理（一）声学基础</a> 更详细的回顾乐理知识。</p>
+
+<p>音乐就是一种声音。回顾初中物理，震动产生声音。声音的三要素:音调、响度、音色。</p>
+
+<p>简单说，不同的材料控制了音色，材料的松紧控制了频率，材料的震动强度控制了响度。通过三要素，人可以控制声音。</p>
+
+<p><a href="https://zh.wikipedia.org/zh-hans/%E5%8D%81%E4%BA%8C%E5%B9%B3%E5%9D%87%E5%BE%8B">十二平均律</a> 的发现十份有意思。 简单的说就是各个国家的乐师逐渐发现了音调之间存在一些稳定关系，如果把这种相对稳定的关系固定下来，人就可以控制”好听的声音“。 发现”好听“也就是”和谐”的频率关系，在历史上不断被修正。有趣的是中国的明朝的一位皇子，发明了十二平均律。</p>
+
+<p>通过十二平均律，可以稳定的推导和谐频率的排布。这就厉害了，仿佛是发现了“耳朵”这个解释器里面原子性的接口。通过调用合适的接口，就可以产生美妙的音乐。</p>
+
+<h1 id="三音乐就是程序">三、音乐就是程序</h1>
+
+<p>音乐就是一组时序的程序。人要控制的是 频率和音高。</p>
+
+<p>我们知道材料决定音色，物质的松紧决定了频率，振动强度是响度。而频率之间的关系当符合十二平均律，他是和谐的是美妙的音乐。</p>
+
+<p>人们用特定的琴弦（马毛、尼龙、金属丝……），控制松紧，按照相对关系排布。就形成了 弦乐器——吉他、古筝、琵琶……。其他乐器的类似。</p>
+
+<p>乐器经过调校。通过琴弦，琴键，或者其他的交互方式。总之，给予了稳定的频率关系。人的任务是随着时间演奏出合适的音符。音符随着时间起起伏伏构成旋律。</p>
+
+<p>音符是通用的抽象符号，仿佛是一个协议。</p>
+
+<p>所有的乐器对准这个协议。基准频率是 440HZ，十二平均律是固定的数学关系，由此万物皆定。一套通用的音乐系统由此产生。</p>
+
+<p>音乐就是一个时间的函数，不同的时间，出现的不同的音符。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[musicalNote1, musicalN2ote, …… ] = f(t); // 一刻
+
+music_frame = [musicalNote1, musicalN2ote, …… ] // 一帧
+
+Music = Sum(music_frame, t-&gt;0~T ) // 音乐= 所有时间帧求和
+
+</code></pre></div></div>
+
+<p>音符可高可低，可短可长。仿佛程序一般，可以实现特定的效果。</p>
+
+<h1 id="四谱子的构成">四、谱子的构成</h1>
+
+<p>音乐是一个随着时间的函数。作为描述音乐的谱子，一定是一个和时间相关的描述。</p>
+
+<p>乐谱不论是简谱，五线谱，也许未来还可以发明更多的形式。</p>
+
+<p>总是他一定是结合了 时间、音符（包含了音调，音高） 甚至是特定乐器的演奏方法（比如手势）。</p>
+
+<h1 id="五适合的谱子适合的乐器">五、适合的谱子适合的乐器</h1>
+
+<p>每个乐器都有特别的音色，和特别演奏操作方法。</p>
+
+<p>具体的乐器就像具体的键盘、机器。有时候可能要特别的姿势、方法才能控制。</p>
+
+<p>乐曲可以专门为特定的乐器谱写。
+一些谱子是专门为乐器书写的。</p>
+
+<p>这看起来就像，更贴切一点，应该像不同的键盘，键盘可以千奇百怪，但是他们都要输入相同的东西。</p>
+
+<h1 id="六他们本质都是创作平台万物皆可改">六、他们本质都是创作平台，万物皆可改</h1>
+
+<p>从第一原理出发。音乐的重点，是是人以及人耳。任何乐器的目标都是向这个重点服务。</p>
+
+<p>每个乐器的特点不一样。操作手法不一样。他们就像不同的编程工具。甚至就像不同的键盘。而音符是一个统一的编程语言。</p>
+
+<p>乐谱是抽象的音乐，是接口协议。具体实现需要具体的乐器演奏。</p>
+
+<p>这里想表达，不论是口琴，钢琴，吉他。不论是古典乐器还是现代乐器。不管是叶子，甚至简陋的瓶子。
+他们都是一种乐器。只要能制造震动。他们都是具体实现。</p>
+
+<p>音乐是一个抽象的存在。</p>
+
+<p>理论上乐器不应该存在绝对形式。不存在绝对权威的乐器。乐器，乐器也应该随着技术手段提高，不断便携，方便化。电子化，可编程乐器是个不错的想法。</p>
+
+<p>就像手表，从机械到电子化，并不意味着手表变差了，相反加工工艺的升级让工具更加可靠耐用，突破瓶颈。</p>
+
+<p>人不应该被传统工具法典所束缚。应该遵循第一原理。我们面向的音乐这件事情。所以不必法古，创造性的艺术更加不必拘泥形式。</p>
+
+<h1 id="七绘画音乐编程">七、绘画、音乐、编程</h1>
+
+<p>绘画、音乐、编程的特点都十分相似。</p>
+
+<p>他们面向一个解释器，编写和创造美的东西。收获结果。</p>
+
+<p>要针对性的设计，要优雅的演奏。</p>
+
+<p>涂抹的练习。收获好的结果。</p>
+
+<p>所用的工具都是一个创作平台。</p>
+
+<p>我们使用原子特性，伴随着想法而创造。</p>
+
+<p>创造者，并且MIX Everthing</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E9%9F%B3%E4%B9%90/%E9%9A%8F%E7%AC%94/2021/06/10/对音乐的思考(一)';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2020 
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+ 
+    </div>
+  </body>
+</html>

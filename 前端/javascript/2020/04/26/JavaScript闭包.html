@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Javascript闭包</title>
+  <meta name="description" content="作用域作用域可以参考：      JavaScript变量提升        JavaScript块级作用域（let、const）  作用域链关于作用域链,很多人会感觉费解,但如果你理解了调用栈、执行上下文、词法环境、变量环境等概念,那么你理解起来作用域链也会很容易。所以很是建议你结合前几篇文章将上面那几个概念学...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E5%89%8D%E7%AB%AF/javascript/2020/04/26/JavaScript%E9%97%AD%E5%8C%85.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">Javascript闭包</h1>
+    <p class="artilce_meta"><time datetime="2020-04-26T15:37:41+08:00" itemprop="datePublished">Apr 26, 2020</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="作用域">作用域</h1>
+
+<p>作用域可以参考：</p>
+
+<ul>
+  <li>
+    <p><a href="/%E5%89%8D%E7%AB%AF/javascript/2021/01/26/JavaScript%E5%8F%98%E9%87%8F%E6%8F%90%E5%8D%87.html">JavaScript变量提升</a></p>
+  </li>
+  <li>
+    <p><a href="/%E5%89%8D%E7%AB%AF/javascript/2021/01/26/JavaScript%E5%9D%97%E7%BA%A7%E4%BD%9C%E7%94%A8%E5%9F%9F.html">JavaScript块级作用域（let、const）</a></p>
+  </li>
+</ul>
+
+<h1 id="作用域链">作用域链</h1>
+
+<p>关于作用域链,很多人会感觉费解,但如果你理解了调用栈、执行上下文、词法环境、变量环境等概念,那么你理解起来作用域链也会很容易。所以很是建议你结合前几篇文章将上面那几个概念学习透彻。
+其实在每个执行上下文的变量环境中,都包含了一个外部引用,用来指向外部的执行上下文,我们把这个外部引用称为outer。
+当一段代码使用了一个变量时,JavaScript引擎首先会在“当前的执行上下文”中查找该变量,比如上面那段代码在查找myName变量时,如果在当前的变量环境中没有查找到,那么JavaScript引擎会继续在outer所指向的执行上下文中查找。</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">bar</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">myName</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">myName</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">mark</span><span class="dl">"</span>
+    <span class="nx">bar</span><span class="p">()</span>
+<span class="p">}</span>
+<span class="kd">var</span> <span class="nx">myName</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">Tony</span><span class="dl">"</span>
+<span class="nx">foo</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><img src="https://i.loli.net/2021/01/27/gQ2kOeE7IqL31DR.png" alt="scope_outer_pointer.png" /></p>
+
+<p>JS执行过程中，作用域链是由词法作用域决定的。</p>
+
+<h2 id="词法作用域">词法作用域</h2>
+
+<p>词法作用域： 词法作用域就是指作用域由代码中函数声明的位置来决定，所以词法作用域是静态的作用域，通过它就可以预测代码在执行过程在如何查找标识符。</p>
+
+<p><img src="https://i.loli.net/2021/01/27/lIMkjRwHbQgsELZ.png" alt="Lexical_Environment_overview.png" /></p>
+
+<p>词法作用域就是代码阶段就决定好的，和函数是怎么调用的没有关系。</p>
+
+<h2 id="闭包">闭包</h2>
+
+<p>在JavaScript中,根据词法作用域的规则,内部函数总是可以访问其外部函数中声明的变量,当通过调用一个外部函数返回一个内部函数后,即使该外部函数已经执行结束了,但是内部函数引用外部函数的变量依然保存在内存中,我们就把这些变量的集合称为闭包。比如外部函数是foo,那么这些变量的集合就称为foo函数的闭包。</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">myName</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">mark</span><span class="dl">"</span>
+    <span class="kd">let</span> <span class="nx">test1</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="kd">const</span> <span class="nx">test2</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="kd">var</span> <span class="nx">innerBar</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="na">getName</span><span class="p">:</span><span class="kd">function</span><span class="p">(){</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">test1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nx">myName</span>
+    <span class="p">},</span>
+    <span class="na">setName</span><span class="p">:</span><span class="kd">function</span><span class="p">(</span><span class="nx">newName</span><span class="p">){</span>
+        <span class="nx">myName</span> <span class="o">=</span> <span class="nx">newName</span>
+    <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">innerBar</span>
+<span class="p">}</span>
+<span class="kd">var</span> <span class="nx">bar</span> <span class="o">=</span> <span class="nx">foo</span><span class="p">()</span>
+<span class="nx">bar</span><span class="p">.</span><span class="nx">setName</span><span class="p">(</span><span class="dl">"</span><span class="s2">tony</span><span class="dl">"</span><span class="p">)</span>
+<span class="nx">bar</span><span class="p">.</span><span class="nx">getName</span><span class="p">()</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">bar</span><span class="p">.</span><span class="nx">getName</span><span class="p">())</span>
+</code></pre></div></div>
+
+<p>这些闭包是如何使用的呢?当执行到bar.setName方法中的 myName = “mark” 这句代码时,JavaScript引擎会沿着“当前执行上下文–&gt;foo函数闭包–&gt;全局执行上下文”的顺序来查找myName变量。</p>
+
+<h2 id="闭包是怎么回收的">闭包是怎么回收的</h2>
+
+<p>理解什么是闭包之后,接下来我们再来简单聊聊闭包是什么时候销毁的。因为如果闭包使用不正确,会很容易造成内存泄漏的,关注闭包是如何回收的能让你正确地使用闭包。通常,如果引用闭包的函数是一个全局变量,那么闭包会一直存在直到⻚面关闭;但如果这个闭包以后不再使用的话,就会造成内存泄漏。
+如果引用闭包的函数是个局部变量,等函数销毁后,在下次JavaScript引擎执行垃圾回收时,判断闭包这块内容如果已经不再被使用了,那么JavaScript引擎的垃圾回收器就会回收这块内存。</p>
+
+<p>所以在使用闭包的时候,你要尽量注意一个原则:如果该闭包会一直使用,那么它可以作为全局变量而存在;但如果使用频率不高,而且占用内存又比较大的话,那就尽量让它成为一个局部变量。</p>
+
+<h1 id="参考">参考</h1>
+
+<ul>
+  <li>
+    <p>《代码的未来》</p>
+  </li>
+  <li>
+    <p><a href="https://time.geekbang.org/column/intro/100033601">极客时间-浏览器工作原理与实践</a></p>
+  </li>
+  <li>
+    <p><a href="/%E5%89%8D%E7%AB%AF/javascript/2021/01/26/JavaScript%E5%8F%98%E9%87%8F%E6%8F%90%E5%8D%87.html">JavaScript变量提升</a></p>
+  </li>
+  <li>
+    <p><a href="/%E5%89%8D%E7%AB%AF/javascript/2021/01/26/JavaScript%E5%9D%97%E7%BA%A7%E4%BD%9C%E7%94%A8%E5%9F%9F.html">JavaScript块级作用域（let、const）</a></p>
+  </li>
+</ul>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E5%89%8D%E7%AB%AF/javascript/2020/04/26/JavaScript闭包';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2020 
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+ 
+    </div>
+  </body>
+</html>
