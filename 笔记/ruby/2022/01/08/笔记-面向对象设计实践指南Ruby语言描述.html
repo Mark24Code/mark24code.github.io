@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>笔记:面向对象设计实践指南Ruby语言描述</title>
+  <meta name="description" content="1.2.1 设计原则RobertMartin 提出 SOLID 原则：  Sing Responsibility Principle, SRB (单一职责原则)  Open-Closed Principle, OCP (开闭原则)  Liskov Substitution Principle , LSP (里氏替...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E7%AC%94%E8%AE%B0/ruby/2022/01/08/%E7%AC%94%E8%AE%B0-%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E8%AE%BE%E8%AE%A1%E5%AE%9E%E8%B7%B5%E6%8C%87%E5%8D%97Ruby%E8%AF%AD%E8%A8%80%E6%8F%8F%E8%BF%B0.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">笔记:面向对象设计实践指南Ruby语言描述</h1>
+    <p class="artilce_meta"><time datetime="2022-01-08T11:34:18+08:00" itemprop="datePublished">Jan 8, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="121-设计原则">1.2.1 设计原则</h1>
+
+<p>RobertMartin 提出 SOLID 原则：</p>
+
+<ul>
+  <li>Sing Responsibility Principle, SRB (单一职责原则)</li>
+  <li>Open-Closed Principle, OCP (开闭原则)</li>
+  <li>Liskov Substitution Principle , LSP (里氏替换原则)</li>
+  <li>Interface Segregation Principle，ISP (接口隔离原则)</li>
+  <li>Dependency Inversion Principle,DIP (依赖倒置原则)</li>
+</ul>
+
+<p>Andy Hunt 和 Dave Thomas 提出：</p>
+
+<ul>
+  <li>Don’t Repeat Yourself, DRY (不重复原则)</li>
+</ul>
+
+<p>美国东北大学(Northeastern University)迪米特项目：</p>
+
+<ul>
+  <li>Law of Demeter, LoD (迪米特法则)</li>
+</ul>
+
+<h1 id="121-设计模式">1.2.1 设计模式</h1>
+
+<p>Gang of Four, Gof(四人组)：</p>
+
+<p>Erich Gamma、Richard Helm、Ralph Johnson、Jov Vlissides 与1995年
+一起编写了 《设计模式》</p>
+
+<p>摘要</p>
+
+<p>当设计行为与编程行为分开时，所开发的那个面向对象软件也注定失败。设计是一个逐步发现的过错，他依赖往复不断的反馈。这种反馈应该是适时和递增的。</p>
+
+<h1 id="211-设计具有单一职责的类">2.1.1 设计具有单一职责的类</h1>
+
+<p>设计是保留可变性的艺术，而非达到完美性的行为。</p>
+
+<h1 id="212-组织代码以便于更改">2.1.2 组织代码以便于更改</h1>
+
+<p>代码“易于更改”定义成下面几条</p>
+
+<ul>
+  <li>更改不会产生意想不到的副作用</li>
+  <li>需求的轻微变化对代码的更改要求也相应较小</li>
+  <li>现有的代码易于重用</li>
+  <li>最简单的更改方式是添加其自身也易于更改的代码</li>
+</ul>
+
+<p>编写的代码应该具有如下几个特点</p>
+
+<ol>
+  <li>透明性（Transparent): 在所更改的代码，以及在远处依赖它的代码里，更改所产生的后果应该显而易见</li>
+  <li>合理性（Reasonable）: 任何更改所产生的成本都应该与更改所要带来的效益成正比</li>
+  <li>可用性（Usable）: 现有代码在新的环境和意想不到的环境里都可以使用</li>
+  <li>典范性（Exemplary）: 代码本身应该鼓励那些为延续这些特点而对它进行的更改</li>
+</ol>
+
+<p>简写为  TRUE 特点代码</p>
+
+<p>TRUE 特点代码的第一步是要保证每个类都只有一种单一的、定义明确的职责。</p>
+
+<h1 id="221-示例程序-自行车和齿轮">2.2.1 示例程序： 自行车和齿轮</h1>
+
+<h2 id="个人评论">个人评论</h2>
+
+<p>2.2.1 的末尾那段我非常的赞同了。就是组织代码如何确认是最好的？</p>
+
+<p>像  initialize 需要四个参数值这种，如果他未来不变化了，形式完全ok。如果未来这部分要发生变化，那么我们就要做点事情，让未来的变化易于更改。
+固定参数的方式可能就不好了。因为所有引用 初始化的地方，都要同步更改。</p>
+
+<h1 id="222-为何单一职责原则很重要">2.2.2 为何单一职责原则很重要</h1>
+
+<p>易于更改的程序，应该有易于重用的类构成。  拥有多重职责的类难以重用，内部纠缠不清。 单一职责的类像积木。
+依赖过多的职责类，会增加程序被意外破坏的概率。</p>
+
+<h1 id="223-确定一个类是否具有单一职责">2.2.3 确定一个类是否具有单一职责</h1>
+
+<p>有一种方法是假设它存在意识，然后质询它，将它的每个方法都改述为一个问题，那么提问应该会行之有效。</p>
+
+<p>另一种彻底弄清楚某类实际上做什么的方法是：尝试一句话描述它。这件事描述起来应该很简单，如果你能想出最简单的描述使用了 “和” 这样一个字，那么这个类可能有多重职责。
+如果使用了 “或” 那么这个类便具有了多重职责，只是他们的关系没那么紧密。</p>
+
+<p>OO设计者使用了 “内聚”（cohesion) 一次来描述这个概念。当某个类的所有内容都与其中心目标相关联时，就可以说这个类属于 “高内聚”（highly cohesive)或者具有单一职责。</p>
+
+<p>单一职责并不是要求一个类非常狭窄的只做一件事情，也不是要求这个类只为某种吹毛求疵的原因而进行修改。与之相反，当一个类是内聚的——这个类做的所有事情都与其目标高度相关。</p>
+
+<h1 id="23-编写拥抱变化的代码">2.3 编写拥抱变化的代码</h1>
+
+<p>有时候，你会写出很奇怪的类，他作为A不适合作为B也不适合，它还具有多重职责。除非给出更加明确的信息（未来需求），否则我们很难下决定。</p>
+
+<p>尝试挖掘更多的信息，正面修改；或者衡量今日和未来的成本，决定是否修改。</p>
+
+<p>还有一种就是，把他编写的可以拥抱变化。</p>
+
+<p>2.3.1 要依赖行为，不依赖数据</p>
+
+<p>1.隐藏实例变量</p>
+
+<p>ruby里面 数据是永远在 实例内部的，只有通过方法才能获得。实际上 reader、wrtter 构造的方法，会把 变量转换为行为。
+存在这个中间层，当数据发生变化，我们只需要重新的定义 方法 内部数据处理，从而避免了四处修改引用他的逻辑。</p>
+
+<blockquote>
+  <p>评论
+这是ruby刻意的设计。相比来说，Python和JavaScript都可以直接引用，这点确实差了一点思考。</p>
+</blockquote>
+
+<p>2.隐藏数据结构</p>
+
+<p>最糟糕的事情是依赖一个复杂的数据结构。比如 一个类中 实例变量 @data 他的值是一个嵌套数组，你需要知道 <code class="language-plaintext highlighter-rouge">[0]</code> <code class="language-plaintext highlighter-rouge">[1]</code> 具体的位置才能使用它。并且所有内部方法，凡是使用到 <code class="language-plaintext highlighter-rouge">@data</code>
+都必须要关心这个。一旦 <code class="language-plaintext highlighter-rouge">@data</code> 发生变化，对于其他引用方法是灾难性的。</p>
+
+<h3 id="评论">评论</h3>
+
+<p>参考 Page 24 页。</p>
+
+<p>主要原理是 使用自定义类，或者Ruby的 Struct 的解构把数据转化为具有接口属性的语义化解构。</p>
+
+<p>引用的地方只要关心这组数据是 可迭代的，响应 2种方法即可。</p>
+
+<p>这是一种把数据本身给接口语义化的例子</p>
+
+<p>这也不是说，Struct 之类的就是解药了。</p>
+
+<p>主要的目标是，我们通过某种方式隐藏这种混乱的数据结构。这种方式根据情况而定。</p>
+
+<h1 id="232-全面推行单一职责原则">2.3.2 全面推行单一职责原则</h1>
+
+<p>1.将额外的责任从方法里提取出来</p>
+
+<p>与类一样，方法也应该具有单一职责</p>
+
+<p>2.将类里的额外职责隔离起来</p>
+
+<p>可以单独设置一个类。或者通过 Struct的方式简单的 创建一个类。</p>
+
+<p>隔离可以让后面的修改变得安全和可具有复用。</p>
+
+<p>这个类里面可以有必要的方法，当未来的场景出现，这个类可以单独声明，方法增加。</p>
+
+<h1 id="25-单一职责小结">2.5 （单一职责）小结</h1>
+
+<p>将负责一件事的类，与程序的其余部分 隔离起来。这种隔离可支持无不良后果的更改和不进行复制的重用。</p>
+
+<h1 id="3-管理依赖关系">3 管理依赖关系</h1>
+
+<p>一个对象必须要知道其他对象的某种情况，这种 “知道” 便创建了一种以来关系。如果不仔细加以管理，那么这种依赖关系将会毁掉整个程序。</p>
+
+<h1 id="312-对象间的耦合">3.1.2 对象间的耦合</h1>
+
+<p>依赖关系就是耦合。每一个耦合都会创建一个依赖关系，两个类彼此“知道”的越多，他们耦合的就越紧密，他们的行为就越想一个单一实体。</p>
+
+<p>A、B如果耦合（彼此以来），那么你要更改A，那么你就会发现也要更改B；如果你要复用A，B也会来凑热闹；如果你要测试A，你就得测试B。</p>
+
+<p>程序往往都是第一次写完的时候，一切都很好。问题会一直被掩盖到另一个环境尝试使用或者更改B、或者A的时候。</p>
+
+<h1 id="32-编写松耦合的代码">3.2 编写松耦合的代码</h1>
+
+<h1 id="321-注入依赖关系--依赖注入dependency-injection">3.2.1 注入依赖关系 —— 依赖注入（dependency injection)</h1>
+
+<p>Page 35</p>
+
+<p>通过名字引入另一个类会创建一个主要的依赖点。这个依赖所产生的直接后果是，如果名字改变，那么两处的代码都要更改。</p>
+
+<p>Page37</p>
+
+<p>依赖注入，初始化的时候传入目标类/对象，保存成自身实例变量之一。自身的方法，访问这个变量，并且通过鸭子类型的方式工作，只认方法/接口。</p>
+
+<p>依赖注入名气很大，实际上很简单，只需要调整下参数，不需要改动内部就可以实现解耦。</p>
+
+<h1 id="322-隔离依赖关系">3.2.2 隔离依赖关系</h1>
+
+<p>不能移除的依赖关系，都把他们隔离在你的类里。</p>
+
+<p>把所有的依赖关系都当成一种细菌，把他们隔离起来</p>
+
+<ol>
+  <li>隔离实例创建</li>
+</ol>
+
+<p>1）初始initialize 中创建实例</p>
+
+<p>可以创建，并且显示的注册了一种依赖关系。</p>
+
+<p>2）延时创建</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>调用具体方法的时候</td>
+      <td> </td>
+      <td>= 的方式创建，更加lazy一点</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>分析，然后把最脆弱的部分，用自己的方法创建，方法内部可能包含着外部依赖实例创建。</p>
+
+<ol>
+  <li>移除参数顺序依赖</li>
+</ol>
+
+<p>顺序参数定义，意味着引用他的函数，也要关注参数顺序，参数顺序变化也会带来问题。</p>
+
+<p>1） 使用散列表初始化参数</p>
+
+<p>2） 显示定义默认值</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>A</td>
+      <td> </td>
+      <td>default  但是如果想要显示获得 false、nil</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>fetch方法是可取的。</p>
+
+<p>也可以内部创建一个方法提供默认值，内部对参数进行默认值 merge</p>
+
+<ol>
+  <li>隔离多参数初始化操作</li>
+</ol>
+
+<p>顺序参数、字典参数创建过成无法避免，极其复杂。可以把他放在一个单独的方法、类中。</p>
+
+<p>其实这是一种工厂模式的实践。</p>
+
+<p>把复杂创建过程给隐藏掉。</p>
+
+<h1 id="332-选择依赖方向">3.3.2 选择依赖方向</h1>
+
+<p>直接依赖、依赖反转</p>
+
+<blockquote>
+  <p>评论
+直接以来就是直接引用了名字、方法； 依赖反转就是通过传参的形式传入，内部通过约定接口来调用。
+这是两个方向的选择。
+到底如何选择控制依赖的方向。这里的关键在于，我们需要区分那些类更容易变化，然后排个序。做出选择。这里是一个平衡和评估的过程。</p>
+</blockquote>
+
+<h2 id="小结">小结</h2>
+
+<p>书里为了描述清晰，引入了UML、图标、象限。就像数学过程一样，希望他变得严谨，给出了一些比较方法。</p>
+
+<p>但是实际上这个过程，没那么复杂甚至相当简单，而且有限。我个人觉得是如此。</p>
+
+<p>就单一职责而言，使用的东西也是极其有限的。</p>
+
+<p>计算机的底层就是函数的执行栈，函数执行比如被明确的引用。引用就要使用方法。</p>
+
+<p>而写出松耦合的代码，技巧就是：</p>
+
+<ol>
+  <li>隔离（用方法隐藏操作）</li>
+  <li>控制方向，直接引用、控制反转（传参依赖接口）</li>
+</ol>
+
+<p>说了很多，但是实际上最关键的其实是——程序未来将会如何变化</p>
+
+<p>实际上我们的程序也无法预知未来如何变化，所以我们要做的就是嗅探或者警觉的增加隔离。受到变化的冲击其实也无法避免，这也是工作的日常。</p>
+
+<p>这只能说是个努力的方向。 而上面的思想方法和技巧，等于提前劳动，为未来减少劳动。</p>
+
+<h1 id="4-创建灵活接口">4 创建灵活接口</h1>
+
+<h1 id="41-理解接口">4.1 理解接口</h1>
+
+<blockquote>
+  <p>评论
+讨论的图例，给我一个灵感就是，减少一种无须的相互引用，即便可以如此，也要尽量让一切存在一种秩序。
+这种灵感来自于 Redux框架理论，对前端混乱的数据流，定义了一种方向。
+编程依然是一种对现实的建模活动，现实中，水管、电线都会实现一种一致性的排线，观感上可以寻找出秩序，而从预测，也是方便下次检查使用。这种思想其实都是一致的。
+程序需要在完成任务的同时，尽可能的维护一种内在的秩序性。
+而这种秩序性，其实就是我们追求的、大师拥有的、本书一直在聊的 关键思想。</p>
+</blockquote>
+
+<h1 id="42-定义接口">4.2 定义接口</h1>
+
+<p>区分私有接口、公共接口。</p>
+
+<p>公共接口就是对外的承诺，稳定的存在，希望外界访问，避免变化和联动修改。</p>
+
+<p>私有接口，内部使用，可以自己更改实现。不会传染性的联动修改。</p>
+
+<p>这里有个问题就是，区分出这两种接口，设计出来。</p>
+
+<h1 id="43-找出公共接口">4.3 找出公共接口</h1>
+
+<p>草稿构建，实际上要先于测试、编码。想清楚再做。</p>
+
+<p>时序图可以帮上忙。时序图可以描述 类之间调用关系。</p>
+
+<p>（UML时序图）</p>
+
+<h1 id="434-请询问要什么别告知如何做">4.3.4 请询问“要什么”，别告知“如何做”</h1>
+
+<h1 id="853-选择关系">8.5.3 选择关系</h1>
+
+<ol>
+  <li>将继承用于“是什么”关系</li>
+  <li>将鸭子类型用于“表现的想什么”关系</li>
+  <li>将组合用于“有什么”关系</li>
+</ol>
+
+<h1 id="设计最划算的测试">设计最划算的测试</h1>
+
+<p>编写可更改的代码是一门艺术，其实实践依赖于三种不同的技能。</p>
+
+<p>第一种,你必须理解面向对象设计。从实用角度可变性是唯一重要的设计指标，易于更改的代码是需要精心设计的。</p>
+
+<p>第二种，你必须要擅长代码的重构。重构指的是以这样一种方式更改软件系统的过程：他不会改变代码的外在行为，而只是改善其内部结构。</p>
+
+<blockquote>
+  <p>评论：重构其实是和外部设计是相辅相成的。</p>
+</blockquote>
+
+<p>第三种，编写高价值测试的能力。测试可以不断给你重构的信心。</p>
+
+<blockquote>
+  <p>评论：这三种是互为支撑的，在敏捷的道路上。
+让代码更加容易修改，重构就是让你的代码从一种设计变成另一种，而测试可以让你重构的时候不会受到“惩罚”。
+敏捷，可以让这种开发周期围逼近真实的需求情况去交付。更快的完成目标。</p>
+</blockquote>
+
+<h1 id="912">9.1.2</h1>
+
+<p>测试如果事无巨细，甚至编写的成本巨高，那么也没意义了。</p>
+
+<blockquote>
+  <p>评论
+所以编写测试的方法论，和上面的技巧并不冲突</p>
+</blockquote>
+
+<p>测试本身也要注意：</p>
+
+<ol>
+  <li>测试关键的部分</li>
+  <li>依赖抽象</li>
+  <li>松耦合，低深度 的编写测试</li>
+</ol>
+
+<h1 id="评论-1">评论</h1>
+
+<p>什么较艺术性呢？就是这些技巧也罢，理论也罢，都无法推向一个极端。比如全部测试、全部无差别极端解耦……</p>
+
+<p>艺术性的特点就是要靠人根据实际情况进行平衡。</p>
+
+<p>这些技巧终归是技巧罢了。看情况使用罢了。任何不合适的情况，极端的使用都会进入一个陷阱。</p>
+
+<p>按照我以前的经验，很多的东西难以发挥出作用，就是因为按照一种信条无差别极端的推进，导致很快进入了一种滥用和恶化。</p>
+
+<p>本质因为代码不论是业务还是测试他们都要产生容易改变的代码。而部分情况一味的强推，马上就会进入难以自处的漩涡。</p>
+
+<p>所以设计的关键的不是知道了某种技巧，其实这些所谓的技巧都是完全可以自己发现的。</p>
+
+<h1 id="914-了解测试的方法">9.1.4 了解测试的方法</h1>
+
+<p>BDD（行为驱动）开发，侧重于有外向内</p>
+
+<p>TDD (测试驱动)开发，侧重于由内向外</p>
+
+<p>测试鸭子类型就是 测试中 response 抽象方法</p>
+
+<p>对于父类测试，就是测试公共方法，测试继承父类的子类，对于mini_test 这种框架，也可以 include 父类的 Module</p>
+
+<p>进行继承测试。</p>
+
+<h1 id="总结">总结</h1>
+
+<p>总之，技巧方法需要灵活使用，自己不断的探索。</p>
+
+<p>这类的书看多了逐渐发现不是一个固定的模式，而是灵活使用。
+也不应该辩才一个固定的公式机械化的使用，而是灵活取舍，平衡优先。</p>
+
+<p>他也不是非黑即白，贯彻一种绝对，或者一元论。而是要很辨证的根据具体的情况使用，善用其特点，避免极端化扩大缺点。</p>
+
+<hr />
+
+<h1 id="随笔">随笔</h1>
+
+<p>其实也就一句话，考虑实现，考虑容易更改，考虑容易测试容易更改。把他们都纳入考虑，然后写出来的代码都带有设计性。</p>
+
+<p>具体的技巧无非就是：单一，隔离，控制反转，继承，组合，鸭子类型；
+对应的测试也有 (测试鸭子类型，测试可以继承，测试可以组合)</p>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E7%AC%94%E8%AE%B0/ruby/2022/01/08/笔记:面向对象设计实践指南Ruby语言描述';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

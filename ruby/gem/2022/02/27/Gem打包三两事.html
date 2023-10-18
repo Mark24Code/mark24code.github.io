@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Gem打包三两事</title>
+  <meta name="description" content="前置参考      《Ruby中Gemspec和Gemfile的区别》        gemspec specification-reference  开发一个gem手动新建gem 官方提供了一个简单的教程。make-your-own-gem主要围绕描述通过自己新建 gemspec、rakefile 来实现一个约...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/gem/2022/02/27/Gem%E6%89%93%E5%8C%85%E4%B8%89%E4%B8%A4%E4%BA%8B.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">Gem打包三两事</h1>
+    <p class="artilce_meta"><time datetime="2022-02-27T23:31:43+08:00" itemprop="datePublished">Feb 27, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="前置参考">前置参考</h1>
+
+<ul>
+  <li>
+    <p><a href="/ruby/2022/02/28/Ruby%E4%B8%ADGemspec%E5%92%8CGemfile%E7%9A%84%E5%8C%BA%E5%88%AB.html">《Ruby中Gemspec和Gemfile的区别》</a></p>
+  </li>
+  <li>
+    <p><a href="https://guides.rubygems.org/specification-reference/">gemspec specification-reference</a></p>
+  </li>
+</ul>
+
+<h1 id="开发一个gem">开发一个gem</h1>
+
+<h2 id="手动新建">手动新建</h2>
+
+<p>gem 官方提供了一个简单的教程。
+<a href="https://guides.rubygems.org/make-your-own-gem/">make-your-own-gem</a></p>
+
+<p>主要围绕描述通过自己新建 gemspec、rakefile 来实现一个约定gem的打包过程。</p>
+
+<h2 id="自动脚手架">自动脚手架</h2>
+
+<p>如果你已经使用了 bundler，bundler提供了一个脚手架来制作gem，生成的结果和上面的目标类似。</p>
+
+<p><code class="language-plaintext highlighter-rouge">bundle gem &lt;YOUR GEM NAME&gt;</code></p>
+
+<h1 id="重点打包成可执行程序-exe文件夹">重点：打包成可执行程序 exe文件夹</h1>
+
+<p>以前是 bin 文件夹存放可执行文件，后来 bin 用来存放和开发相关的一些可执行文件。</p>
+
+<p>现在 exe 文件夹内部用来存放对外暴露的可执行文件。</p>
+
+<blockquote>
+  <p>Since bundler 1.8 all application’s executables should be located inside an exe folder instead of bin, so that bin folder only contains binstubs and development-only executables. Therefore the gemspec should have <code class="language-plaintext highlighter-rouge">spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }</code> and file executable with chmod +x exe/gemname</p>
+</blockquote>
+
+<p>最近脚手架的摘要</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  #file: PROJECT_NAME.gemspec
+  spec.bindir = "exe"
+  spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
+  spec.require_paths = ["lib"]
+
+</code></pre></div></div>
+
+<p>我们需要把可执行文件，放在 exe 中。</p>
+
+<p>并且最后放入什么名字，就会映射到 系统的bin中。这里为了执行方便。比如你的可执行程序是</p>
+
+<p>game.rb 也请命名为 game。如果我们写成 game.rb 那么放入 PATH 的就是 game.rb 相同名字的映射文件，我们需要写 <code class="language-plaintext highlighter-rouge">game.rb</code> 才能执行。所以请以最终执行的结果的方式命名文件。</p>
+
+<p>可执行文件的内部，完全就是ruby代码。加入这样，我们引用自己内部的文件的 class 进行主进程启动。</p>
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">#!/usr/bin/env ruby</span>
+
+<span class="nb">require_relative</span> <span class="s2">"../lib/snakes"</span>
+
+<span class="no">Snakes</span><span class="o">::</span><span class="no">Game</span><span class="p">.</span><span class="nf">new</span><span class="p">.</span><span class="nf">run</span>
+
+</code></pre></div></div>
+
+<h1 id="bundle-gem-脚手架提供的-rake-帮助的程序">bundle gem 脚手架提供的 rake 帮助的程序</h1>
+
+<p><code class="language-plaintext highlighter-rouge">rake -T</code>脚手架提供了 build 和 install:local</p>
+
+<p>可以用来调试</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rake build                 # Build snakes-0.1.0.gem into the pkg directory
+rake build:checksum        # Generate SHA512 checksum if snakes-0.1.0.gem into the checksums directory
+rake clean                 # Remove any temporary products
+rake clobber               # Remove any generated files
+rake install               # Build and install snakes-0.1.0.gem into system gems
+rake install:local         # Build and install snakes-0.1.0.gem into system gems without network access
+rake release[remote]       # Create tag v0.1.0 and build and push snakes-0.1.0.gem to rubygems.org
+rake rubocop               # Run RuboCop
+rake rubocop:auto_correct  # Auto-correct RuboCop offenses
+rake test                  # Run tests
+
+</code></pre></div></div>
+
+<p>主要是  <code class="language-plaintext highlighter-rouge">rake release</code> 会帮助你根据 verison 文件的版本号，进行打包 gem 发布，以及在你的git中打上tag。</p>
+
+<h1 id="重点关于-gem-的依赖">重点：关于 gem 的依赖</h1>
+
+<p>以前是 <code class="language-plaintext highlighter-rouge">add_dependency</code> 现在做了更加细致的区分</p>
+
+<ul>
+  <li><a href="https://guides.rubygems.org/specification-reference/#add_development_dependency">add_development_dependency</a></li>
+  <li><a href="https://guides.rubygems.org/specification-reference/#add_runtime_dependency">add_runtime_dependency</a></li>
+</ul>
+
+<p>重点观察下这是一个 DSL 的描述文件，多个依赖就声明多句。</p>
+
+<p>这里容易混乱的，还是要明确下 <a href="/ruby/2022/02/28/Ruby%E4%B8%ADGemspec%E5%92%8CGemfile%E7%9A%84%E5%8C%BA%E5%88%AB.html">《Ruby中Gemspec和Gemfile的区别》</a></p>
+
+<h1 id="题外话-安装ruby和安装完gem但是无法工作">题外话： 安装Ruby和安装完gem但是无法工作</h1>
+
+<p>大概率是因为 gem 的path没有被加入到系统的path而导致的。可以在你的 .zshrc  或者  .bashrc 取决于你在用什么, 加入这两句。添加最新ruby的path。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GEM_BIN=`(gem env | sed -n "s/.*EXECUTABLE DIRECTORY: \(.*\)/\1/p")`
+export PATH=$GEM_BIN:$PATH
+</code></pre></div></div>
+
+<hr />
+
+<h1 id="二次补充">二次补充</h1>
+
+<p>1.创建 Gem模板</p>
+
+<p><code class="language-plaintext highlighter-rouge">bundle gem &lt;项目名&gt;</code></p>
+
+<p>1.1 开发 Github的Actions</p>
+
+<p>不同的CI机器可能平台不同</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#  arm64-darwin-21
+#  ruby
+#  x86_64-darwin
+#  x86_64-linux
+
+bundle lock --add-platform x86_64-darwin
+bundle lock --add-platform ruby
+</code></pre></div></div>
+<p>2.开发完毕 build gem</p>
+
+<p>build 那个 gemspec</p>
+
+<p><code class="language-plaintext highlighter-rouge">gem build &lt;your_gem&gt;.gemspec </code></p>
+
+<p>3.本地安装检查</p>
+
+<p><code class="language-plaintext highlighter-rouge">gem install ./&lt;your_gem&gt;-1.0.0.gem</code></p>
+
+<p>4.发布</p>
+
+<p><code class="language-plaintext highlighter-rouge">gem push ./&lt;your_gem&gt;-1.0.0.gem </code></p>
+
+<p>通用Actions举例</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will download a prebuilt Ruby version, install dependencies and run tests with Rake
+# For more information see: https://github.com/marketplace/actions/setup-ruby-jruby-and-truffleruby
+
+
+name: Ruby
+
+
+
+on:
+push:
+branches: [ "main" ]
+
+pull_request:
+branches: [ "main" ]
+
+
+
+permissions:
+contents: read
+
+
+
+jobs:
+test:
+
+
+runs-on: ubuntu-latest
+
+strategy:
+matrix:
+ruby-version: ['2.6', '2.7', '3.0']
+
+
+
+steps:
+- uses: actions/checkout@v3
+
+- name: Set up Ruby
+
+# To automatically get bug fixes and new Ruby versions for ruby/setup-ruby,
+# change this to (see https://github.com/ruby/setup-ruby#versioning):
+# uses: ruby/setup-ruby@v1
+uses: ruby/setup-ruby@2b019609e2b0f1ea1a2bc8ca11cb82ab46ada124
+
+with:
+ruby-version: $
+
+bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+
+- name: Run tests
+
+run: bundle exec rake
+</code></pre></div></div>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/gem/2022/02/27/Gem打包三两事';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1665 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mark24</title>
+    <description>记录灵感、技术、思考</description>
+    <link>https://mark24code.github.io/</link>
+    <atom:link href="https://mark24code.github.io/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Thu, 19 Oct 2023 00:35:19 +0800</pubDate>
+    <lastBuildDate>Thu, 19 Oct 2023 00:35:19 +0800</lastBuildDate>
+    <generator>Jekyll v4.3.2</generator>
+    
+      <item>
+        <title>Ruby 元编程概要</title>
+        <description>&lt;h1 id=&quot;前言&quot;&gt;前言&lt;/h1&gt;
+
+&lt;p&gt;个人总结，方便回忆。偏向自言自语。&lt;/p&gt;
+
+&lt;p&gt;Ruby 的概念非常多，重点在于划分，可以让他清楚一些：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;OOP 常规部分&lt;/li&gt;
+  &lt;li&gt;self&lt;/li&gt;
+  &lt;li&gt;元编程动态修改的部分&lt;/li&gt;
+  &lt;li&gt;其他辅助功能&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;最后觉得理解 Ruby 复杂之处的关键就是 self，任何疑难杂症，确认了 self 也就能找到问题的突破口了。&lt;/p&gt;
+
+&lt;div class=&quot;language-text highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;“understanding self is the key to Ruby. Also the key to life”.
+                                             —— Dave Thomas
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h1 id=&quot;一ruby-的面向对象基础&quot;&gt;一、Ruby 的面向对象基础&lt;/h1&gt;
+
+&lt;p&gt;Ruby 的面向对象其实并不特别。基本概念和其他语言保持一致。&lt;/p&gt;
+
+&lt;p&gt;1）类、实例、模块&lt;/p&gt;
+
+&lt;p&gt;这完全是 普通的面向对象的概念&lt;/p&gt;
+
+&lt;p&gt;特别一点的存在：&lt;/p&gt;
+
+&lt;p&gt;2）作用域门：class、module、def 彼此互不可见&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;class 内部 def 通过 @ 实例变量通信&lt;/li&gt;
+  &lt;li&gt;module、class以及 def 之间共通的只有常量&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;3）块、lambda&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;lambda 是匿名函数&lt;/li&gt;
+  &lt;li&gt;块，自带周围环境的绑定，即闭包；和 Python、JS 不同，Ruby需要有目的的使用闭包（&lt;strong&gt;经过我的理解，闭包是接口预留给用户的&lt;/strong&gt;）&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;二ruby-的继承&quot;&gt;二、Ruby 的继承&lt;/h1&gt;
+
+&lt;h2 id=&quot;1-ruby的模式&quot;&gt;1. Ruby的模式&lt;/h2&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;receiver.message&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;调用方法被认为是发给 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;receiver&lt;/code&gt; 的消息。&lt;/p&gt;
+
+&lt;p&gt;实际上，有一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;current_object&lt;/code&gt; 概念就是指当前的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;receiver&lt;/code&gt;，它会被放在 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;self&lt;/code&gt; 变量里。&lt;/p&gt;
+
+&lt;p&gt;程序的执行过程中，遇到 module、class、def、xxx_eval、receiver.message形式显式调用 都会切换 self 执行完毕又会切换回来。&lt;/p&gt;
+
+&lt;p&gt;显式调用，self 会被设置为对象，方法会在 对象的链路里查找。&lt;/p&gt;
+
+&lt;p&gt;隐式调用，receiver 会被设置为 self ，方法查询就会在 self 的链路中查找。&lt;/p&gt;
+
+&lt;p&gt;理解 self 就是至关重要的。&lt;/p&gt;
+
+&lt;h2 id=&quot;2-receiver-ruby-查找方法的方式是固定的&quot;&gt;2. receiver Ruby 查找方法的方式是固定的：&lt;/h2&gt;
+
+&lt;p&gt;查询方式：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;1）单例类（如果有的话）&lt;/li&gt;
+  &lt;li&gt;2）类&lt;/li&gt;
+  &lt;li&gt;3）类的继承链条&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;可以通过执行的方式获得查询路径：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;1）单例类： &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;xxx.singleton_class&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;2) 类以及单继承链： &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;xxx.class.ancestors&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;3-ruby-面向对象底层逻辑&quot;&gt;3. Ruby 面向对象底层逻辑：&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;1）Ruby 的一切几乎都是对象&lt;/li&gt;
+  &lt;li&gt;2）Ruby 的 class 也是实例&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Ruby 的对象就是一个结构体，包含：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;1）flags&lt;/li&gt;
+  &lt;li&gt;2）实例属性&lt;/li&gt;
+  &lt;li&gt;3）指向类&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;类 保存的是：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;1）方法&lt;/li&gt;
+  &lt;li&gt;2）superclass&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;设计与推论&quot;&gt;设计与推论&lt;/h2&gt;
+
+&lt;h4 id=&quot;树形结构&quot;&gt;树形结构&lt;/h4&gt;
+
+&lt;p&gt;Ruby 只支持单继承；Ruby 的所有类默认继承 Object。&lt;/p&gt;
+
+&lt;p&gt;这两个推论不难得出：所有的类会构成一个树形彼此引用的结构；所有的类在 根 层级共享方法。&lt;/p&gt;
+
+&lt;h4 id=&quot;环形结构&quot;&gt;环形结构&lt;/h4&gt;
+
+&lt;p&gt;Ruby 在文件中，即不在任何类中的方法，会被定义在 当前的对象 实例 main 上。
+Ruby 的所有代码跑在了一个 Object 的实例化对象上面。&lt;/p&gt;
+
+&lt;p&gt;这就类似于所有的代码，定义执行在一个 Object 的 实例上下文中&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;n&quot;&gt;main&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;instance_eval&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;sr&quot;&gt;//&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;your&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;所有定义在 文件中的方法，最后都是 main 的 private 方法。&lt;/p&gt;
+
+&lt;p&gt;所有 后期复杂自定义类的 实例，寻找方法的时候，会沿着 祖先链条查找，最后会查到 Object，然后会访问到 Object 的私有方法，最后会访问到 main 上下文中定义的方法。&lt;/p&gt;
+
+&lt;p&gt;所有方法一个不剩，都会被查找一圈。有一个美丽的环形结构。&lt;/p&gt;
+
+&lt;p&gt;同时告诉我们，尽可能不要在 文件的最外层上下文中定义方法，这个和 Kernel 方法无异。&lt;/p&gt;
+
+&lt;h2 id=&quot;4单例类&quot;&gt;4.单例类&lt;/h2&gt;
+
+&lt;p&gt;每一个对象除了类定义时候的方法，还有一个空间 —— 单例类&lt;/p&gt;
+
+&lt;p&gt;可以保存属于他自己的方法的地方&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;1) def 定义&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;instance_name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;xxxx&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;2) “class «” 定义形式&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;【&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;instance&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;】&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;xxx&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;定义 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;【instance】&lt;/code&gt; 的 单例类&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;class &amp;lt;&amp;lt;  【instance】&lt;/code&gt;, 可以用下面几种方式，来说服自己理解这个丑陋的语法：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;可以认为是&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt; class &amp;lt;&amp;lt; &lt;/code&gt;是 单例类&lt;/li&gt;
+  &lt;li&gt;可以认为这种特殊语法 把 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;【instance】&lt;/code&gt;切换成了当前 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;self&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;可以认为这种特殊语法，把方法注入到 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;【instance】&lt;/code&gt;的单例类中&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;PS: 由于 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;self&lt;/code&gt; 的存在，为了通用性 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;【instance】&lt;/code&gt; 通常会是上下文中的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;self&lt;/code&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;三ruby-特殊的地方&quot;&gt;三、Ruby 特殊的地方&lt;/h1&gt;
+
+&lt;p&gt;Ruby 特殊的地方就是 元编程 能力，可以改变自身。
+讲清楚 self 就可以讲明白 元编程&lt;/p&gt;
+
+&lt;p&gt;程序的执行者，就是 数据+函数；而面向对象把这两个封装成了： 类（包含：数据、方法）
+元编程，是动态的塑造  类  的能力。&lt;/p&gt;
+
+&lt;p&gt;（笔者：没有 meta-meta programming 的原因，因为再抽象一层意义不大 :P）&lt;/p&gt;
+
+&lt;p&gt;我们知道了class、以及实例查找方法的固定套路、以及self&lt;/p&gt;
+
+&lt;p&gt;元编程由几个部分组成&lt;/p&gt;
+
+&lt;p&gt;1）动态调用方法&lt;/p&gt;
+
+&lt;p&gt;除了语法的声明式，还有内置的 API 可以调用做相同的事情。&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;define_method&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;define_class&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;send&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;# 。。。&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;2) 类宏: 类方法，在类声明的上下文中执行，结果是生成定义的实例方法&lt;/p&gt;
+
+&lt;p&gt;理解类宏的关键是：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;类也是实例&lt;/li&gt;
+  &lt;li&gt;类的声明部分，也在执行代码&lt;/li&gt;
+  &lt;li&gt;类方法除了被单独外部调用，也可以在类声明部分执行，用来生成实例方法&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;实际上只有 Ruby 精心的预留设计，才能促成这样的结果。
+这些特点是有意而为之。&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;# 常见内置类宏举例&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;attr_accessor&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;alias&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;3）xxx_eval ：eval的特点是可以执行字符串、block；最重要的差距是，他会改变 self&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;xxx_eval&lt;/code&gt; 的内部会切 self&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;class_eval&lt;/code&gt; 只在 class 中使用&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;eval&lt;/code&gt; 是 字符串和传入绑定&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;instance_eval&lt;/code&gt; 最常用，他总是在定义单例类方法
+  由于一切都是对象：普通对象定义的就是实例方法、如果定义在类上，就等于类方法&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;xxx_eval&lt;/code&gt; 可以接入 self 的作用域&lt;/p&gt;
+
+&lt;p&gt;4）modules 与 mixins&lt;/p&gt;
+
+&lt;p&gt;类中：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;include：把方法放入当前 class 的继承链条，如果在 class 初始化中执行等同于拓展了 &lt;strong&gt;实例方法&lt;/strong&gt;&lt;/li&gt;
+  &lt;li&gt;extend：把方法放入 当前的单例类， class 初始化中执行等同于拓展了 &lt;strong&gt;类方法&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;至于其他的 prepend、refinement 都是辅助&lt;/p&gt;
+
+&lt;p&gt;5）Hooks&lt;/p&gt;
+
+&lt;p&gt;一些周期的钩子，比如继承&lt;/p&gt;
+
+&lt;p&gt;6）自省&lt;/p&gt;
+
+&lt;p&gt;通过读取属性，来判断
+配合 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;=~&lt;/code&gt; 内部正则来工作&lt;/p&gt;
+
+&lt;p&gt;7）proxy：xxx_missing&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;method_missing&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;const_missing&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;respond_to_missing&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;# 。。。&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;在这里可以收集失败方法，使用 其他 1）~ 6）&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;* 自省，来判断方法
+* hooks，来判断注入阶段
+* define，动态定义方法
+* send，动态发送方法
+* eval，求值
+* 类宏，可以使用来定义方法
+* super 交还给父方法，不带参数等于继承所有参数
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;动态生成新的类、方法&lt;/p&gt;
+
+&lt;h1 id=&quot;四有效的方法-self&quot;&gt;四、有效的方法 self&lt;/h1&gt;
+
+&lt;p&gt;Ruby 的执行，用远在围绕着 self&lt;/p&gt;
+
+&lt;p&gt;当遇到困惑的时候：&lt;/p&gt;
+
+&lt;p&gt;在当前代码中，打印 self； 或者使用 instance_eval 中 打印 self&lt;/p&gt;
+
+&lt;p&gt;self 作为探针，可以反映出当前正在工作的对象&lt;/p&gt;
+
+&lt;p&gt;self 可以按图索骥：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;class&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;class&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ancestors&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;singleton_class&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;来查询当前的工作状态&lt;/p&gt;
+
+&lt;h1 id=&quot;五dsl&quot;&gt;五、DSL&lt;/h1&gt;
+
+&lt;p&gt;self 和 instance_eval 的神奇组合&lt;/p&gt;
+
+&lt;p&gt;这是由 Ruby 的几个规则设定，组合下的产物：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;1）由于上下文中一直存在 self&lt;/li&gt;
+  &lt;li&gt;2）隐式调用的方法，会默认调用当前的 self 方法&lt;/li&gt;
+  &lt;li&gt;3）instance_eval 是会切换到 当前 self 到 instance 的上下文&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;这样外部的 block 可以省略 receiver 直接书写 instance 内部的方法名&lt;/p&gt;
+
+&lt;p&gt;这样就是 DSL 的书写范式&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Demo&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;attr_accessor&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:cache&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;initialize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;block&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;vi&quot;&gt;@cache&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;instance_eval&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;block&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;attr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;vi&quot;&gt;@cache&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;value&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;d&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Demo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+	&lt;span class=&quot;c1&quot;&gt;# 这里被eval 执行，这里的 self 是对象的上下文&lt;/span&gt;
+	&lt;span class=&quot;c1&quot;&gt;# 这里 调用 attr 省略了调用者，呈现出语言形态&lt;/span&gt;
+	&lt;span class=&quot;c1&quot;&gt;# 这部分就是 DSL&lt;/span&gt;
+	&lt;span class=&quot;c1&quot;&gt;# 这部分的 程序，也可以读取文件的代码，以DSL 形式书写的文件，进行读取&lt;/span&gt;
+  &lt;span class=&quot;kp&quot;&gt;attr&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:hobby&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;programming&quot;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;cache&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h1 id=&quot;总结&quot;&gt;总结&lt;/h1&gt;
+
+&lt;p&gt;Ruby 丰富的 feature，是刻意设计，有意制造出这么多的组合效果。继承 Lisp 的基因。可以持续变化自身的语言。&lt;/p&gt;
+
+&lt;p&gt;Ruby 设计思想非常深邃。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;面向对象，强行的规定所有变量只能通过方法获取。这是使用了一种设计模式，最大可能应对未来变化。&lt;/li&gt;
+  &lt;li&gt;复用结构，有 class、module，可以动态的调整模块的继承顺序。环形查找结构、树形的继承结构。&lt;/li&gt;
+  &lt;li&gt;使用 Module管理模块，潜在为了配合：Monkey patching&lt;/li&gt;
+  &lt;li&gt;所有语言构建都可以改变；每一个语言组件都是对象，都可以动态的添加、删除方法。&lt;/li&gt;
+  &lt;li&gt;DSL，eval，proxy 语言可以动态的求值，根据输入动态的生成方法&lt;/li&gt;
+  &lt;li&gt;……&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Ruby 很适合抽象程度高的目标。&lt;/p&gt;
+</description>
+        <pubDate>Wed, 18 Oct 2023 23:41:25 +0800</pubDate>
+        <link>https://mark24code.github.io/ruby/2023/10/18/Ruby-%E5%85%83%E7%BC%96%E7%A8%8B%E6%91%98%E8%A6%81.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ruby/2023/10/18/Ruby-%E5%85%83%E7%BC%96%E7%A8%8B%E6%91%98%E8%A6%81.html</guid>
+        
+        
+        <category>Ruby</category>
+        
+      </item>
+    
+      <item>
+        <title>【翻译】Async Ruby（异步Ruby）</title>
+        <description>&lt;ul&gt;
+  &lt;li&gt;原文作者：&lt;a href=&quot;https://brunosutic.com/&quot;&gt;Bruno Sutic&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;原文链接: &lt;a href=&quot;https://brunosutic.com/blog/async-ruby&quot;&gt;《Async Ruby》&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;原文时间：2021年10月30日&lt;/li&gt;
+  &lt;li&gt;原文讨论：&lt;a href=&quot;https://news.ycombinator.com/item?id=29049881&quot;&gt;Hacker News 讨论&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;译者：&lt;a href=&quot;https://github.com/Mark24Code&quot;&gt;Mark24&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;译者 Email：mark.zhangyoung@gmail.com&lt;/li&gt;
+  &lt;li&gt;译文链接：https://mark24code.github.io/ruby/2023/10/12/Async-Ruby.html&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Ruby 已经有了异步实现！&lt;/p&gt;
+
+&lt;p&gt;它现在就可使用，已经做好了投入生产的准备，而且它可能是过去十年甚至更久时间里 Ruby 发生的最令人振奋的事情。&lt;/p&gt;
+
+&lt;p&gt;Async Ruby 给这门语言添加了新的并发特性；你可以将其视为“没有任何缺点的线程”。它已经在酝酿了几年，也终
+于在 Ruby 3.0 中准备好进入主流。&lt;/p&gt;
+
+&lt;p&gt;在这篇文章中，我希望向你展示异步 Ruby 的所有力量、可扩展性和魔力。&lt;strong&gt;如果你热爱 Ruby，那这应该会让你非常激动！&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;async-gem&quot;&gt;Async gem&lt;/h3&gt;
+
+&lt;p&gt;什么是 Async Ruby？&lt;/p&gt;
+
+&lt;p&gt;首先，&lt;a href=&quot;https://github.com/socketry/async&quot;&gt;Async 只是一个gem&lt;/a&gt;，可以通过 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gem install async&lt;/code&gt; 进行安装。这是一个相当特殊的 gem，因为 &lt;strong&gt;Matz( Ruby 的创始人) 请它加入 Ruby 的标准库&lt;/strong&gt;，但邀请还未被接受。&lt;/p&gt;
+
+&lt;p&gt;Async Ruby 是由 &lt;a href=&quot;https://github.com/ioquatix&quot;&gt;Samuel Williams&lt;/a&gt; 创建的，他也是一个 Ruby 核心贡献者。Samuel还实现了 Fiber Scheduler（纤程调度器），这是 Ruby 3.0 的一个重要特性。它是”库无关的”，未来可能有其他用途，但目前，&lt;strong&gt;纤程调度器的主要目的是使 async gem 与 Ruby 无缝集成&lt;/strong&gt;。&lt;/p&gt;
+
+&lt;p&gt;并不是很多 gem 能得到他们自定义的 Ruby 集成，但这个是值得的！&lt;/p&gt;
+
+&lt;p&gt;所有这些都告诉你，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;async&lt;/code&gt; 不是”只是外面的另一个 gem”。&lt;strong&gt;Ruby核心团队，包括 Matz 本人，都在支持这个 gem ，希望它能成功。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;async-生态&quot;&gt;Async 生态&lt;/h3&gt;
+
+&lt;p&gt;Async 还是一个 gem 生态系统，这些 gem 能很好地一起工作。以下是一些最有用的例子：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;async-http&lt;/code&gt; 是一个功能丰富的 HTTP 客户端&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;falcon&lt;/code&gt; 是围绕 Async 核心构建的 HTTP 服务器&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;async-await&lt;/code&gt; 是 Async 的语法糖&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;async-redis&lt;/code&gt; 是 Redis 客户端&lt;/li&gt;
+  &lt;li&gt;…以及许多其他的&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;虽然上面列出的每一个 gem 都提供了一些有用的东西，但事实是你只需要核心 async gem 就可以获取它的大部分好处。&lt;/p&gt;
+
+&lt;h3 id=&quot;异步模型asynchronous-paradigm&quot;&gt;异步模型（Asynchronous paradigm）&lt;/h3&gt;
+
+&lt;p&gt;Asynchronous programming（异步编程），（在任何语言中，包括 Ruby）允许同时运行许多事情。这最常见的是多个网络 I/O 操作（如 HTTP 请求），因为在这方面 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;async&lt;/code&gt; 是最有效的。&lt;/p&gt;
+
+&lt;p&gt;多任务操作经常带来混乱：“回调地狱（callback hell）”，“Promise hell（Promise地狱）”，乃至 “async-await hell（async-await地狱）” 是其他语言中 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;async&lt;/code&gt; 接口的众所周知的缺点。&lt;/p&gt;
+
+&lt;p&gt;但 Ruby 是不同的。&lt;strong&gt;由于其超群的设计，Async Ruby 不受任何这些 *-地狱的困扰。它允许编写出令人惊喜的干净、简单且有序的代码。&lt;/strong&gt;它是一个像 Ruby 一样优雅的 async 实现。&lt;/p&gt;
+
+&lt;p&gt;注意：Async 不能绕过 Ruby 的全局解释器锁（GIL）。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;译者注：&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Async gem 以及 Fiber Scheduler 都是工作在当前主线程。他们受到 GIL 约束。&lt;/li&gt;
+  &lt;li&gt;不受 GIL 约束参考 &lt;a href=&quot;https://docs.ruby-lang.org/en/master/ractor_md.html&quot;&gt;Ractor&lt;/a&gt;，Ractor 被设计用来提供 Ruby 的并行执行功能，而不需要考虑线程安全问题。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;同步示例synchronous-example&quot;&gt;同步示例（Synchronous example）&lt;/h3&gt;
+
+&lt;p&gt;让我们从一个简单的例子开始：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;open-uri&quot;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;URI&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/1.6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;no&quot;&gt;URI&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/1.6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Duration: &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;上述代码正在发起两个 HTTP 请求。单个 HTTP 请求的总持续时间为 2 秒，包括：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;大约 0.2 秒的网络延迟在进行请求时&lt;/li&gt;
+  &lt;li&gt;1.6 秒的服务器处理时间&lt;/li&gt;
+  &lt;li&gt;大约 0.2 秒的网络延迟在接收响应时&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;让我们运行这个示例：&lt;/p&gt;
+
+&lt;p&gt;持续时间：4.010390391&lt;/p&gt;
+
+&lt;p&gt;如预期，程序需要2 x 2秒 = 4秒才能完成。&lt;/p&gt;
+
+&lt;p&gt;这段代码还不错，但它运行速度慢。对于这两个请求，执行过程大概像这样：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;触发一个HTTP（超文本传输协议）请求&lt;/li&gt;
+  &lt;li&gt;等待2秒以获取响应&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;问题在于程序在大部分时间里都处于等待状态；2 秒钟（对于计算机）就像永恒。&lt;/p&gt;
+
+&lt;h3 id=&quot;threads线程&quot;&gt;Threads（线程）&lt;/h3&gt;
+
+&lt;p&gt;提高多个网络请求速度的常用方法是使用线程。以下是一个示例：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;open-uri&quot;&lt;/span&gt;
+
+&lt;span class=&quot;vi&quot;&gt;@counter&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt;
+
+&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;upto&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;Thread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;no&quot;&gt;URI&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/1.6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;vi&quot;&gt;@counter&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;each&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Duration: &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;代码的输出是：&lt;/p&gt;
+
+&lt;p&gt;持续时间: 2.055751087&lt;/p&gt;
+
+&lt;p&gt;我们将执行时间缩短到2秒钟，这表明请求在同时运行。那么，问题解决了吗？&lt;/p&gt;
+
+&lt;p&gt;好吧，别过于着急：&lt;strong&gt;如果你做过任何真实世界的线程编程，你会知道线程很难。真的，非常难。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;如果你打算做任何严肃的线程工作，你最好习惯使用互斥（mutexes），条件变量（condition variables），处理语言级的竞态条件（race conditions）…甚至我们的简单示例在 @counter += 1 这一行就有一个竞态条件错误！&lt;/p&gt;
+
+&lt;p&gt;线程是困难的，并且毫无疑问下面的声明在Ruby社区一直被不断提及：&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  I regret adding threads.
+
+                    — Matz
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;async-例子&quot;&gt;Async 例子&lt;/h2&gt;
+
+&lt;p&gt;鉴于所有的线程复杂性，Ruby社区早就应该有一个更好的并发模式。有了Async Ruby，我们终于有了一种。&lt;/p&gt;
+
+&lt;h3 id=&quot;async-http&quot;&gt;async-http&lt;/h3&gt;
+
+&lt;p&gt;让我们看看使用 Async Ruby 来进行两次 HTTP 请求的同样的例子：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;async&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;async/http/internet&quot;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;http_client&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Async&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;HTTP&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Internet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;http_client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/1.6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;http_client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/1.6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Duration: &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;示例的输出是：&lt;/p&gt;
+
+&lt;p&gt;持续时间：1.996420725&lt;/p&gt;
+
+&lt;p&gt;看看总运行时间，我们可以看出请求是同时运行的。&lt;/p&gt;
+
+&lt;p&gt;这个例子显示了 Async Ruby 程序的一般结构：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;你总是从一个传递任务的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Async&lt;/code&gt; 块开始。&lt;/li&gt;
+  &lt;li&gt;这个主任务通常用于用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;task.async&lt;/code&gt; 生成更多的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Async&lt;/code&gt; 任务。&lt;/li&gt;
+  &lt;li&gt;这些任务相互并发运行，也与主任务并发运行。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;一旦你习惯了，你会发现这个结构实际上非常整洁。&lt;/p&gt;
+
+&lt;h3 id=&quot;uriopen&quot;&gt;URI.open&lt;/h3&gt;
+
+&lt;p&gt;前一个例子中可以被认为是一个缺点的事情是，它使用了 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;async-http&lt;/code&gt;，一个具有异步特性的 HTTP 客户端。我们大多数人有自己喜欢的 Ruby HTTP 客户端，我们不想再花时间去学习另一个 HTTP 库的详细情况。
+让我们看收同样的例子，只是这次使用 URI.open：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;async&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;open-uri&quot;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;no&quot;&gt;URI&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/1.6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;no&quot;&gt;URI&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/1.6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Duration: &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;与前一个例子的唯一区别是，我们用 Ruby 的标准库中的方法 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;URI.open&lt;/code&gt; 替换了 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;async-http&lt;/code&gt;。&lt;/p&gt;
+
+&lt;p&gt;示例的输出是：&lt;/p&gt;
+
+&lt;p&gt;持续时间：2.030451785&lt;/p&gt;
+
+&lt;p&gt;这个持续时间显示了两个请求是并行运行的，所以我们认为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;URI.open&lt;/code&gt; 是异步运行的！&lt;/p&gt;
+
+&lt;p&gt;这一切真的很好。我们不仅不需要忍受线程及其复杂性，而且我们可以使用 Ruby 的标准 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;URI.open&lt;/code&gt; 来运行请求，&lt;/p&gt;
+
+&lt;p&gt;无论是在 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Async&lt;/code&gt; 块的外部还是内部。这无疑可以为我们提供一些方便的代码重用。&lt;/p&gt;
+
+&lt;h3 id=&quot;其他-http-clients&quot;&gt;其他 HTTP clients&lt;/h3&gt;
+
+&lt;p&gt;虽然 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;URI.open&lt;/code&gt; 是普通的 Ruby，但可能并不是你喜欢的进行 HTTP 请求的方式。而且，你也不经常看到它被用于”serious work(正式的工作)”。&lt;/p&gt;
+
+&lt;p&gt;你可能有你自己喜欢的 HTTP  gem ，你可能会问 “它能在 Async 中工作吗”？为了找出答案，这里有一个使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HTTParty&lt;/code&gt;（一种知名的 HTTP 客户端）的例子。&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;async&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;open-uri&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;httparty&quot;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;no&quot;&gt;URI&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/1.6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;no&quot;&gt;HTTParty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/1.6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Duration: &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;在这个例子中，我们在一起运行了 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;URI.open&lt;/code&gt; 和 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HTTParty&lt;/code&gt;，这完全没问题。&lt;/p&gt;
+
+&lt;p&gt;输出是：&lt;/p&gt;
+
+&lt;p&gt;持续时间：2.010069566&lt;/p&gt;
+
+&lt;p&gt;它运行的时间稍微超过了2秒，这表明两个请求是并发运行的（同时进行）。
+这里的要点是：&lt;strong&gt;你可以在一个 Async 上下文中运行任何 HTTP 客户端，它将会异步运行。Async Ruby 完全支持任何现有的 HTTP gem！&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;高级例子&quot;&gt;高级例子&lt;/h2&gt;
+
+&lt;p&gt;到目前为止，我们只看到 Async Ruby 用各种 HTTP 客户端进行请求。让我们揭示 Async 在 Ruby 3 中的全部能力。&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;async&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;open-uri&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;httparty&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;redis&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;net/ssh&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;sequel&quot;&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;DB&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Sequel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;postgres&lt;/span&gt;
+&lt;span class=&quot;no&quot;&gt;Sequel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;extension&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:fiber_concurrency&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;no&quot;&gt;URI&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/1.6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;no&quot;&gt;HTTParty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/1.6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;no&quot;&gt;Redis&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;blpop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;abc123&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;no&quot;&gt;Net&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;SSH&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;164.90.237.21&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;exec!&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;sleep 1&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;no&quot;&gt;DB&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;SELECT pg_sleep(2)&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;sleep&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;sb&quot;&gt;`sleep 2`&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Duration: &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;我们扩展了包含 URI.open 和 HTTParty 的前一个例子，增加了五个附加操作：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Redis 请求&lt;/li&gt;
+  &lt;li&gt;使用 net-ssh gem 进行的 SSH 连接&lt;/li&gt;
+  &lt;li&gt;使用 sequel gem 进行的数据库查询&lt;/li&gt;
+  &lt;li&gt;Ruby 的 sleep 方法&lt;/li&gt;
+  &lt;li&gt;运行 sleep 可执行文件的系统命令。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;这个例子中的所有操作也需要恰好2秒才能运行。&lt;/p&gt;
+
+&lt;p&gt;以下是示例输出：&lt;/p&gt;
+
+&lt;p&gt;持续时间：2.083171146&lt;/p&gt;
+
+&lt;p&gt;我们得到的输出结果和之前一样，这表明所有的操作都是并发运行的。哇，这有很多不同的 gem 可以异步运行！&lt;/p&gt;
+
+&lt;p&gt;重点：&lt;strong&gt;任何阻塞操作（Ruby解释器等待的方法）都与Async兼容，并将在Ruby 3.0和更高版本的 Async 代码块中异步工作。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;性能看起来很好：7 x 2 = 14秒，但示例在2秒内完成 – 很容易得到7倍的提升。&lt;/p&gt;
+
+&lt;h3 id=&quot;fiber-scheduler纤程调度器&quot;&gt;Fiber Scheduler（纤程调度器）&lt;/h3&gt;
+
+&lt;p&gt;让我们花一点时间来反思一些重要的事情。这个例子中的所有操作（例如，URI.open，Redis，sleep）都会根据上下文的不同而表现不同：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;同步执行:
+操作默认同步执行。整个 Ruby 程序（或者更具体的说，当前的线程）会等待一个操作完成后才会进行下一个操作。&lt;/li&gt;
+  &lt;li&gt;异步执行:
+当操作包裹在一个 Async 块中时，操作会异步地执行。由此，多个 HTTP 或网络请求可以同时运行。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;但是，例如，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HTTParty&lt;/code&gt; 或 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sleep&lt;/code&gt; 方法如何能同步和异步同时存在呢？Async 库是否对所有这些 gems 和内部 Ruby 方法进行了猴子补丁？
+这种魔术是由于 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber Scheduler&lt;/code&gt;。这是 Ruby 3.0 的一个特性，使得 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;async&lt;/code&gt; 能够很好地与现有的 Ruby gems 和方法集成 - 不需要任何 hack 或 猴子补丁(Monkey patch) ！&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://brunosutic.com/blog/ruby-fiber-scheduler&quot;&gt;Fiber Scheduler 也可以单独使用&lt;/a&gt; (&lt;a href=&quot;https://mark24code.github.io/ruby/2023/10/12/Ruby-Fiber-Scheduler.html&quot;&gt;链接译文&lt;/a&gt;)！用这种方式，只需要几个内置的 Ruby 方法就能启用异步编程。&lt;/p&gt;
+
+&lt;p&gt;如你所想，Fiber Scheduler 触及的代码范围非常广：它是 Ruby 当前所有的阻塞 API！这绝不仅仅是一个小功能。&lt;/p&gt;
+
+&lt;h2 id=&quot;扩展例子&quot;&gt;扩展例子&lt;/h2&gt;
+
+&lt;p&gt;让我们提高效率，并展示一个 Async Ruby 擅长的另一方面：扩展(scaling)。&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;async&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;async/http/internet&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;redis&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;sequel&quot;&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;DB&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Sequel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;postgres&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;max_connections: &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;no&quot;&gt;Sequel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;extension&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:fiber_concurrency&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;# Warming up redis clients&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;redis_clients&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;upto&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Redis&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;tap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:ping&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;start&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;http_client&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Async&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;HTTP&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Internet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;
+
+  &lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;times&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;http_client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/1.6&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;redis_clients&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;blpop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;abc123&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;no&quot;&gt;DB&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;SELECT pg_sleep(2)&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;nb&quot;&gt;sleep&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;sb&quot;&gt;`sleep 2`&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Duration: &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;s&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;此例子基于之前的那个例子，只是做了一些改动：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;在 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Async&lt;/code&gt; 区块中的所有内容都会被重复 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;1000.times&lt;/code&gt; (运行1000次)，这将并发操作的数量增加到了5000。&lt;/li&gt;
+  &lt;li&gt;出于性能考虑，我们将 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;URI.open&lt;/code&gt; 和 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;HTTParty&lt;/code&gt; 替换为了 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;async-http&lt;/code&gt; HTTP &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;客户端。async-http&lt;/code&gt; 可以与 HTTP2 一起工作，当进行大量请求时，它的速度要快得多。&lt;/li&gt;
+  &lt;li&gt;SSH 操作被移除了，因为我找不到一种正确的配置方法可以使其高效地工作。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;就像之前一样，每个独立操作都需要2秒才能执行。其输出为：&lt;/p&gt;
+
+&lt;p&gt;持续时间: 13.672289712&lt;/p&gt;
+
+&lt;p&gt;这表明累积运行时间为10,000秒的5,000个操作仅在13.6秒内就完成了！&lt;/p&gt;
+
+&lt;p&gt;这个持续时间比前面的例子（2秒）要长，这是因为创建这么多网络连接的开销。&lt;/p&gt;
+
+&lt;p&gt;我们几乎没有进行性能调优（例如，调整垃圾收集，内存分配等），&lt;strong&gt;但我们仍然实现了730倍的“加速”，在我看来，这是一个相当令人印象深刻的结果！&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;扩容限制scaling-limits&quot;&gt;扩容限制(Scaling limits)&lt;/h3&gt;
+
+&lt;p&gt;最好的部分是：我们只是初步探索了使用 Async Ruby 所能做到的事情。&lt;/p&gt;
+
+&lt;p&gt;虽然线程（Threads）的最大数量是2048（至少在我的机器上是这样），&lt;strong&gt;但是 Async tasks 的上限数量是百万级别的！&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;你真的可以同时运行百万个异步操作吗？是的，你可以 - 已经有些用户做到了。&lt;/p&gt;
+
+&lt;p&gt;Async 真的为 Ruby 打开了新局面：想象一下一个 HTTP 服务器处理成千上万的客户，或者同一时间处理成百上千的 websocket 连接 … 这都是可能的！&lt;/p&gt;
+
+&lt;h2 id=&quot;结论&quot;&gt;结论&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;Async Ruby 经过了漫长而神秘的开发期，但现在它稳定且已经准备好投入生产。&lt;/strong&gt;已经有一些公司在生产环境下运行它并从中受益。要开始使用它，你可以去 &lt;a href=&quot;https://github.com/socketry/async&quot;&gt;Async 的仓库&lt;/a&gt;看看。&lt;/p&gt;
+
+&lt;p&gt;唯一的注意点是，它不能和 Ruby on Rails 一起工作，因为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ActiveRecord&lt;/code&gt; 不支持 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Async&lt;/code&gt; gem。但如果不涉及到 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ActiveRecord&lt;/code&gt;，你仍然可以在 Rails 中使用它。&lt;/p&gt;
+
+&lt;p&gt;Async 的最大优势在于扩展网络 I/O 操作，比如进行或接收 HTTP 请求。对于 CPU 密集型的工作负载，线程是更好的选择，但至少我们不再需要把他们用于所有事情。&lt;/p&gt;
+
+&lt;p&gt;Async Ruby 非常强大，可扩展性极高。它是一个游戏规则改变者，我希望这篇文章能证明这一点。Async 改变了 Ruby 的可能性，并且当我们所有人开始更多地“异步”思考时，它将对 Ruby 社区产生重大影响。&lt;/p&gt;
+
+&lt;p&gt;最好的一点是，它不会使任何现有的代码变得过时。&lt;strong&gt;就像 Ruby 本身一样，Async 设计得很美，使用起来也很愉快。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;希望你在使用 Async Ruby 时编程愉快！&lt;/p&gt;
+
+&lt;p&gt;Happy hacking with Async Ruby!&lt;/p&gt;
+</description>
+        <pubDate>Thu, 12 Oct 2023 13:40:22 +0800</pubDate>
+        <link>https://mark24code.github.io/ruby/2023/10/12/Async-Ruby.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ruby/2023/10/12/Async-Ruby.html</guid>
+        
+        
+        <category>Ruby</category>
+        
+      </item>
+    
+      <item>
+        <title>【翻译】Ruby Fiber Scheduler</title>
+        <description>&lt;ul&gt;
+  &lt;li&gt;原文作者：&lt;a href=&quot;https://brunosutic.com/&quot;&gt;Bruno Sutic&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;原文链接: &lt;a href=&quot;https://brunosutic.com/blog/ruby-fiber-scheduler&quot;&gt;《Ruby Fiber Scheduler》&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;原文时间：2022年2月25日&lt;/li&gt;
+  &lt;li&gt;原文讨论：&lt;a href=&quot;https://news.ycombinator.com/item?id=30488227&quot;&gt;Hacker News 讨论&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;译者：&lt;a href=&quot;https://github.com/Mark24Code&quot;&gt;Mark24&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;译者 Email：mark.zhangyoung@gmail.com&lt;/li&gt;
+  &lt;li&gt;译文链接：https://mark24code.github.io/ruby/2023/10/12/Ruby-Fiber-Scheduler.html&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Fiber Scheduler(纤程调度器)在 Ruby 中实现异步编程。该功能是 Ruby 3.0 的一大增强功能，并且也是优秀的 async gem 的核心组件之一。
+最棒的一点是，你并不需要一个完整的框架就能开始！&lt;strong&gt;只需使用一对内置的 Ruby 方法，就能独立地实现纤程调度器并享受到异步编程的好处。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;纤程调度器主要包括两部分：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Fiber Scheduler interface（纤程调度器接口）
+这是一套内置于编程语言中的阻塞操作钩子。钩子实现被委托给 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber.scheduler&lt;/code&gt; 对象。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Fiber Scheduler implementation（纤程调度器的实现）
+实现了异步行为。这是一个需要程序员显式设置的对象，因为 Ruby不提供默认的 Fiber Scheduler（纤程调度器）实现。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;非常感谢 Samuel Williams！他是 Ruby 的核心开发者，设计并实现了纤程调度器这一功能并整合到了语言中。&lt;/p&gt;
+
+&lt;h2 id=&quot;fiber-scheduler-interface纤程调度器接口&quot;&gt;Fiber Scheduler interface（纤程调度器接口）&lt;/h2&gt;
+
+&lt;p&gt;Fiber Scheduler（纤程调度器）接口是一套阻塞操作的钩子，它允许在阻塞操作发生时插入异步行为。它像是带有反转的回调：当异步回调被执行时，主阻塞方法不会运行。
+这些钩子在 &lt;a href=&quot;https://docs.ruby-lang.org/en/3.1/Fiber/SchedulerInterface.html&quot;&gt;Fiber::SchedulerInterface&lt;/a&gt; 类中有文档记录。这个 Ruby 功能背后的一些主要思想包括：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;钩子是低层级的。这导致了少量的钩子，每个钩子处理许多高层级方法的行为。例如，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;#address_resolve&lt;/code&gt; 钩子负责处理大约 20 个方法。&lt;/li&gt;
+  &lt;li&gt;钩子只在 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber.scheduler&lt;/code&gt; 对象设置后才会工作，钩子的实现被委托给该对象。&lt;/li&gt;
+  &lt;li&gt;钩子的行为应该是异步的。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;hook-implementation-钩子实现&quot;&gt;Hook implementation (钩子实现)&lt;/h3&gt;
+
+&lt;p&gt;让我们看一个示例，显示如何实现 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Kernel#sleep&lt;/code&gt; 钩子。在实践中，所有的钩子都是用 C 语言编写的，但为了清晰起见，这里使用了 Ruby 伪代码。&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;Kernel&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;sleep&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;duration&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;nil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;scheduler&lt;/span&gt;
+      &lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;scheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;kernel_sleep&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;duration&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;synchronous_sleep&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;duration&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;以上代码的阅读方式如下：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;如果设置了 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber.scheduler&lt;/code&gt; 对象 - 运行其 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;#kernel_sleep&lt;/code&gt; 方法。&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;#kernel_sleep&lt;/code&gt; 应该异步运行 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sleep&lt;/code&gt;。&lt;/li&gt;
+  &lt;li&gt;否则，执行常规的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;synchronous_sleep&lt;/code&gt;，它会阻塞当前线程直到 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sleep&lt;/code&gt; 完成。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;其他的钩子的工作方式也类似。&lt;/p&gt;
+
+&lt;h3 id=&quot;blocking-operations阻塞操作&quot;&gt;Blocking operations（阻塞操作）&lt;/h3&gt;
+
+&lt;p&gt;已经多次提到了”Blocking operations（阻塞操作）”这个概念，但它到底是什么意思呢？&lt;strong&gt;阻塞操作是指任何Ruby进程（更具体地说：当前线程）最终会等待的操作。&lt;/strong&gt;一个更具描述性的名称是“waiting operations（等待操作）”。
+一些例子如下：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sleep&lt;/code&gt; 方法。&lt;/li&gt;
+  &lt;li&gt;I/O操作如 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;URI.open(&quot;https://brunosutic.com&quot;)&lt;/code&gt;。&lt;/li&gt;
+  &lt;li&gt;系统命令，例如 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;curl https://www.ruby-lang.org&lt;/code&gt;。&lt;/li&gt;
+  &lt;li&gt;通过 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Thread#join&lt;/code&gt; 等待线程结束。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;作为一个反例，以下代码片段需要一段时间才能完成，但不包含阻塞操作：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;fibonacci&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;include?&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;fibonacci&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fibonacci&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;fibonacci&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;获取 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fibonacci(100)&lt;/code&gt; 的结果需要等待很长时间，但只有程序员在等待！整个时间 Ruby 解释器都在工作，后台进行计算。一个简单的斐波那契实现并不包含阻塞操作。&lt;/p&gt;
+
+&lt;p&gt;发展对阻塞操作是什么（和不是什么）的直觉是值得的，&lt;strong&gt;因为异步编程的整个目标就是同时等待多个阻塞操作&lt;/strong&gt;。&lt;/p&gt;
+
+&lt;h2 id=&quot;fiber-scheduler-implementation纤程调度器实现&quot;&gt;Fiber Scheduler implementation（纤程调度器实现）&lt;/h2&gt;
+
+&lt;p&gt;纤程调度器实现是 Fiber Scheduler 功能的第二大部分。&lt;/p&gt;
+
+&lt;p&gt;如果你想在 Ruby 中启用异步行为，你需要为当前线程设置一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber Scheduler&lt;/code&gt; 对象。这是通过 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber.set_scheduler(scheduler)&lt;/code&gt; 方法完成的。实现通常是一个定义了所有 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber::SchedulerInterface&lt;/code&gt; 方法的类。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Ruby 不提供默认的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber Scheduler&lt;/code&gt; 类，也没有可以用于此目的的对象&lt;/strong&gt;。这看起来不寻常，但实际上不将 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber Scheduler&lt;/code&gt; 实现包含在语言中是一个好的长期决定。最好将这种相对快速演变的关注点留在 Ruby 核心之外。
+从头开始编写 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber Scheduler&lt;/code&gt; 类是一项复杂的任务，所以最好使用现有的解决方案。实现的列表，它们的主要区别和推荐可以在 &lt;a href=&quot;https://github.com/bruno-/fiber_scheduler_list&quot;&gt;Fiber Scheduler List&lt;/a&gt; 项目中找到。&lt;/p&gt;
+
+&lt;h3 id=&quot;举个例子&quot;&gt;举个例子&lt;/h3&gt;
+
+&lt;p&gt;让我们来看看仅使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber Scheduler&lt;/code&gt; 可以做什么。
+所有示例都使用 Ruby 3.1 和来自 &lt;a href=&quot;https://github.com/bruno-/fiber_scheduler&quot;&gt;fiber_scheduler&lt;/a&gt; gem 的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;FiberScheduler&lt;/code&gt; 类，这个 gem 由我维护。这个 gem 对于示例来说不是一个硬性依赖项，因为如果将以下代码片段中的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;FiberScheduler&lt;/code&gt; 替换为另一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber Scheduler&lt;/code&gt; 类，每个代码片段仍然应该可以工作。&lt;/p&gt;
+
+&lt;h4 id=&quot;基本示例&quot;&gt;基本示例&lt;/h4&gt;
+
+&lt;p&gt;这里有一个简单的示例：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;fiber_scheduler&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;open-uri&quot;&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;set_scheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;FiberScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;schedule&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;URI&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/2&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;schedule&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;URI&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/2&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;上面的代码创建了两个纤程，每个纤程都进行一次 HTTP 请求。这些请求并行运行，整个程序在 2 秒内完成。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber.set_scheduler(FiberScheduler.new)&lt;/code&gt;
+在当前线程中设置一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber Scheduler&lt;/code&gt;，这使得 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber.schedule&lt;/code&gt; 方法可以工作，且 fiber 可以异步行为。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber.schedule { ... }&lt;/code&gt;
+这是一个内置的 Ruby 方法，用于启动新的异步 fiber。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;这个示例仅使用了标准的 Ruby 方法 - &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber.set_scheduler&lt;/code&gt; 和 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber.schedule&lt;/code&gt; 自 Ruby 3.0 版本以来就一直可用。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;高级例子&quot;&gt;高级例子&lt;/h4&gt;
+
+&lt;p&gt;我们来看看运行多种不同操作是什么样子的：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;fiber_scheduler&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;httparty&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;open-uri&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;redis&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;sequel&quot;&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;DB&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Sequel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;postgres&lt;/span&gt;
+&lt;span class=&quot;no&quot;&gt;Sequel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;extension&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:fiber_concurrency&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;set_scheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;FiberScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;schedule&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;URI&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/2&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;schedule&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;c1&quot;&gt;# Use any HTTP library&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;HTTParty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://httpbin.org/delay/2&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;schedule&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;c1&quot;&gt;# Works with any TCP protocol library&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;Redis&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;blpop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;abc123&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;schedule&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;c1&quot;&gt;# Make database queries&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;DB&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;SELECT pg_sleep(2)&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;schedule&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;sleep&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;schedule&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;c1&quot;&gt;# Run system commands&lt;/span&gt;
+  &lt;span class=&quot;sb&quot;&gt;`sleep 2`&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;如果我们顺序运行这个程序，它大约需要12秒才能完成。但是由于这些操作是并行运行的，所以总的运行时间仅仅超过2秒。
+你并不仅限于发起 HTTP 请求。&lt;strong&gt;任何内置在 Ruby 中或由外部 gem 实现的阻塞操作都可以工作！&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;扩展示例&quot;&gt;扩展示例&lt;/h4&gt;
+
+&lt;p&gt;这是一个简单的，显然是人为刻意的示例，同时运行一万个操作。&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;fiber_scheduler&quot;&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;set_scheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;FiberScheduler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;mi&quot;&gt;10_000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;times&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;schedule&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;sleep&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;上述代码的完成时间略超过2秒。&lt;/p&gt;
+
+&lt;p&gt;由于其低开销，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sleep&lt;/code&gt; 方法被选择用于扩展示例。如果我们使用网络请求，由于需要建立数千个连接并进行 SSL 握手等，执行时间将会更长。&lt;/p&gt;
+
+&lt;p&gt;异步编程的主要优势之一是能够同时等待许多阻塞操作。&lt;strong&gt;阻塞操作数量的增加将增加这种优势。幸运的是，运行大量协程(fibers)非常简单。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;结论&quot;&gt;结论&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;Ruby只需要一个纤程调度器（Fiber Scheduler）和一些内置方法就可以异步工作 - 不需要任何框架！&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;使其工作很容易。选择一个纤程调度器（Fiber Scheduler）实现，然后使用以下这些方法：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber.set_scheduler(scheduler)&lt;/code&gt;为当前线程设置一个纤程调度器（Fiber Scheduler），使阻塞操作能够异步执行。&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber.schedule { ... }&lt;/code&gt; 启动一个新的纤程，该纤程与其他纤程并发运行。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;一旦你开始运行，&lt;strong&gt;你可以通过将它包装在一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Fiber.schedule&lt;/code&gt; 块中来使任何代码异步化&lt;/strong&gt;。&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;schedule&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;SynchronousCode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;run&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;整个库可以轻松地使用这种方法转换为异步，而且往往不需要比这里展示的更多努力。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;异步编程的重大好处是并行化阻塞/等待操作以减少程序运行时间。&lt;/strong&gt;这通常意味着在单个CPU上运行更多的操作，或者更好地，在你的Web服务器上处理更多的请求。&lt;/p&gt;
+
+&lt;p&gt;祝你使用纤程调度器（Fiber Scheduler）愉快！&lt;/p&gt;
+
+&lt;p&gt;Happy hacking with Fiber Scheduler!&lt;/p&gt;
+</description>
+        <pubDate>Thu, 12 Oct 2023 12:58:37 +0800</pubDate>
+        <link>https://mark24code.github.io/ruby/2023/10/12/Ruby-Fiber-Scheduler.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ruby/2023/10/12/Ruby-Fiber-Scheduler.html</guid>
+        
+        
+        <category>Ruby</category>
+        
+      </item>
+    
+      <item>
+        <title>css有趣的面试题</title>
+        <description>&lt;h1 id=&quot;1要求纯css-实现效果文字内容一行居中两行居左&quot;&gt;1.要求纯CSS 实现效果：文字内容一行居中，两行居左&lt;/h1&gt;
+
+&lt;div class=&quot;language-html highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;!DOCTYPE html&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;html&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;lang=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;en&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;head&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;meta&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;charset=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;UTF-8&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;meta&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;viewport&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;content=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;width=device-width, initial-scale=1.0&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;title&amp;gt;&lt;/span&gt;Document&lt;span class=&quot;nt&quot;&gt;&amp;lt;/title&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/head&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;style&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nc&quot;&gt;.demo&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nl&quot;&gt;width&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;100%&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;nl&quot;&gt;text-align&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;center&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;nl&quot;&gt;word-break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;break-all&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;nc&quot;&gt;.example&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nl&quot;&gt;display&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inline-block&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;nl&quot;&gt;text-align&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;left&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/style&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;body&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;demo&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;example&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+    ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/body&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/html&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;那外面让里面居中。就是 没填充满，自然是居中，全部满了，就反映出子元素的一个排列特征了。&lt;/p&gt;
+
+&lt;p&gt;题目的描述具有一种迷惑性。&lt;/p&gt;
+</description>
+        <pubDate>Thu, 13 Jul 2023 18:41:37 +0800</pubDate>
+        <link>https://mark24code.github.io/%E6%9C%AA%E5%AE%9A%E4%B9%89/2023/07/13/css%E6%9C%89%E8%B6%A3%E7%9A%84%E9%9D%A2%E8%AF%95%E9%A2%98.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E6%9C%AA%E5%AE%9A%E4%B9%89/2023/07/13/css%E6%9C%89%E8%B6%A3%E7%9A%84%E9%9D%A2%E8%AF%95%E9%A2%98.html</guid>
+        
+        
+        <category>未定义</category>
+        
+      </item>
+    
+      <item>
+        <title>编程语言的几个能力维度</title>
+        <description>&lt;p&gt;我把编程语言或者是功能深入的维度划分为八个层次。&lt;/p&gt;
+
+&lt;h1 id=&quot;一-八个层次&quot;&gt;一、 八个层次&lt;/h1&gt;
+
+&lt;h3 id=&quot;1-基本函数能力--function&quot;&gt;1. 基本函数能力 —— Function&lt;/h3&gt;
+
+&lt;p&gt;可以构建一个子函数的能力。具有基本的&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;顺序&lt;/li&gt;
+  &lt;li&gt;分支&lt;/li&gt;
+  &lt;li&gt;循环&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;控制逻辑，可以整合变量、对象 到一个函数的概念中去。&lt;/p&gt;
+
+&lt;h3 id=&quot;2-类模块能力--classmodule&quot;&gt;2. 类/模块能力 —— Class/Module&lt;/h3&gt;
+
+&lt;p&gt;可以把 数据、方法，整合到一个概念中。比如 类。&lt;/p&gt;
+
+&lt;p&gt;有基本的，数据访问、方法访问。&lt;/p&gt;
+
+&lt;p&gt;可以进行复用，比如实例化过程。&lt;/p&gt;
+
+&lt;p&gt;也可以是某种方法的集合，比如 模块概念。&lt;/p&gt;
+
+&lt;p&gt;可以对模块的 Mixin、Inclde 过程&lt;/p&gt;
+
+&lt;p&gt;总之这是一个整合 data、methods，并且可以复用 methods 的概念。
+到这里进一步的把复用、封装的抽象概念进行贯彻。&lt;/p&gt;
+
+&lt;h3 id=&quot;3-文件包能力--packagemodule&quot;&gt;3. 文件包能力 —— Package/Module&lt;/h3&gt;
+
+&lt;p&gt;这里是站在文件角度，可以将文件中的 上面的概念，可以进行：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;导入&lt;/li&gt;
+  &lt;li&gt;导出&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;从而建立起一个 文件包Package 一样的能力。
+可以进行多文件组织。&lt;/p&gt;
+
+&lt;h3 id=&quot;4-函数式能力--lambda&quot;&gt;4. 函数式能力 —— Lambda&lt;/h3&gt;
+
+&lt;p&gt;除了前面 类 支持多文件、多模块。&lt;/p&gt;
+
+&lt;p&gt;纯函数也有自己的方式，可以支持多模块、多文件支持。&lt;/p&gt;
+
+&lt;p&gt;从而支持函数式范式。&lt;/p&gt;
+
+&lt;h3 id=&quot;5-作用域以及跨作用域通信--scope&quot;&gt;5. 作用域、以及跨作用域通信 —— Scope&lt;/h3&gt;
+
+&lt;p&gt;拥有作用域概念，隔离变量。&lt;/p&gt;
+
+&lt;p&gt;又有某种方式可以跨域作用域，进行变量的传递、访问。&lt;/p&gt;
+
+&lt;p&gt;以及他们之间可以交换值。&lt;/p&gt;
+
+&lt;h3 id=&quot;6-接口暴露委托能力--delegation&quot;&gt;6. 接口暴露，委托能力 —— Delegation&lt;/h3&gt;
+
+&lt;p&gt;可以选择性的暴露，或者把暴露的方法，挂载在某个模块上。&lt;/p&gt;
+
+&lt;p&gt;可以进行对复杂过程、基本类、模块的隐藏。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;到这里，跨文件、跨模块的各部分才能有效的进行合作。
+所有的子函数才能在一起进行配合。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;7-元编程--evalproxy&quot;&gt;7. 元编程 —— Eval/Proxy&lt;/h3&gt;
+
+&lt;p&gt;具有 Eval 求值、Proxy 拦截 两个功能，可以进行元编程能力的拓展。
+可以进行动态的生成代码。&lt;/p&gt;
+
+&lt;h3 id=&quot;8-设计模式和数据结构&quot;&gt;8. 设计模式和数据结构&lt;/h3&gt;
+
+&lt;p&gt;既有的语言基础，提供：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;基本数据结构构造的能力&lt;/li&gt;
+  &lt;li&gt;基本的设计模式，实现的接口的能力&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;站在这个基础上，可以进行复杂模型的设计。&lt;/p&gt;
+
+&lt;h3 id=&quot;81-建立在复杂模型上可以进行面向模型编程面向接口编程&quot;&gt;8.1 建立在复杂模型上，可以进行面向模型编程、面向接口编程&lt;/h3&gt;
+
+&lt;h1 id=&quot;二总结&quot;&gt;二、总结&lt;/h1&gt;
+
+&lt;p&gt;一个语言，拥有或者摸索出这八个基本的层次，才能进一步的构建复杂程序。&lt;/p&gt;
+
+&lt;h1 id=&quot;三程序设计原则&quot;&gt;三、程序设计原则&lt;/h1&gt;
+
+&lt;p&gt;主要设计原则实际上只有一个：高内聚、低耦合。&lt;/p&gt;
+
+&lt;p&gt;任何复杂的原则都是基于这两者衍生出来的。&lt;/p&gt;
+
+&lt;p&gt;比如完全能体现上面的：  “复用”、“可读性”、“KISS” 三个原则。&lt;/p&gt;
+
+</description>
+        <pubDate>Wed, 26 Apr 2023 22:02:40 +0800</pubDate>
+        <link>https://mark24code.github.io/%E9%9A%8F%E7%AC%94/2023/04/26/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80%E7%9A%84%E5%87%A0%E4%B8%AA%E8%83%BD%E5%8A%9B%E7%BB%B4%E5%BA%A6.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E9%9A%8F%E7%AC%94/2023/04/26/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80%E7%9A%84%E5%87%A0%E4%B8%AA%E8%83%BD%E5%8A%9B%E7%BB%B4%E5%BA%A6.html</guid>
+        
+        
+        <category>随笔</category>
+        
+      </item>
+    
+      <item>
+        <title>postgresql实用摘要</title>
+        <description>&lt;h1 id=&quot;0-文档&quot;&gt;0. 文档&lt;/h1&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;英文 &lt;a href=&quot;https://www.postgresql.org/docs/&quot;&gt;https://www.postgresql.org/docs/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;中文 &lt;a href=&quot;http://postgres.cn/docs/13/&quot;&gt;http://postgres.cn/docs/13/&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;建议从完善文档的版本开始，低于官网2个版本。比如 v13（截止2023年4月）。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;官网最新版本往往是开发板，次版本是最近一次稳定版。所以建议往前使用2个版本。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h1 id=&quot;1-进入控制界面&quot;&gt;1. 进入控制界面&lt;/h1&gt;
+
+&lt;p&gt;psql 是shell命令&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 以默认用户进入
+# psql [OPTION]... [DBNAME [USERNAME]]
+
+# 以特定用户进入, 往往会认为是  使用 A用户名，进入同名数据库
+# 不指定不同系统状态不同，MacOS 以当前用户为 superuser， Linux 是 postgres 需要切换至该用户
+# 如果 没有用户，或者 没有同名数据库会失败
+psql -U &amp;lt;username&amp;gt;
+
+
+# 进入数据库
+psql &amp;lt;database&amp;gt;
+psql -d &amp;lt;database&amp;gt;
+
+# 一般默认会创建 postgres 数据库
+# 下面命令会以当前用户，指定数据库登录
+psql -d postgres
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;用来确认自己&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;打印当前用户名
+    &lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SELECT current_user, current_database();
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;查看所有用户&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SELECT usename FROM pg_user;
+``
+
+3. 列出所有数据库
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;\l&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+4. 进入某个数据库
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;\c &lt;database name=&quot;&quot;&gt;&lt;/database&gt;&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;5. 列出所有表
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h1 id=&quot;需要进入一个数据库的基础上执行&quot;&gt;需要进入一个数据库的基础上执行&lt;/h1&gt;
+&lt;p&gt;\dt&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+6. 获取帮助
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;\?&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+# 1.1 数据库相关
+
+这是一个shell命令
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h1 id=&quot;创建数据库&quot;&gt;创建数据库&lt;/h1&gt;
+&lt;h1 id=&quot;createdb-option-dbname-description&quot;&gt;createdb [OPTION]… [DBNAME] [DESCRIPTION]&lt;/h1&gt;
+&lt;p&gt;createdb &lt;databasename&gt;&lt;/databasename&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;删除数据库&quot;&gt;删除数据库&lt;/h1&gt;
+&lt;p&gt;dropdb &lt;databasename&gt;&lt;/databasename&gt;&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+
+
+# 2. 用户相关
+
+2.1 创建用户
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h1 id=&quot;createuser-option-rolename&quot;&gt;createuser [OPTION]… [ROLENAME]&lt;/h1&gt;
+
+&lt;h1 id=&quot;创建可以在终端交付的用户&quot;&gt;创建可以在终端交付的用户&lt;/h1&gt;
+&lt;p&gt;createuser &lt;username&gt; --interactive&lt;/username&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;创建超级用户&quot;&gt;创建超级用户&lt;/h1&gt;
+&lt;p&gt;createuser &lt;username&gt; -s&lt;/username&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;更多查看&quot;&gt;更多查看&lt;/h1&gt;
+
+&lt;p&gt;createuser –help&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+2.2 删除用户
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;dropuser &lt;username&gt;&lt;/username&gt;&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+
+# 3. Postgresql 创建 用户以及同名数据库
+
+在 PostgreSQL 中，可以通过以下步骤创建一个用户并创建同名数据库：
+
+    使用超级用户登录到 PostgreSQL 数据库。例如，使用命令行工具 psql 并输入以下命令：
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;$ psql -U postgres&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;其中 postgres 是超级用户的名称。
+
+创建一个新用户。假设要创建一个名为 myuser 的用户，可以使用以下命令：
+```sql
+CREATE USER myuser WITH PASSWORD &apos;mypassword&apos;;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;这将创建一个新用户，并为该用户设置密码为 mypassword。&lt;/p&gt;
+
+&lt;p&gt;创建同名数据库。接下来，可以使用以下命令创建一个名为 myuser 的数据库：&lt;/p&gt;
+&lt;div class=&quot;language-sql highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;CREATE&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;DATABASE&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;myuser&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;这将创建一个与新用户同名的数据库。&lt;/p&gt;
+
+&lt;p&gt;授予用户对数据库的访问权限。最后，您需要授予新用户访问其同名数据库的权限。可以使用以下命令：&lt;/p&gt;
+&lt;div class=&quot;language-sql highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    &lt;span class=&quot;k&quot;&gt;GRANT&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;ALL&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;PRIVILEGES&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;ON&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;DATABASE&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;myuser&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;TO&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;myuser&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;这将授予 myuser 用户对 myuser 数据库的完全访问权限。
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;完成以上步骤后，新用户 myuser 将能够连接到同名的数据库，并且有完全的访问权限。&lt;/p&gt;
+
+&lt;h1 id=&quot;4-从文件导入数据库&quot;&gt;4. 从文件导入数据库&lt;/h1&gt;
+
+&lt;p&gt;psql 中 COPY 命令可以把整个文件导入数据库。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://postgres.cn/docs/13/sql-copy.html&quot;&gt;sql-copy&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;比如把 CSV 文件导入到数据库：&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;COPY word ( word, phonetic ) FROM &apos;&amp;lt;/abs/path/to/csv&amp;gt;&apos; DELIMITER &apos;,&apos; CSV HEADER;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h1 id=&quot;查看配置路径&quot;&gt;查看配置路径&lt;/h1&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;进入 postgresql
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;psql&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;打印配置文件路径
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;SHOW data_directory;&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&quot;允许-0000-访问&quot;&gt;允许 0.0.0.0 访问&lt;/h1&gt;
+
+&lt;p&gt;配置目录下&lt;/p&gt;
+
+&lt;p&gt;postgresql.conf&lt;/p&gt;
+
+&lt;p&gt;其中
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;listen_address = &apos;*&apos;&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;brew info postgresql 查看重启服务命令&lt;/p&gt;
+</description>
+        <pubDate>Tue, 18 Apr 2023 15:16:32 +0800</pubDate>
+        <link>https://mark24code.github.io/postgresql/2023/04/18/postgresql%E5%AE%9E%E7%94%A8%E6%91%98%E8%A6%81.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/postgresql/2023/04/18/postgresql%E5%AE%9E%E7%94%A8%E6%91%98%E8%A6%81.html</guid>
+        
+        
+        <category>postgresql</category>
+        
+      </item>
+    
+      <item>
+        <title>零刻GTR5-5900HX改装成Linux服务器</title>
+        <description>&lt;h1 id=&quot;一关于-零刻gtr5&quot;&gt;一、关于 零刻GTR5&lt;/h1&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/blog/linux_mini_pc/beelink_gtr5.jpg&quot; alt=&quot;beelink-gtr5&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Beelink-GTR5 是一款迷你主机，采用 AMD5900HX 处理器，可以自行升级内存、硬盘、加装SSD，可以改装支持独立显卡。
+拥有丰富的接口，支持多个屏幕。&lt;/p&gt;
+
+&lt;p&gt;噪音不大，性能给力等优点。&lt;/p&gt;
+
+&lt;p&gt;并且对 Linux 十分友好。我买回来后，保持了原来的 Windows11 正版系统保留使用，加装了另一块硬盘独立安装 Linux 系统，当作服务器用。&lt;/p&gt;
+
+&lt;p&gt;记录下过程摘要。&lt;/p&gt;
+
+&lt;h1 id=&quot;二安装-linux&quot;&gt;二、安装 Linux&lt;/h1&gt;
+
+&lt;h2 id=&quot;1-加装-ssd-硬盘&quot;&gt;1. 加装 SSD 硬盘&lt;/h2&gt;
+&lt;p&gt;这款机器支持自己安装一块 SSD。&lt;/p&gt;
+
+&lt;p&gt;我自己安装一块SSD，这里自带的硬盘默认保持 Windows 11 系统，自己安装的 SSD 安装 Linux。&lt;/p&gt;
+
+&lt;h2 id=&quot;2-选择-linux-系统&quot;&gt;2. 选择 Linux 系统&lt;/h2&gt;
+
+&lt;p&gt;选择了 &lt;a href=&quot;https://www.linuxmint.com/&quot;&gt;Linux Mint&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;具有如下优点：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;驱动没问题：Linux Mint 属于 Ubuntu 衍生版，零刻GTR5 5900HX 官方支持 Ubuntu 20.04，这意味着在此基础上的 Ubuntu 衍生版都不会出现驱动问题&lt;/li&gt;
+  &lt;li&gt;不臃肿、去除商业化：Linux Mint 默认移除 Snap 应用，程序不臃肿，保持原生应用，下载速度快，占用资源少&lt;/li&gt;
+  &lt;li&gt;支持4K屏幕：Linux Mint 维护的 Cinnamon 桌面平衡了占用资源和表达效果的平衡。4K、2K屏幕展示没有问题，并且占用资源相对 GNOME44 少，支持插件。&lt;/li&gt;
+  &lt;li&gt;桌面高可用：Linux Mint 作为桌面，有着精致和一致性的UI、IDE、编辑器都不会出现低级的 UI 问题。&lt;/li&gt;
+  &lt;li&gt;软件质量过硬：软件质量高，稳定性强。没有频繁地错误。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;总结为两点：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;一方面，可以作为 个人桌面 临时使用&lt;/li&gt;
+  &lt;li&gt;另一方面去除显示器就可以作为占用资源极少的服务器来工作。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;是一个非常实用主义的选择。&lt;/p&gt;
+
+&lt;h2 id=&quot;3-安装-linux-系统&quot;&gt;3. 安装 Linux 系统&lt;/h2&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;踩坑： 请用不同发行版的官网推荐烧录工具，烧录 USB 启动盘。他们通用型没有那么强，我遇到很多因为文件无法展开，安装一半失败的情况。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;简单的步骤概要：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;烧录USB系统盘&lt;/li&gt;
+  &lt;li&gt;插在迷你主机接口&lt;/li&gt;
+  &lt;li&gt;启动机器，按 F7 进入BIOS&lt;/li&gt;
+  &lt;li&gt;选择U盘启动&lt;/li&gt;
+  &lt;li&gt;正常安装操作系统&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;总结-走到这步可以选择性的进入-linux-系统&quot;&gt;总结： 走到这步，可以选择性的进入 Linux 系统&lt;/h3&gt;
+
+&lt;h1 id=&quot;三解决疑难杂症汇总&quot;&gt;三、解决疑难杂症汇总&lt;/h1&gt;
+
+&lt;h2 id=&quot;1-4k屏幕下grub字体太小&quot;&gt;1. 4K屏幕下grub字体太小&lt;/h2&gt;
+
+&lt;p&gt;官方提供了 grub 启动菜单主题，参考这里解决：&lt;a href=&quot;https://linuxmint-user-guide.readthedocs.io/en/latest/grub.html#grub-boot-menu&quot;&gt;grub-boot-menu&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;2-默认启动-linux&quot;&gt;2. 默认启动 Linux&lt;/h2&gt;
+
+&lt;p&gt;机器启动界面 F7 在 BIOS 中寻找启动顺序，把 Mint/Ubuntu 启动位置变成第一位。&lt;/p&gt;
+
+&lt;h2 id=&quot;3-重启停留在-grub-命令行界面无法进入系统&quot;&gt;3. 重启，停留在 grub 命令行界面，无法进入系统&lt;/h2&gt;
+
+&lt;p&gt;有一个现象就是从 Linux 中 reboot 重启，总是会进入 Grub 的命令行界面，等到输入命令。&lt;/p&gt;
+
+&lt;p&gt;这种情况往往是因为更新了 Windows 导致分区被重写，Linux 无法找到正确的分区，从而产生的问题。常见于多分区的 Linux 电脑。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/blog/linux_mini_pc/stop_grub_menu.jpg&quot; alt=&quot;grub2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;解决办法：&lt;/p&gt;
+
+&lt;p&gt;使用 LiveCD 作为恢复系统对计算机内部进行启动区修复。&lt;/p&gt;
+
+&lt;p&gt;1.制作一个 Ubuntu 系统（或衍生版）的 USB 启动盘&lt;/p&gt;
+
+&lt;p&gt;2.从U盘启动，进入 Try Ubuntu 界面&lt;/p&gt;
+
+&lt;p&gt;3.安装 boot-repair&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sudo add-apt-repository ppa:yannubuntu/boot-repair
+sudo apt-get update
+sudo apt-get install -y boot-repair
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;4.运行 boot-repair 执行默认修复即可&lt;/p&gt;
+
+&lt;h3 id=&quot;总结-在这里可以确保设置完linux为启动第一顺位每次启动都可以进入-linux-系统&quot;&gt;总结： 在这里，可以确保设置完Linux为启动第一顺位，每次启动，都可以进入 Linux 系统&lt;/h3&gt;
+
+&lt;h2 id=&quot;4-像服务器一样断电重启&quot;&gt;4. 像服务器一样断电重启&lt;/h2&gt;
+
+&lt;p&gt;如果遇到断电，正常电脑必须手动重新开机，如何像服务器一样可以自行开机？ 零刻GTR5 可以通过修改 BIOS 办到。&lt;/p&gt;
+
+&lt;p&gt;机器开机界面 F7 进入 BIOS&lt;/p&gt;
+
+&lt;p&gt;BIOS 配置路径：&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Advance -&amp;gt; AMD CBS -&amp;gt; FCH Common Options -&amp;gt; Ac Power Loss Options
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;其中选项 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Always Off&lt;/code&gt; 是默认选项，就是正常行为，断电需要手动开机。&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Always On&lt;/code&gt; 表示通电就开机，保持最后的状态。&lt;/p&gt;
+
+&lt;h3 id=&quot;总结-这里可以确保断电恢复之后机器依然可以正常启动到-linux-中&quot;&gt;总结： 这里可以确保，断电，恢复之后机器依然可以正常启动到 Linux 中。&lt;/h3&gt;
+</description>
+        <pubDate>Wed, 12 Apr 2023 22:48:35 +0800</pubDate>
+        <link>https://mark24code.github.io/%E6%95%99%E7%A8%8B/2023/04/12/%E9%9B%B6%E5%88%BBGTR5-5900HX%E6%94%B9%E8%A3%85%E6%88%90Linux%E6%9C%8D%E5%8A%A1%E5%99%A8.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E6%95%99%E7%A8%8B/2023/04/12/%E9%9B%B6%E5%88%BBGTR5-5900HX%E6%94%B9%E8%A3%85%E6%88%90Linux%E6%9C%8D%E5%8A%A1%E5%99%A8.html</guid>
+        
+        
+        <category>教程</category>
+        
+      </item>
+    
+      <item>
+        <title>CSS3 flex手写布局</title>
+        <description>&lt;h1 id=&quot;产品列表项目布局&quot;&gt;产品列表项目布局&lt;/h1&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;| 标题 | 详情|         |按钮|
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;实现一个这样的flex布局。&lt;/p&gt;
+
+&lt;p&gt;父容器宽度自动，内部有三个平级关系的子元素，宽度固定，宽度和小于父容器宽度。现在要求三个元素排列在一行，前两个元素靠左对齐，第三个元素靠右对齐。请写出符合要求的CSS，采用flex。&lt;/p&gt;
+
+&lt;div class=&quot;language-css highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nc&quot;&gt;.parent-container&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;nl&quot;&gt;display&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;nc&quot;&gt;.child-element&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;nl&quot;&gt;width&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;100px&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;nl&quot;&gt;height&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;100px&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;nc&quot;&gt;.child-element&lt;/span&gt;&lt;span class=&quot;nd&quot;&gt;:nth-child&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;nl&quot;&gt;margin-left&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;auto&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;主要要说下 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;margin: auto&lt;/code&gt; :&lt;/p&gt;
+
+&lt;p&gt;1.在这个例子中&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;margin-left: auto&lt;/code&gt; 可以使子元素的左边距自动计算，从而实现将第三个子元素靠右对齐的效果。&lt;/p&gt;
+
+&lt;p&gt;而在第三个子元素上加上 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;margin-left: auto&lt;/code&gt; 的话，就会将其左边距自动计算，从而实现将其靠右对齐的效果。这是因为在flex布局中，当某个子元素上使用&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;margin-left: auto&lt;/code&gt;时，浏览器会自动将其左边距调整为可以填充剩余空间的值。由于前两个子元素的宽度已经固定，在父容器宽度大于三个子元素宽度之和的情况下，第三个子元素会占据剩余空间，从而实现了靠右对齐的效果。&lt;/p&gt;
+
+&lt;h2 id=&quot;margin&quot;&gt;margin&lt;/h2&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;margin: auto&lt;/code&gt; 的计算过程如下：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;如果没有设置宽度（width）属性，那么左右边距都为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;auto&lt;/code&gt; 时，元素会根据父元素的宽度自动调整宽度，左右边距会各自平均分配。这时，元素将水平居中。&lt;/li&gt;
+  &lt;li&gt;如果设置了宽度，那么左右边距都为 auto 时，元素的宽度不会改变，剩余的空间将被均分为左右边距，从而实现元素水平居中。&lt;/li&gt;
+  &lt;li&gt;如果同时设置了 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;margin: auto、left: 0、right: 0&lt;/code&gt;，则元素将距离父元素的左右两侧各保持相等的距离，从而实现水平居中的效果。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;总之，当 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;margin: auto&lt;/code&gt; 时，元素的左右边距将由浏览器自动计算，以实现元素在父容器中的居中等效果（可以是水平居中或垂直居中）。此时，元素的宽度将被自动调整或保持不变，具体情况取决于是否设置了宽度和其他样式属性。&lt;/p&gt;
+</description>
+        <pubDate>Sun, 19 Mar 2023 13:39:31 +0800</pubDate>
+        <link>https://mark24code.github.io/css/2023/03/19/CSS3-flex%E6%89%8B%E5%86%99%E5%B8%83%E5%B1%80.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/css/2023/03/19/CSS3-flex%E6%89%8B%E5%86%99%E5%B8%83%E5%B1%80.html</guid>
+        
+        
+        <category>CSS</category>
+        
+      </item>
+    
+      <item>
+        <title>JavaScript手写题汇总</title>
+        <description>&lt;h1 id=&quot;设计模式&quot;&gt;设计模式&lt;/h1&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;/设计模式/2023/03/16/单例模式JavaScript具体实现.html&quot;&gt;单例模式JavaScript具体实现&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;/设计模式/2023/03/17/Promise实现的Scheduler.html&quot;&gt;Promise实现调度器Scheduler&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;算法&quot;&gt;算法&lt;/h1&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;/前端/javascript/2020/04/18/JavaScript中this指向问题.html&quot;&gt;手写 bind&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;/前端/javascript/2020/04/18/JavaScript深拷贝浅拷贝.html&quot;&gt;JavaScript深拷贝浅拷贝&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;/算法/2023/03/17/Lodash的get方法模拟实现.html&quot;&gt;Lodash的get方法模拟实现&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;/算法/2023/03/16/版本比较算法.html&quot;&gt;版本比较算法&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;/算法/2023/03/16/LRU算法.html&quot;&gt;LRU（最近最少使用）缓存淘汰算法&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;/前端/javascript/2020/04/18/JavaScript编程之手写扁平函数(flat).html&quot;&gt;JavaScript编程之手写扁平函数flat&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        <pubDate>Sat, 18 Mar 2023 22:30:08 +0800</pubDate>
+        <link>https://mark24code.github.io/%E7%AE%97%E6%B3%95/%E6%89%8B%E5%86%99%E9%A2%98/2023/03/18/JavaScript%E6%89%8B%E5%86%99%E9%A2%98%E6%B1%87%E6%80%BB.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E7%AE%97%E6%B3%95/%E6%89%8B%E5%86%99%E9%A2%98/2023/03/18/JavaScript%E6%89%8B%E5%86%99%E9%A2%98%E6%B1%87%E6%80%BB.html</guid>
+        
+        
+        <category>算法</category>
+        
+        <category>手写题</category>
+        
+      </item>
+    
+      <item>
+        <title>JavaScript精度缺失问题</title>
+        <description>&lt;p&gt;Javascript 中的数字精度丢失是由于其采用 IEEE 754 标准的浮点数运算方式导致的。该标准对于存储大数字或进行小数运算时，会存在一定的舍入误差和精度问题。&lt;/p&gt;
+
+&lt;p&gt;例如，在执行如下代码时：&lt;/p&gt;
+
+&lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;z&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;z&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;我们期望输出结果为 0.3。然而实际上，由于 JS 中浮点数精度受限，往往会出现如下结果：&lt;/p&gt;
+
+&lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;mf&quot;&gt;0.30000000000000004&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;这是因为在计算过程中的舍入误差导致的结果。&lt;/p&gt;
+
+&lt;p&gt;要解决这个问题，我们可以采用以下两种方法：&lt;/p&gt;
+
+&lt;h2 id=&quot;使用整数计算&quot;&gt;使用整数计算&lt;/h2&gt;
+
+&lt;p&gt;由于整数计算不存在精度丢失的问题，我们可以将小数转换成整数进行计算，再将结果转换回小数。例如：&lt;/p&gt;
+
+&lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;add&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;baseNum&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;Math&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;pow&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;num1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;Math&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;round&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;baseNum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;num2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;Math&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;round&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;baseNum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;num1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;num2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;baseNum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;z&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;add&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;z&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;输出结果为 0.3。&lt;/p&gt;
+
+&lt;h2 id=&quot;使用-decimaljs-库&quot;&gt;使用 Decimal.js 库&lt;/h2&gt;
+
+&lt;p&gt;Decimal.js 是一个 JS 库，可以提供高精度的数字计算能力，避免了 JS 中浮点数精度丢失的问题。例如：&lt;/p&gt;
+
+&lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Decimal&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;require&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;decimal.js&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;Decimal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;({&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;precision&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Decimal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;0.1&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Decimal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;0.2&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;z&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;plus&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;z&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;toString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;输出结果为 0.3。&lt;/p&gt;
+
+&lt;p&gt;以上两种方法都可以有效地解决 JS 中数字精度丢失的问题。&lt;/p&gt;
+</description>
+        <pubDate>Sat, 18 Mar 2023 22:05:09 +0800</pubDate>
+        <link>https://mark24code.github.io/javascript/2023/03/18/JavaScript%E7%B2%BE%E5%BA%A6%E7%BC%BA%E5%A4%B1%E9%97%AE%E9%A2%98.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/javascript/2023/03/18/JavaScript%E7%B2%BE%E5%BA%A6%E7%BC%BA%E5%A4%B1%E9%97%AE%E9%A2%98.html</guid>
+        
+        
+        <category>JavaScript</category>
+        
+      </item>
+    
+  </channel>
+</rss>
