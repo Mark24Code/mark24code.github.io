@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>选择编程语言的思考</title>
+  <meta name="description" content="选择编程语言的思考语言是个工具。理论上他们是等价的，实际上选错了，你到达不了目标。到底是坐拖拉机去拉萨，还是做高铁去。体验非常不同。一、本质上资源决定语言选择编程语言其实是分层的。如何理解这句话？首先编程语言的抽象程度不同，底层、高级负责的事情不同。灵活程度不同，决定了个人还是多人合作。使用的场景不同，比如嵌入式...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E7%A8%8B%E5%BA%8F%E6%80%9D%E8%80%83/2024/05/29/%E9%80%89%E6%8B%A9%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80%E7%9A%84%E6%80%9D%E8%80%83.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">选择编程语言的思考</h1>
+    <p class="artilce_meta"><time datetime="2024-05-29T16:52:24+08:00" itemprop="datePublished">May 29, 2024</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <p>选择编程语言的思考</p>
+
+<p>语言是个工具。理论上他们是等价的，实际上选错了，你到达不了目标。</p>
+
+<p>到底是坐拖拉机去拉萨，还是做高铁去。体验非常不同。</p>
+
+<h1 id="一本质上资源决定语言选择">一、本质上资源决定语言选择</h1>
+
+<p>编程语言其实是分层的。如何理解这句话？首先编程语言的抽象程度不同，底层、高级负责的事情不同。灵活程度不同，决定了个人还是多人合作。使用的场景不同，比如嵌入式，Web 开发，游戏开发。总之每种语言特点是不同的。</p>
+
+<p>你有多少人、多少时间、多少资源，平台，还有你要做什么。决定了你要选择何种编程语言。</p>
+
+<p>语言是一种朴素的工具，工具能做和擅长做，这之间差距可能非常大。这种跨度是否可以被一个人有限的资源和时间填平，这将会影响结果是否成功。</p>
+
+<p>如果底层的条件无法满足，项目必定失败。这是内因。</p>
+
+<h2 id="1底层语言">1.底层语言:</h2>
+
+<ul>
+  <li>C ：简洁、灵活，容易实现解释器。他是实战派 的胜利者。从众多竞争者中被自然选择出来。从而成为事实标准。他是操作系统、底层库的语言。C 现在成了一种标准。所有厂商都会迎合和接受这个标准，来接入目前生态。</li>
+</ul>
+
+<p>C 不适合开发原型。他适合学习、研究。因为灵活，所以对人要求非常高。需要非常有经验。</p>
+
+<p>C 往往被当作一个优化性能的手段，来替换掉项目中有瓶颈的部分（往往是其他语言项目）。</p>
+
+<p>C 完全取决于设计者的经验和学识，你需要在混乱没有标准的底层世界中，寻找自己的坐标，构建软件。总之，我觉得在想到这里再去构建软件，不容易。这是属于刀根火种的时代。了解和欣赏就可以了，现代的人们应该往上走。别浪费时间。</p>
+
+<h2 id="2高级语言">2.高级语言：</h2>
+
+<p>每种高级语言都为了不同目的设计，有的强调性能，有的强调灵活。</p>
+
+<p>但是有约束语言的不可得三角（我总结的） ：</p>
+
+<ul>
+  <li>功能</li>
+  <li>体积</li>
+  <li>速度</li>
+</ul>
+
+<p>三者不可得，最多满足其二。所以所有语言都有达不到的短板。</p>
+
+<p>有的语言为了安全性设计的极为繁琐。有的语言为了速度，兼容更少的系统。有的语言极富表现力，代价就是非常的缓慢。</p>
+
+<p>总的来说，每种特点都有。</p>
+
+<p>对于个人来说，个人拥有的时间、耐心、资源都极其有限。</p>
+
+<p>选一个 表现力强的，构建原型。是非常合适的。
+获得成功之后，再选择性能强的精耕细作。</p>
+
+<p>我始终觉得，个人软件和大公司软件，使用的技术其实是不同的。各种定位也不应该相同。如果能够跳出来思考。选择什么，更像是资源约束下决定的。</p>
+
+<p>动态语言是构建原型的首选。既是相比静态语言速度慢，对于 90% 的情况也足够了。况且现代动态语言也越来越快了。</p>
+
+<p>JavaScript、Python、Ruby 都可以。在事情成功，发展壮大之前。你的程序应该很难够到现在的计算机硬件的天花板。</p>
+
+<p>毕竟在他们刚出来的时候，应该还不如今天，依然有很多软件获得了成功。</p>
+
+<p>后面也许省资源会考虑 Go，安全部分会考虑 Rust，企业的成熟可靠，用工性价比高，也许会选择 Java。</p>
+
+<p>总的来说，这些前期都不需要考虑。</p>
+
+<h1 id="二宏观和微观思考">二、宏观和微观思考</h1>
+
+<h2 id="1本质上都一样">1.本质上都一样</h2>
+
+<p>MacOS、Linux、Windows 在打包二进制的时候，只是 ELF 文件描述有点差异。</p>
+
+<p>他们遵循的基本原理都一样。</p>
+
+<p>不同语言，最终都直接或者间接的来自于 C。</p>
+
+<p>所以不必有选择困难症，他们本质上是一样的。</p>
+
+<p>遇到瓶颈，可以尝试用更高性能的语言替换掉。FFI 调用之类的。</p>
+
+<p>遇到瓶颈是成功的。</p>
+
+<h2 id="2生命周期">2.生命周期</h2>
+
+<p>实际上大多数软件，没有办法被人看到。甚至都无法继续维护下去。被人看到是成功的，有一天要用别的语言替换掉心爱的语言重写，是成功的烦恼。</p>
+
+<p>成功是少数。成功需要运气。大多数的软件被人偶尔执行。一旦写出来基本就不变了。一周后就被丢弃。一个月后就会被忘记。</p>
+
+<p>聚光灯下从来是少数，二八定律永恒生效。</p>
+
+<h2 id="3语言技术也有生命周期">3.语言/技术也有生命周期</h2>
+
+<p>语言、框架、系统，都是有生命周期的。MacOS 每个大版本都不兼容。 Windows 也在组件淘汰。曾经叱咤风云的 smalltalk、VB、dolphin 今天只能留在维基百科和计算机历史故事里。</p>
+
+<p>当年天才云集、如日中天的 Sun 公司，因为资金链断裂，倒闭之后，也只留下 Java 作为遗产。</p>
+
+<p>工具发展是个动态的过程。</p>
+
+<p>不必太完美主义，或者细节。一切都是动态的混沌。世界的进化有时候跟你也没什么关系。</p>
+
+<p>程序的编写，更多是你一个人的事情。你熟悉就是最好的。</p>
+
+<p>之于这些工具的宿命，可能维护者失业、去世、公司倒闭、裁员。某个技术就戛然而止。</p>
+
+<p>所以一切不必较真，乐在其中更重要。</p>
+
+<h1 id="三最终的选择">三、最终的选择</h1>
+
+<p>前期当然不应该人云亦云，甚至应该多多尝试。</p>
+
+<p>最后选择一个喜欢的，能让你在三分钟热度内搞定的。</p>
+
+<p>选择一个不混乱的，内部自洽和谐的。</p>
+
+<p>选择一个对于你容易的、顺眼的、符合你思考方式的。</p>
+
+<p>选择一个你喜欢的特点，胜过其他的。</p>
+
+<p>选择一个成熟的，而不是时髦的，这会让你后面更顺畅一点。你没那多时间陪它们成功。</p>
+
+<p>每个人的选择，都会是不同的。这很正常。每个人的思维习惯不同。但是他们本质上是一样的，最终会条条大路通罗马。</p>
+
+<p>因为不可得三角，你一定会需要很多语言，帮助你实现目标。</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E7%A8%8B%E5%BA%8F%E6%80%9D%E8%80%83/2024/05/29/选择编程语言的思考';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

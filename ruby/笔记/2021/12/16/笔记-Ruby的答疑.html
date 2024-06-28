@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>笔记:Ruby的答疑</title>
+  <meta name="description" content="导航关联Ruby特性和实验分析汇总答疑Ruby的问题比较动态，而经典的几本书《Ruby元编程（第二版）》、《Ruby程序员修炼之道（第二版）》、《Ruby原理剖析》除了最后一本，都喜欢用比喻。我不喜欢用比喻。使用比喻你总觉得你懂了，但是偏偏 Ruby 富于变化，可以嵌套、mixin，这种让比喻带来的理解很容易破碎...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/%E7%AC%94%E8%AE%B0/2021/12/16/%E7%AC%94%E8%AE%B0-Ruby%E7%9A%84%E7%AD%94%E7%96%91.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">笔记:Ruby的答疑</h1>
+    <p class="artilce_meta"><time datetime="2021-12-16T15:32:43+08:00" itemprop="datePublished">Dec 16, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="导航关联">导航关联</h1>
+
+<p><a href="/ruby/%E7%AC%94%E8%AE%B0/2021/12/16/Ruby%E7%89%B9%E6%80%A7%E5%92%8C%E5%AE%9E%E9%AA%8C%E5%88%86%E6%9E%90%E6%B1%87%E6%80%BB.html">Ruby特性和实验分析汇总</a></p>
+
+<h1 id="答疑">答疑</h1>
+
+<p>Ruby的问题比较动态，而经典的几本书《Ruby元编程（第二版）》、《Ruby程序员修炼之道（第二版）》、《Ruby原理剖析》除了最后一本，都喜欢用比喻。</p>
+
+<p>我不喜欢用比喻。使用比喻你总觉得你懂了，但是偏偏 Ruby 富于变化，可以嵌套、mixin，这种让比喻带来的理解很容易破碎。</p>
+
+<p>这里使用一些自省实验的方式，从反向理解。</p>
+
+<p>我们可以建立心理模型，亦或是根本不关心工作原理，毕竟在超级复杂的比如Rails下，类太多了。我们已经无从确认。
+那么我们就使用最终的计算结果，来校准我们的程序行为好了 —— 这也很符合 元编程的现状。很工程的方法，他很奏效。</p>
+
+<h1 id="难点一-方法查找">难点一 方法查找</h1>
+
+<p>一旦理解Ruby的单继承，那么复杂继承就最终会变成一个链条。</p>
+
+<p>《Ruby原理剖析》 简单的说就是实例先找自己的类，找到不就顺着 super指针指向的父类一直这样找，找不到就 method_missing</p>
+
+<p>obj.ancestors 可以获得继承链</p>
+
+<p>obj.singleton_class.ancestors 可以获得类的继承链</p>
+
+<p>我们也可以不关心 他是如何工作的，也能靠 ruby的这个打印出他如何搜索方法。</p>
+
+<h1 id="难点二-常量查找">难点二 常量查找</h1>
+
+<p>常量查找怎么找？</p>
+
+<p>根据 《Ruby原理剖析》</p>
+
+<p>常量有两种层次的查找</p>
+
+<ol>
+  <li>顺着词法作用域查找</li>
+</ol>
+
+<p>这里参考《Ruby程序员修炼之道》 他跟书写层及有关，像文件目录一样，先搜索本层。绝对层级请用 ::开头</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># 自我实验</span>
+
+<span class="k">module</span> <span class="nn">B</span>
+  <span class="no">NAME</span> <span class="o">=</span> <span class="s2">"aaaaaaaa"</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">A</span>
+
+  <span class="k">module</span> <span class="nn">B</span>
+  <span class="no">NAME</span> <span class="o">=</span><span class="s1">'bbbb'</span>
+  <span class="k">end</span>
+  <span class="nb">puts</span> <span class="no">B</span><span class="o">::</span><span class="no">NAME</span> <span class="c1"># 在自己的词法作用域向下搜索到 bbbb</span>
+  <span class="nb">puts</span> <span class="o">::</span><span class="no">B</span><span class="o">::</span><span class="no">NAME</span> <span class="c1"># aaaa 可以访问到外部</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>1.1 如果遇到 autoload 就载入文件展开，进行搜索。</p>
+
+<p>2.如果词法作用域找不到，则进入超类链中搜索</p>
+
+<p>2.1 如果遇到 autoload 就载入文件展开，进行搜索。</p>
+
+<p>最后调用 const_missing</p>
+
+<p>不光是自定义的大写开头的叫常量。使用类、Module 都是常量。遵循搜索。</p>
+
+<p>实验：通过《原理剖析》我们知道，常量其实是保存在RClass上面的</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">basic_consts</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nf">class</span><span class="p">.</span><span class="nf">constants</span>
+<span class="k">module</span> <span class="nn">B</span>
+  <span class="no">NAME</span> <span class="o">=</span> <span class="s2">"aaaaaaaa"</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">A</span>
+
+  <span class="k">module</span> <span class="nn">B</span>
+    <span class="no">NAME</span> <span class="o">=</span><span class="s1">'bbbb'</span>
+    
+    <span class="nb">puts</span> <span class="s1">'--In class B'</span>
+    <span class="nb">puts</span> <span class="nb">self</span><span class="p">.</span><span class="nf">constants</span>
+  <span class="k">end</span>
+  <span class="nb">puts</span> <span class="s1">'-In class A---'</span>
+  <span class="nb">puts</span> <span class="nb">self</span><span class="p">.</span><span class="nf">constants</span>
+<span class="k">end</span>
+
+<span class="nb">puts</span> <span class="s1">'---outer---'</span>
+<span class="c1"># 默认的top level 是一个 main实例，想访问constans需要找他的 class</span>
+<span class="nb">puts</span> <span class="nb">self</span><span class="p">.</span><span class="nf">class</span><span class="p">.</span><span class="nf">constants</span> <span class="o">-</span> <span class="n">basic_consts</span>
+
+<span class="c1"># output&gt;&gt;&gt;&gt;&gt;</span>
+<span class="c1"># --In class B</span>
+<span class="c1"># NAME</span>
+<span class="c1"># -In class A---</span>
+<span class="c1"># B</span>
+<span class="c1"># ---outer---</span>
+<span class="c1"># B</span>
+<span class="c1"># A</span>
+
+</code></pre></div></div>
+<p>我们也可以用自省，获得每个 Class、Module 即 RClass下的 常量。</p>
+
+<p>在这里，其实我们把每层的constans打出来，再叠加试验等于模拟了 词法作用域中 寻找变量的方式。就是往上找（上面的代码是运行过得，会被注册。下面的代码没有真正运行所以不可见）。</p>
+
+<p>Module.nesting 可以返回词法作用域栈的数组 —— 《Ruby原理剖析》 9.1.8 Page250</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">module</span> <span class="nn">C</span>
+  <span class="k">module</span> <span class="nn">B</span>
+    <span class="k">class</span> <span class="nc">A</span>
+      <span class="n">pp</span> <span class="o">::</span><span class="no">Module</span><span class="p">.</span><span class="nf">nesting</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="c1"># output&gt;&gt;&gt;</span>
+<span class="c1"># [C::B::A, C::B, C]</span>
+</code></pre></div></div>
+<p>其实这个就很容易理解了。基本上就是书写层面上  Module、Class</p>
+
+<hr />
+
+<p>Ruby里比较晦涩的，就是在这里。个人觉得。他的动态性到底如何工作。</p>
+
+<p>但是实际上，Ruby采用的就是很朴素的算法。把问题设计的简单。我们可以站在这个角度补全一些资料不足，依然可以做一些猜测和判断。</p>
+
+<h3 id="小结">小结</h3>
+
+<p>我们就算是明白了两个最难得部分。</p>
+
+<ol>
+  <li>方法如何查找 —— 超类链</li>
+  <li>常量如何查找 —— 词法作用域优先，超类链靠后，特别像文件系统</li>
+</ol>
+
+<p>而且都可以用自省的方式去逐层确认</p>
+
+<p>方法、常量这两个可以帮助我们去写一个 互不往来的类和方法了。也能工作。</p>
+
+<p>但是想打破所谓的作用域门，作用域、作用域门、块，他们之间又是怎么工作的？</p>
+
+<h1 id="难点三-作用域和作用域门">难点三 作用域和作用域门</h1>
+
+<p>Class、Module、def 都会创建新的作用域。</p>
+
+<p>一下实验说明，无法跨级访问，作用域真实存在。</p>
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">test_a</span> <span class="o">=</span> <span class="s1">'aaaa'</span>
+
+<span class="k">class</span> <span class="nc">A</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">test_b</span> <span class="o">=</span> <span class="s1">'cccc'</span>
+    <span class="nb">puts</span> <span class="n">test_b</span>
+    <span class="nb">puts</span> <span class="n">test_a</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="no">A</span><span class="p">.</span><span class="nf">new</span><span class="p">.</span><span class="nf">run</span>
+
+
+<span class="c1"># output:&gt;&gt;&gt;</span>
+<span class="c1"># cccc</span>
+<span class="c1"># Traceback (most recent call last):</span>
+<span class="c1">#         1: from test.rb:12:in `&lt;main&gt;'</span>
+<span class="c1"># test.rb:8:in `run': undefined local variable or method `test_a' for #&lt;A:0x00007fc402036538&gt; (NameError)</span>
+<span class="c1"># Did you mean?  test</span>
+<span class="c1">#                test_b</span>
+</code></pre></div></div>
+
+<p>Class、Module 都会在内存中创建独立的 RClass、RClass:Module 结构体，其实这很容易理解。RClass不同于用户生成的对象RObject； RClass更复杂，并且保存了一些变量方法，彼此隔离很容易理解。</p>
+
+<p>这里重点提一下 def</p>
+
+<p>《Ruby原理剖析》9.1.1节 Page239</p>
+
+<p>程序中使用def关键字定义方法，Ruby会遵循三个步骤</p>
+
+<ol>
+  <li>把每个方法体编译成独立的YARV指令片段（这个情况会发生在Ruby解析和编译程序的时候）</li>
+  <li>使用当前的词法作用域，来获取类或者模块指针（这种情况发生在Ruby执行程序的时候遇到了def关键字）</li>
+  <li>在该类的方法表中保存新的方法名 —— 实际上是保存对应方法名的整数ID值</li>
+</ol>
+
+<p>编译那段我们可以不关心。这个对于程序执行是透明的。我们就当做我们的程序在直接执行，时序上是一致的。</p>
+
+<p>这段的意思其实是，Ruby会将这个方法（编译的，拥有ID的）分配给当前词法作用域对应的类。</p>
+
+<p>还有特殊情况</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">display</span>
+
+<span class="k">end</span>
+</code></pre></div></div>
+<p>这种书写方式与标准方法不同，它使用了前缀，这个前缀告诉Ruby将方法添加到 被指定前缀的——对象的——类中。</p>
+
+<p>仔细品味这句话。 所以如果我们这样定义类方法（类是个对象）所以这个方法其实添加到了 元类中。</p>
+
+<p>好了。我们知道了，总之 def 是运行的时候，他会做的事情就是绑定到 当前词法作用域类（或者指定) 的方法列表中注册。</p>
+
+<h1 id="闭包和块">闭包和块</h1>
+
+<p>闭包是一种计算机科学理论，块 是一个闭包的具体实现。 块在底层是一个结构体，保存了词法作用域的环境指针 EP(Environment Pointer)。</p>
+
+<p>保存环境指针意味着可以看到外部的变量。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+
+<span class="n">a</span> <span class="o">=</span> <span class="s1">'aaa'</span>
+<span class="n">b</span> <span class="o">=</span> <span class="s1">'bbbb'</span>
+
+<span class="nb">puts</span> <span class="s1">'---outer---'</span>
+<span class="n">pp</span> <span class="nb">local_variables</span>
+
+<span class="k">def</span> <span class="nf">test</span>
+  <span class="n">c</span> <span class="o">=</span> <span class="s1">'ccc'</span>
+  <span class="nb">puts</span> <span class="s1">'---in test'</span>
+  <span class="n">pp</span> <span class="nb">local_variables</span>
+<span class="k">end</span>
+
+<span class="nb">test</span>
+
+<span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">test2</span>
+  <span class="n">d</span> <span class="o">=</span> <span class="s1">'dddd'</span>
+  <span class="nb">puts</span> <span class="s1">'---in test2'</span>
+  <span class="n">pp</span> <span class="nb">local_variables</span>
+<span class="k">end</span>
+
+<span class="n">test2</span>
+
+
+<span class="n">define_method</span> <span class="ss">:test3</span> <span class="k">do</span>
+  <span class="n">e</span> <span class="o">=</span> <span class="s2">"eeeeeee"</span>
+  <span class="nb">puts</span> <span class="s2">"---in test3"</span>
+  <span class="n">pp</span> <span class="nb">local_variables</span>
+<span class="k">end</span>
+
+<span class="n">test3</span>
+
+<span class="c1"># output &gt;&gt;&gt;&gt;&gt;</span>
+<span class="c1"># ---outer---</span>
+<span class="c1"># [:a, :b]</span>
+<span class="c1"># ---in test</span>
+<span class="c1"># [:c]</span>
+<span class="c1"># ---in test2</span>
+<span class="c1"># [:d]</span>
+<span class="c1"># ---in test3</span>
+<span class="c1"># [:e, :a, :b]</span>
+</code></pre></div></div>
+<p>可以看到 test3 看到了外部的变量</p>
+
+<p>那么块到底能看到多少层次呢？</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+
+<span class="n">a</span> <span class="o">=</span> <span class="s1">'aaa'</span>
+<span class="n">b</span> <span class="o">=</span> <span class="s1">'bbbb'</span>
+
+<span class="nb">puts</span> <span class="s1">'---outer---'</span>
+<span class="n">pp</span> <span class="nb">local_variables</span>
+
+<span class="k">class</span> <span class="nc">B</span>
+  <span class="n">ba</span> <span class="o">=</span> <span class="s1">'baaaa'</span>
+  <span class="n">bb</span> <span class="o">=</span> <span class="s1">'bbbb'</span>
+  <span class="nb">puts</span> <span class="s2">"---in ClassB"</span>
+  <span class="n">pp</span> <span class="nb">local_variables</span>
+  <span class="k">class</span> <span class="nc">A</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="s2">"cccc"</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="s2">"dddd"</span>
+    <span class="nb">puts</span> <span class="s2">"---in ClassA"</span>
+    <span class="n">pp</span> <span class="nb">local_variables</span>
+    <span class="n">define_method</span> <span class="ss">:test3</span> <span class="k">do</span>
+      <span class="n">e</span> <span class="o">=</span> <span class="s2">"eeeeeee"</span>
+      <span class="nb">puts</span> <span class="s2">"---in test3"</span>
+      <span class="n">pp</span> <span class="nb">local_variables</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="no">B</span><span class="o">::</span><span class="no">A</span><span class="p">.</span><span class="nf">new</span><span class="p">.</span><span class="nf">test3</span>
+<span class="c1"># output &gt;&gt;&gt;&gt;&gt;</span>
+<span class="c1"># ---outer---</span>
+<span class="c1"># [:a, :b]</span>
+<span class="c1"># ---in ClassB</span>
+<span class="c1"># [:ba, :bb]</span>
+<span class="c1"># ---in ClassA</span>
+<span class="c1"># [:c, :d]</span>
+<span class="c1"># ---in test3</span>
+<span class="c1"># [:e, :c, :d]</span>
+
+</code></pre></div></div>
+
+<p>可以看到 基本上 def都在class中声明的。在module中声明的无法运行。</p>
+
+<p>简单的说 块，只能带上词法作用域最近一层（Class\Module)的 EP（环境指针）罢了。</p>
+
+<blockquote>
+  <p>EP 是调用lambda或者函数时 所用环境的指针——指上下文栈帧的指针。 —— 《Ruby原理剖析》8.1.2 Page 214 
+块是函数与调用该函数时所用环境的组合。  —— 《Ruby原理剖析》8.3 Page 234</p>
+</blockquote>
+
+<p>可以用 <code class="language-plaintext highlighter-rouge">pp local_variables</code> 确认下当前环境。local_variables 也是自省，可以用他的结果，验证词法作用域问题。block中和外部变量比较。这个在元编程中也可以验证, 一些元编程方法的内部情况。</p>
+
+<h3 id="技巧-扁平化作用域">技巧： 扁平化作用域</h3>
+
+<p>参考《Ruby元编程（第二版）》 4.3.4 Page 84</p>
+
+<p>我们的实验内容比较浅显，比如前面只用了 A里面动态定义 def的时候，观察了下 local_variables.</p>
+
+<p>实际上 <code class="language-plaintext highlighter-rouge">Class.new</code> 、<code class="language-plaintext highlighter-rouge">Module.new</code> 、<code class="language-plaintext highlighter-rouge">Module#define_method</code>  可以嵌套使用，作用域会进行传递。相当于压平了作用域、嵌套的话相当于串联了作用域。如下所示。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">my_car</span> <span class="o">=</span> <span class="s1">'ssss'</span>
+
+<span class="no">MyClass</span> <span class="o">=</span> <span class="no">Class</span><span class="p">.</span><span class="nf">new</span> <span class="k">do</span>
+  <span class="nb">puts</span> <span class="s1">'---MyClass new'</span>
+  <span class="n">pp</span> <span class="nb">local_variables</span>
+
+  <span class="n">define_method</span> <span class="ss">:my_method</span> <span class="k">do</span>
+    <span class="nb">puts</span> <span class="s1">'--in my method'</span>
+    <span class="n">pp</span> <span class="nb">local_variables</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="no">MyClass</span><span class="p">.</span><span class="nf">new</span><span class="p">.</span><span class="nf">my_method</span>
+
+<span class="c1"># output &gt;&gt;&gt;&gt;&gt;</span>
+<span class="c1"># ---MyClass new</span>
+<span class="c1"># [:my_car]</span>
+<span class="c1"># --in my method</span>
+<span class="c1"># [:my_car]</span>
+</code></pre></div></div>
+<p>他们都可以看到 最外部的 my_car</p>
+
+<h3 id="技巧-共享作用域">技巧： 共享作用域</h3>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">def</span> <span class="nf">define_shared_methods</span>
+  <span class="n">shared</span> <span class="o">=</span> <span class="mi">0</span>
+
+  <span class="no">Kernel</span><span class="p">.</span><span class="nf">send</span> <span class="ss">:define_method</span><span class="p">,</span> <span class="ss">:counter</span> <span class="k">do</span>
+    <span class="n">shared</span>
+  <span class="k">end</span>
+
+  <span class="no">Kernel</span><span class="p">.</span><span class="nf">send</span> <span class="ss">:define_method</span><span class="p">,</span> <span class="ss">:inc</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+    <span class="n">shared</span> <span class="o">+=</span><span class="n">x</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">define_shared_methods</span>
+
+
+<span class="nb">puts</span> <span class="n">counter</span> 
+
+<span class="nb">puts</span> <span class="n">inc</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="nb">puts</span> <span class="n">counter</span>
+
+<span class="c1"># output &gt;&gt;&gt;&gt;</span>
+<span class="c1"># 0</span>
+<span class="c1"># 4</span>
+<span class="c1"># 4</span>
+</code></pre></div></div>
+<p>掌握了扁平作用域，就拥有了控制作用域的能力。
+比如想在一组方法之间共享一个变量，但是又不希望其他方法访问这个变量。就可以把这些方法定义在那个变量所在的扁平作用域里。</p>
+
+<p>而且这两个方法还被 def 作用域门保护着，这种共享变量的技巧叫做 —— 共享作用域。</p>
+
+<p>掌握了，作用域门、扁平作用域 和 共享作用域之后，就可以在任何地方看到你希望看到的变量了。</p>
+
+<blockquote>
+  <p>个人评论： 别忘了Ruby是一个可以重复定义、打开类、重定义方法的。他并不是静态的。所以当我们需要的时候，就开始定义，完全没问题。这里面不会有阻碍。</p>
+</blockquote>
+
+<h1 id="todo-元编程">TODO 元编程</h1>
+
+<p>元编程给我的感觉更像是，内部原理剖析针对了不同情况去处理了指针。</p>
+
+<p>使用者是无感的。</p>
+
+<p>使用具体的元编程接口，就是继承了EP（环境指针）也叫绑定。</p>
+
+<hr />
+<h1 id="总结">总结</h1>
+
+<p>基本的Ruby语法意味着可以构建逻辑</p>
+
+<p>Ruby的方法查找部分，意味着理解了 Ruby单继承、Mixin 包括用自省查看。</p>
+
+<p>Ruby的常量查找，意味着可以使用模块中常量。</p>
+
+<p>Ruby的作用域门、块打破作用域门（还有一些技巧），意味着你可以构建模块、类的嵌套程序，并且可以控制对变量的可见。作为上面程序的补充。</p>
+
+<p>然后就是动态的元编程。</p>
+
+<h1 id="我个人感觉是">我个人感觉是</h1>
+
+<p>Ruby比较特别在与动态性，而这部分内容，如果我们光是研究书本的话，大多数都得不到理想的答案。尤其是我已经在这里浪费了很久的时间。</p>
+
+<p>《Ruby原理剖析》是值得一读的书（虽然和最新的Ruby3源码偏离了），值的原因是它提供了一个比较靠谱的模型帮助你尽可能的理解了Ruby底层的工作原理。而不是模糊的口号、比喻。这对于时刻变化的Ruby很重要。</p>
+
+<p>然后应该鼓励在实践中做实验去查找结论。</p>
+
+<p>Ruby的一些技巧性，据我观察是一些 作用域隔离和扁平、共享的技巧。还有元编程访问的绑定。对环境绑定、对方法的搜索排序甚至剪切。 不过这些都可以通过自省来获得。对于使用方面其实没有多少影响。</p>
+
+<p>只能说期待更完备的理论，实在不行就啃C语言源码 （实在不想）。。。</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/%E7%AC%94%E8%AE%B0/2021/12/16/笔记:Ruby的答疑';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

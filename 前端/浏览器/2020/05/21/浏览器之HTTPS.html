@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>浏览器之HTTPS</title>
+  <meta name="description" content="起初HTTP协议的目的很单纯，就是为了传输超文本协议，没有太强的加密传输数据的需求，所以HTTP一直保持着明文传输数据的特征。这意味着在传输过程中的每一个环节，数据都有可能被窃取或者篡改，这也意味着你和服务器之间还可能有个中间人，你们在通信的过程中的一切内容都在中间人的掌握之中。// 正常状态浏览器  &lt;-...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E5%89%8D%E7%AB%AF/%E6%B5%8F%E8%A7%88%E5%99%A8/2020/05/21/%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B9%8BHTTPS.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">浏览器之HTTPS</h1>
+    <p class="artilce_meta"><time datetime="2020-05-21T21:47:37+08:00" itemprop="datePublished">May 21, 2020</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <p>起初HTTP协议的目的很单纯，就是为了传输超文本协议，没有太强的加密传输数据的需求，所以HTTP一直保持着明文传输数据的特征。这意味着在传输过程中的每一个环节，数据都有可能被窃取或者篡改，这也意味着你和服务器之间还可能有个中间人，你们在通信的过程中的一切内容都在中间人的掌握之中。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// 正常状态
+
+浏览器  &lt;----&gt;  服务器
+
+// 存在中间人
+
+浏览器 &lt;--- 中间人（窃取/伪造/篡改) ---&gt; 服务器
+
+</code></pre></div></div>
+
+<p>示意图的这种方式，称为中间人攻击。</p>
+
+<p>具体来讲，将HTTP数据交给TCP层之后，数据会经过用户电脑、WIFI路由器、运营商和目标服务器；在这中间每个环节中数据都有可能被窃取或篡改。</p>
+
+<h1 id="在http协议栈中引入安全层">在HTTP协议栈中引入安全层</h1>
+
+<p>鉴于http明文传输使得传输过程毫无安全性可言，而且制约了网上购物、在线转账等一系列场景。</p>
+
+<p>从HTTP协议栈层面上来看，我们可以在TCP和HTTP之间插入一个安全曾，所有经过安全层的数据都会被加密或者解密。</p>
+
+<p><img src="/assets/blog/https/https_01.png" alt="https_01" /></p>
+
+<p>从上图可以看出HTTPS并非一个新的协议，通常HTTP直接和TCP通信，HTTPS则先和安全层通信，然后安全曾再和TCP层通信。也就是说HTTPS所有的安全核心都在安全层，它不会影响到上面的HTTP协议，也不会影响到下面的TCP/IP，因此要搞清楚HTTPS如何工作的，就要弄清楚安全层是怎么工作的。</p>
+
+<p>总的来说，安全层主要职责：</p>
+
+<ul>
+  <li>对发起HTTP请求的数据进行加密操作</li>
+  <li>对接收到的HTTP内容进行解密操作</li>
+</ul>
+
+<p>我们知道了安全曾最重要的就是加解密，那么就利用这个安全曾，一步一步实现一个从简单到复杂的HTTPS协议。</p>
+
+<h1 id="第一版-使用对称加密">第一版： 使用对称加密</h1>
+
+<p>提到加密，最简单的加密方式就是使用对称加密。所谓对称加密是指加密和解密都使用相同密钥。</p>
+
+<p>了解对称加密，下面我们就使用对称加密来实现一版本https。</p>
+
+<p>要在两台电脑上加解密同一个文件，我们至少要知道加密方式和密钥，因此，在https发送数据之前，浏览器和服务器之间需要协商加密方式和密钥,过程如下所示：</p>
+
+<p><img src="/assets/blog/https/https_02.png" alt="https_02" /></p>
+
+<p>上图可以看出，https首先要协商加解密方式，这个过程就是https建立安全连接的过程。为了让加密的密钥更难以破解，我们让服务器和客户端同时决定密钥，具体过程如下：</p>
+
+<p>浏览器发送他所支持的加密套件列表和一个随机数 client-random,这里的加密套件是指加密的方法，加密套件列表就是指浏览器能支持多少种加密方法列表。</p>
+
+<p>服务器会从加密套件列表中选取一个加密套件，然后还会随机生成一个随机数 service-random 并将 service-random和加密套件返回给浏览器。</p>
+
+<p>最后浏览器和服务器分别返回确认消息。</p>
+
+<p>这样浏览器和服务器都有相同的 client-random 和 service-random了，然后它们再使用相同的方法将 client-random 和 service-random混合起来生成一个密钥 master secret 有了密钥 master secret和加密套件之后，双方就可以进行数据的加密传输了。</p>
+
+<p>通过将对称应用在安全层上，我们实现了第一个版本HTTPS。虽然这个版本可以很好的工作，但是传输 client-random和 service-random的过程确实明文的。这意味着黑客也可以拿到随机数合成密钥，这样依然可以轻松破解。</p>
+
+<h1 id="第二版使用非对称加密">第二版：使用非对称加密</h1>
+
+<p>不过非对称加密能够解决这个问题。</p>
+
+<h2 id="什么是非对称加密">什么是非对称加密</h2>
+
+<p>非对称加密算法有 A、B两把钥匙，如果你用A密钥来加密，那么只能用B密钥来解密；反过来你要用B密钥来加密，那么只能用A密钥来解密。</p>
+
+<p>在https服务器会将其中一个密钥通过明文形式发送给浏览器，我们把这个密钥称为公钥。服务器自己留下那个密钥称为私钥。</p>
+
+<p>顾名思义，公钥是每个人都能取到的，而私钥只有服务器有，不对任何人公开。</p>
+
+<p>下面是使用非对称加密改造HTTPS协议：</p>
+
+<p><img src="/assets/blog/https/https_03.png" alt="https_03" /></p>
+
+<p>我们来分析下非对称加密的请求流程：</p>
+
+<p>首先浏览器还是发送加密套件列表给服务器，然后服务器会选择一个加密套件，不过和对称加密不同的是，使用非对称加密时服务器上需要有用于浏览器加密的公钥和服务器解密HTTP数据的私钥。由于公钥时给浏览器加密使用的，因此服务器会将加密套件和公钥一道发送给浏览器。</p>
+
+<p>最后就是服务器和浏览器返回确认消息。</p>
+
+<p>这样子浏览器就有了服务器的公钥，在浏览器向服务器发送数据时，可以用公钥来加密，由于公钥只有私钥才能解密，所以黑客即便截获了数据和公钥，他们也是无法使用公钥来解密数据的。</p>
+
+<p>因此采用非对称加密，就能保证浏览器发送给服务器的数据是安全的了，这看上去似乎很完美，不过这种方式依然存在两个严重的问题：</p>
+
+<h3 id="第一个非对称加密的效率太低">第一个非对称加密的效率太低</h3>
+<p>这回严重影响加解密数据的速度，进而影响用户打开页面的速度</p>
+
+<h3 id="无法保证服务器发送给浏览器的数据安全">无法保证服务器发送给浏览器的数据安全</h3>
+
+<p>虽然浏览器可以使用公钥来加密，但是服务器端只能用私钥来解密，私钥加密只有公钥能解密。但是黑客也是可以获得到公钥，这样无法保证服务器发送给客户端的数据是安全的。黑客可以解密。</p>
+
+<h1 id="第三版对称加密和非对称加密搭配使用">第三版：对称加密和非对称加密搭配使用</h1>
+
+<p>小节一下：</p>
+
+<p>明文：相当于裸奔。</p>
+
+<p>对称加密：加密的key一旦被攻破、获取等于没有加密。</p>
+
+<p>非对称加密：只有客户端到服务端是安全的，反过来是不安全的。</p>
+
+<p>基于上面两点，最终选了一个更加完美的方案，那就是在传输数据阶段依然使用对称加密，但是对称加密的密钥我们采用非对称加密来传输。</p>
+
+<p><img src="/assets/blog/https/https_04.png" alt="https_04" /></p>
+
+<p>图中可以看到改造后的流程：</p>
+
+<p>首先浏览器向服务器发送对称加密套件列表、非堆成加密套件列表和随机数client-random</p>
+
+<p>服务器保存随机数client-random 选择对称加密和非对称加密的套件，然后生成随机数service-random, 向浏览器发送选择的加密套件、service-random 和 公钥；</p>
+
+<p>浏览器保存公钥，并生成随机数 pre-master, 然后利用公钥对 pre-master加密，并向服务器发送加密后的数据；</p>
+
+<blockquote>
+  <p>这里的重点就是客户端通过一次请求获得公钥，并且再通过公钥加密一段关键的key发送给服务端。因为客户端通过公钥发送给服务端这个是安全的。后面可以用这几部的数据按照约定生成对称加密的 key，进行通信。</p>
+</blockquote>
+
+<p>最后服务端拿出自己的私钥，解密出pre-master数据，并返回确认消息。</p>
+
+<p>到此位置，服务器和浏览器就有了共同的 client-random,service-random和pre-master; 然后服务器和浏览器会用这三组随机数生成对称密钥，因为服务器和浏览器使用同一个方法来生成密钥，所以最终生成的密钥也是相同的。</p>
+
+<p>有了对称加密的密钥后，双方就可以使用对称加密的方式来传输数据了。</p>
+
+<p>需要注意的的一点，pre-master 是经过公钥加密后传输的，所以黑客无法获取pre-master,这样黑客就无法生成密钥，也就保证了黑客无法破解传输过程中的数据。</p>
+
+<h1 id="第四版添加数字证书">第四版：添加数字证书</h1>
+
+<p>通过对称和非对称混合方式，我们完美实现了数据的加密传输，不过这种方式依然存在着问题。比如我们要打开A的网站，但是黑客通过DNS劫持将A网站的IP换成了黑客IP地址，这样我访问的是黑客的服务器了，黑客就可以在自己的服务器上实现公钥和私钥，对浏览器来说，完全不知道现在访问的是黑客站点。</p>
+
+<p>所以我们还需要服务器向浏览器提供证明。
+那怎么证明呢？</p>
+
+<p>现实中，派出所起到了权威机构，给每个居民颁发身份证。</p>
+
+<p>同理，A服务器如果想要证明自己就是A，也需要权威机构办法证书，这个权威机构就是  CA（Certificate Authority） 办法的证书就称为数字证书（Digital Certificate）。</p>
+
+<p>对于浏览器来说，数字证书有两个作用：</p>
+
+<ul>
+  <li>通过数字证书向浏览器证明服务器的身份</li>
+  <li>数字证书里包含了服务器公钥</li>
+</ul>
+
+<p><img src="/assets/blog/https/https_05.png" alt="https_05" /></p>
+
+<p>相较于第三版https，这里主要有2个改变</p>
+
+<ol>
+  <li>服务器没有直接返回公钥给浏览器，而是返回了数字证书，而公钥正式包含在数字证书的</li>
+  <li>浏览器端多了一个证书验证的操作，验证证书之后，才会继续流程。</li>
+</ol>
+
+<p>这样即使黑客伪造了服务器，由于证书是无法伪造的，依然无法欺骗用户。</p>
+
+<blockquote>
+  <p>数字证书机构，包有证书公钥、证书私钥，通过证书私钥加密服务器的公钥，生成证书。服务端下载这个证书，请求的时候就不返回公钥了，而是返回这个证书。客户端获得证书，需要从数组证书机构处下载公钥进行解密，才可以得到服务端的公钥，进而继续完成下面步骤然后通信。</p>
+</blockquote>
+
+<p>如果这里也发生中间人攻击怎么办？
+所以证书机构的公钥一开始就被内置在浏览器内部了，浏览器通过内部的公钥对证书进行解密。</p>
+
+<p>如果是黑客，不论是在证书验证还是解析数据环节都是无法破译。</p>
+
+<h1 id="总结">总结</h1>
+
+<p>明文： 明文相当于裸奔，完全没有安全性可言。</p>
+
+<p>对称加密： 传输加密key的时候是明文，容易被攻破。</p>
+
+<p>非对称加密： 客户端发送到服务端是安全的，但是服务端发送到客户端不安全，拿到公钥的谁都可以解密。</p>
+
+<p>对称+非对称：
+通过 非对称加密中 客户端发送到服务端是安全的，用来发送对称加密密钥，然后后面通过这个密钥进行对称加密通信。
+这里的缺点就是无法克服中间人问题。</p>
+
+<p>CA认证：对服务端进行身份验证，防止中间人。</p>
+
+<h1 id="以访问百度为例梳理一个详细过程">以访问百度为例，梳理一个详细过程</h1>
+
+<ol>
+  <li>客户端对服务端发起请求</li>
+</ol>
+
+<p>携带 支持SSL版本、非对称加密算法、随机数1</p>
+
+<ol>
+  <li>服务端相应</li>
+</ol>
+
+<p>知道了所需信息，确定SSL版本，对称加密算法，生成随机数2，携带CA证书返回</p>
+
+<ol>
+  <li>客户端</li>
+</ol>
+
+<p>认证证书（浏览器内置了证书机构的公钥，解密），认证失败弹出警告
+证书认证成功继续发起向客户端请求，数据包括一个随机数3，
+发送hash(随机数1，随机数2) == XX 的XX的值</p>
+
+<ol>
+  <li>服务端
+收到随机数3，和XX</li>
+</ol>
+
+<p>拿随机数1，随机数2 验证 XX是否 hash(随机数1，随机数2)确认没有被篡改</p>
+
+<p>然后使用随机数1，随机数2，随机数3 生成一个 K （客户端和服务端约定一个生成方式）</p>
+
+<p>返回 hash(随机1，随机2，XX) = ZZ</p>
+
+<ol>
+  <li>客户端
+接受 ZZ</li>
+</ol>
+
+<p>运行  hash(随机1，随机2，XX) 确认是否是ZZ</p>
+
+<p>然后可以通过自己前面的 随机数1、2、3 按照约定，生成一个K</p>
+
+<ol>
+  <li>两头用约定生成的K 来堆成加密沟通</li>
+</ol>
+
+<h1 id="参考">参考</h1>
+
+<ul>
+  <li><a href="https://www.bilibili.com/video/BV1w4411m7GL?from=search&amp;seid=15726633805047518720">HTTPS原理全解析</a></li>
+</ul>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E5%89%8D%E7%AB%AF/%E6%B5%8F%E8%A7%88%E5%99%A8/2020/05/21/浏览器之HTTPS';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>
