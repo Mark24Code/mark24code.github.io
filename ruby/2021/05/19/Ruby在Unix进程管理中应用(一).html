@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Ruby在Linux/Unix进程管理中应用(一)</title>
+  <meta name="description" content="一、简单介绍这里介绍Unix/Linux中三个关键命令 fork,exec,wait 他们是如何在进程控制中发挥作用的。以及在Ruby中如何使用他们。简单概括后面要聊的内容：      使用fork可以生成子进程。        使用exec可以替换掉当前进程，进入新的执行命令        使用wait可以等待...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/2021/05/19/Ruby%E5%9C%A8Unix%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86%E4%B8%AD%E5%BA%94%E7%94%A8(%E4%B8%80).html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">Ruby在Linux/Unix进程管理中应用(一)</h1>
+    <p class="artilce_meta"><time datetime="2021-05-19T16:18:15+08:00" itemprop="datePublished">May 19, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="一简单介绍">一、简单介绍</h1>
+
+<p>这里介绍Unix/Linux中三个关键命令 <code class="language-plaintext highlighter-rouge">fork</code>,<code class="language-plaintext highlighter-rouge">exec</code>,<code class="language-plaintext highlighter-rouge">wait</code> 他们是如何在进程控制中发挥作用的。以及在Ruby中如何使用他们。</p>
+
+<p>简单概括后面要聊的内容：</p>
+
+<ol>
+  <li>
+    <p>使用<code class="language-plaintext highlighter-rouge">fork</code>可以生成子进程。</p>
+  </li>
+  <li>
+    <p>使用<code class="language-plaintext highlighter-rouge">exec</code>可以替换掉当前进程，进入新的执行命令</p>
+  </li>
+  <li>
+    <p>使用<code class="language-plaintext highlighter-rouge">wait</code>可以等待子进程的退出。</p>
+  </li>
+</ol>
+
+<h1 id="二fork">二、fork</h1>
+
+<h2 id="1-fork介绍">1. fork介绍</h2>
+
+<p>可以通过 <code class="language-plaintext highlighter-rouge">man 2 fork</code> 查询关于fork的介绍。<a href="https://book.douban.com/subject/24298701/">《理解Unix进程》</a> 中也做了精彩的描述。</p>
+
+<p>下面用Ruby中调用fork的方式进行描述和分析。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">puts</span> <span class="s2">"parent process pid is </span><span class="si">#{</span><span class="no">Process</span><span class="p">.</span><span class="nf">pid</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">if</span> <span class="nb">fork</span>
+  <span class="nb">puts</span> <span class="s2">"entered the if block from </span><span class="si">#{</span><span class="no">Process</span><span class="p">.</span><span class="nf">pid</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">else</span>
+  <span class="nb">puts</span> <span class="s2">"entered the else block from </span><span class="si">#{</span><span class="no">Process</span><span class="p">.</span><span class="nf">pid</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>代码执行的结果</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>parent process pid is 50305
+entered the if block from 50305
+entered the else block from 50445
+</code></pre></div></div>
+
+<p>我可以看到所有的代码段都执行了，我们通过打印进程的PID,才明白原来属于不同的PID。这就是fork的特别之处，“一次fork，两次执行”。</p>
+
+<p>具体fork做了什么呢？我们来逐行分析下面代码，尝试给大家描述过程：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># test.rb</span>
+<span class="nb">puts</span> <span class="s2">"parent process pid is </span><span class="si">#{</span><span class="no">Process</span><span class="p">.</span><span class="nf">pid</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">if</span> <span class="nb">fork</span>
+  <span class="nb">puts</span> <span class="s2">"entered the if block from </span><span class="si">#{</span><span class="no">Process</span><span class="p">.</span><span class="nf">pid</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">else</span>
+  <span class="nb">puts</span> <span class="s2">"entered the else block from </span><span class="si">#{</span><span class="no">Process</span><span class="p">.</span><span class="nf">pid</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>假设这段代码是 <code class="language-plaintext highlighter-rouge">test.rb</code>我们执行<code class="language-plaintext highlighter-rouge">ruby test.rb</code> 代码开始执行，第一行代码执行打印自己的进程id，第二行执行到  <code class="language-plaintext highlighter-rouge">if fork</code>, <code class="language-plaintext highlighter-rouge">fork</code> 是 <code class="language-plaintext highlighter-rouge">Kernel::fork</code>  它是 Unix/Linux中 <code class="language-plaintext highlighter-rouge">fork(2)</code>的封装，可以通过 <code class="language-plaintext highlighter-rouge">man 2 fork</code> 查看 fork的说明。</p>
+
+<p>fork是内核调用，此刻在Linux/Unix中，会生成一个子进程，子进程从父进程继承了所有的文件描述，也获得了父进程的所有文件描述。两个进程可以共享打开的文件，套接字等等。子进程也继承了父进程内存中的所有内容。</p>
+
+<p>fork采用了特别的方式共享内存。并没有真正的复制，而是采用了写时复制（Copy-On-Write 后称COW)的策略,待子进程真正开始写入内存的时候，再开始复制父进程的内存，拷贝2份。假设父进程现在是500M的一个进程，那么子进程在写入数据的那一刻，操作系统将会出现 两个500M的内存的程序。</p>
+
+<p>因为这个特点存在，如果不停地 “fork加写”操作，会耗尽系统的内存——这也叫 <code class="language-plaintext highlighter-rouge">fork炸弹</code>，所以fork前确保你知道你在干什么。</p>
+
+<p>也因为 COW的存在，fork实际上只是copy了父内存的指针，他们暂时共享内存。所以fork几乎是可以瞬间返回的。</p>
+
+<p>这一点，比如 fork 3个子程序，比单独打开这3个子程序还要快。</p>
+
+<p>我看到的资料里显示，操作系统通过不断地fork衍生出子进程。fork也是最初一段时间唯一产生子进程的方法。fork非常便捷，fork也先于进程概念之前。</p>
+
+<p>现在对fork的设计有很多说法，有人说是遵循了Unix哲学刻意而为之，有人说fork只是一个实用的存在。我倾向于后者，因为总会有人对历史做一些刻意的包装。fork之所以能留到今天，应该是他的简单且实用。fork的出现先于 进程概念的出现。我们要明白Unix诞生的时候，计算机非常昂贵，计算速度非常慢，内存非常稀缺。Unix编写的时候，可用内存就是0.5M。</p>
+
+<p>fork产生的背景极有可能是这样的：计算机程序只能做一件事顺序执行，而Unix的作者希望主程序还能分出去做点别的事情，并且反复加载程序也是低效和缓慢的。于是出现了fork以及后面的exec。来做这件事。后面介绍exec。这里可以提前预告。fork产生了一模一样的子进程，当在子进程中执行 exec的时候，就会用exec的命令替换掉当前进程，成为一个完全新的命令在执行。所以这种方式就可以让计算机同事做多件事情。 我更倾向于通过这种实践，后来逐渐产生了 进程，线程的概念。</p>
+
+<p>我们知道了那么多背景，继续接着分析代码，fork会迅速的返回。这里返回什么呢? 实际上 fork这步，就进入了内核调度。内核产生了一个一模一样的子进程（除了单独赋予子进程一个pid)。 一模一样意味着代码也一样，他们正在执行的代码也指向同一个地方。</p>
+
+<p>所实际上在fork这句，内存中空间里，就产生了两个平行世界一般的存在。他们都从 fork这行开始往下执行。 他们在操作系统中是平等的，所以轮到谁执行，取决于当时的系统调度。</p>
+
+<p>这里fork语句在父进程中会返回 子进程的pid，在子进程中会返回 nil （这是在ruby里的规则，实际上C语言会返回0）。
+这样返回是具有设计意图的。因为 在C程序中，可以通过系统接口获取自己的 pid获取自己的父pid即 ppid，而获取子进程pid只有通过fork的返回才知道。 进程id即pid，是一个 从 1开始（第一个进程init进程就是1）的递增的整数，所以返回 0 就是不存在的意思。在Ruby中友好的返回了 nil。</p>
+
+<p>所以我们的代码里 <code class="language-plaintext highlighter-rouge">if-else</code> 两句开始生效，其实分别在 父进程中中 fork返回结果是 子进程号，所以执行 if 下面语句，而子进程中，拿到的是nil执行else语句。而他们两个平行程序都在系统调度中不断地被执行。所以你看到的结果是两个程序打印的结果。</p>
+
+<p>代码结构中的执行情况，实际上如下：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># 最先由父执行</span>
+<span class="k">if</span> <span class="nb">fork</span>
+  <span class="c1"># 父执行</span>
+<span class="k">else</span>
+  <span class="c1"># 子执行</span>
+<span class="k">end</span>
+<span class="c1"># 父子皆会执行</span>
+</code></pre></div></div>
+
+<p>在Ruby中也可以使用块，块的方式更常见也更加友好。通过块的封装，可以让一些代码只在子进程中执行。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># 最先由父执行</span>
+  <span class="nb">fork</span> <span class="k">do</span>
+    <span class="c1"># 子执行</span>
+  <span class="k">else</span>
+
+<span class="c1"># 仅在父执行</span>
+</code></pre></div></div>
+
+<h3 id="11-fork-带来的问题">1.1 fork 带来的问题</h3>
+
+<p>先进性相关概念的铺垫，以防止一些读者缺乏上下文。</p>
+
+<h4 id="111-进程与进程控制块pcb">1.1.1 进程与进程控制块(PCB)</h4>
+
+<p>PCB 是系统为了管理进程而设置的一个专门的数据结构，你可以理解为一个对象，实际上在底层是一个C的结构体。
+它大概长这个样子：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c1">// 1、进程标识符 name：每个进程都必须有一个唯一的标识符，可以是字符串，也可以是一个数字。</span>
+
+<span class="c1">// 2、进程当前状态 status：说明进程当前所处的状态。为了管理的方便，系统设计时会将相同的状态的进程组成一个队列，如就绪进程队列，等待进程则要根据等待的事件组成多个等待队列，如等待打印机队列、等待磁盘I/O完成队列等等。</span>
+
+<span class="c1">// 3、进程相应的程序和数据地址，以便把PCB与其程序和数据联系起来。</span>
+
+<span class="c1">// 4、进程资源清单。列出所拥有的除CPU外的资源记录，如拥有的I/O设备，打开的文件列表等。</span>
+
+<span class="c1">// 5、进程优先级 priority：进程的优先级反映进程的紧迫程度，通常由用户指定和系统设置。</span>
+
+<span class="c1">// 6、CPU现场保护区 cpustatus：当进程因某种原因不能继续占用CPU时（如等待打印机），释放CPU，这时就要将CPU的各种状态信息保护起来，为将来再次得到处理机恢复CPU的各种状态，继续运行。</span>
+
+<span class="c1">// 7、进程同步与通信机制 用于实现进程间互斥、同步和通信所需的信号量等。</span>
+
+<span class="c1">// 8、进程所在队列PCB的链接字 根据进程所处的现行状态，进程相的PCB参加到不同队列中。PCB链接字指出该进程所在队列中下一个进程PCB的首地址。</span>
+
+<span class="c1">// 9、与进程有关的其他信息。 如进程记账信息，进程占用CPU的时间等。</span>
+<span class="k">struct</span> <span class="n">task_struct</span> <span class="p">{</span>
+
+	<span class="kt">long</span> <span class="n">state</span><span class="p">;</span> <span class="cm">/*任务的运行状态（-1 不可运行，0 可运行(就绪)，&gt;0 已停止）*/</span>
+
+	<span class="kt">long</span> <span class="n">counter</span><span class="p">;</span><span class="cm">/*运行时间片计数器(递减)*/</span>
+
+	<span class="kt">long</span> <span class="n">priority</span><span class="p">;</span><span class="cm">/*优先级*/</span>
+
+	<span class="kt">long</span> <span class="n">signal</span><span class="p">;</span><span class="cm">/*信号*/</span>
+
+	<span class="k">struct</span> <span class="n">sigaction</span> <span class="n">sigaction</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span><span class="cm">/*信号执行属性结构，对应信号将要执行的操作和标志信息*/</span>
+
+	<span class="kt">long</span> <span class="n">blocked</span><span class="p">;</span> <span class="cm">/* bitmap of masked signals */</span>
+
+	<span class="err">　　</span><span class="cm">/* various fields */</span>
+
+	<span class="kt">int</span> <span class="n">exit_code</span><span class="p">;</span><span class="cm">/*任务执行停止的退出码*/</span>
+
+	<span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">start_code</span><span class="p">,</span> <span class="n">end_code</span><span class="p">,</span> <span class="n">end_data</span><span class="p">,</span> <span class="n">brk</span><span class="p">,</span> <span class="n">start_stack</span><span class="p">;</span><span class="cm">/*代码段地址 代码长度（字节数）
+
+																   　　代码长度 + 数据长度（字节数）总长度 堆栈段地址*/</span>
+
+	<span class="kt">long</span> <span class="n">pid</span><span class="p">,</span> <span class="n">father</span><span class="p">,</span> <span class="n">pgrp</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">leader</span><span class="p">;</span><span class="cm">/*进程标识号(进程号) 父进程号 父进程组号 会话号 会话首领*/</span>
+
+	<span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">uid</span><span class="p">,</span> <span class="n">euid</span><span class="p">,</span> <span class="n">suid</span><span class="p">;</span><span class="cm">/*用户标识号（用户id） 有效用户id 保存的用户id*/</span>
+
+	<span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">gid</span><span class="p">,</span> <span class="n">egid</span><span class="p">,</span> <span class="n">sgid</span><span class="p">;</span> <span class="cm">/*组标识号（组id） 有效组id 保存的组id*/</span>
+
+	<span class="kt">long</span> <span class="n">alarm</span><span class="p">;</span><span class="cm">/*报警定时值*/</span>
+
+	<span class="kt">long</span> <span class="n">utime</span><span class="p">,</span> <span class="n">stime</span><span class="p">,</span> <span class="n">cutime</span><span class="p">,</span> <span class="n">cstime</span><span class="p">,</span> <span class="n">start_time</span><span class="p">;</span><span class="cm">/*用户态运行时间 内核态运行时间 子进程用户态运行时间
+
+												  　　子进程内核态运行时间 进程开始运行时刻*/</span>
+
+	<span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">used_math</span><span class="p">;</span><span class="cm">/*标志：是否使用协处理器*/</span>
+
+	<span class="err">　　</span><span class="cm">/* file system info */</span>
+
+	<span class="kt">int</span> <span class="n">tty</span><span class="p">;</span> <span class="cm">/* -1 if no tty, so it must be signed */</span>
+
+	<span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">umask</span><span class="p">;</span><span class="cm">/*文件创建属性屏蔽位*/</span>
+
+	<span class="k">struct</span> <span class="n">m_inode</span> <span class="o">*</span> <span class="n">pwd</span><span class="p">;</span><span class="cm">/*当前工作目录i 节点结构*/</span>
+
+	<span class="k">struct</span> <span class="n">m_inode</span> <span class="o">*</span> <span class="n">root</span><span class="p">;</span><span class="cm">/*根目录i节点结构*/</span>
+
+	<span class="k">struct</span> <span class="n">m_inode</span> <span class="o">*</span> <span class="n">executable</span><span class="p">;</span><span class="cm">/*执行文件i节点结构*/</span>
+
+	<span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">close_on_exec</span><span class="p">;</span><span class="cm">/*执行时关闭文件句柄位图标志*/</span>
+
+	<span class="k">struct</span> <span class="n">file</span> <span class="o">*</span> <span class="n">filp</span><span class="p">[</span><span class="n">NR_OPEN</span><span class="p">];</span><span class="cm">/*进程使用的文件表结构*/</span>
+
+	<span class="err">　　</span><span class="cm">/* ldt for this task 0 - zero 1 - cs 2 - ds&amp;ss */</span>
+
+	<span class="k">struct</span> <span class="n">desc_struct</span> <span class="n">ldt</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span><span class="cm">/*本任务的局部描述符表。0-空，1-代码段cs，2-数据和堆栈段ds&amp;ss*/</span>
+
+	<span class="err">　　</span><span class="cm">/* tss for this task */</span>
+
+	<span class="k">struct</span> <span class="n">tss_struct</span> <span class="n">tss</span><span class="p">;</span><span class="cm">/*本进程的任务状态段信息结构*/</span>
+
+<span class="p">};</span>
+</code></pre></div></div>
+<p>我们姑且就认为是一个对象吧，通过这个对象记录对一个进程的外部描述。涉及到进程的不同切面。
+PCB对于进程，就仿佛是户口的存在，Pid就是身份证号。
+PCB也是系统感知进程存在的唯一标志。</p>
+
+<h4 id="112-进程状态--僵尸进程">1.1.2 进程状态 &amp; 僵尸进程</h4>
+
+<p>每个进程有不同的状态,如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>R (TASK_RUNNING)，可执行状态。
+S (TASK_INTERRUPTIBLE)，可中断的睡眠状态。
+D (TASK_UNINTERRUPTIBLE)，不可中断的睡眠状态
+T (TASK_STOPPED or TASK_TRACED)，暂停状态或跟踪状态。
+Z (TASK_DEAD – EXIT_ZOMBIE)，退出状态，进程成为僵尸进程。
+X (TASK_DEAD – EXIT_DEAD)，退出状态，进程即将被销毁。
+</code></pre></div></div>
+
+<p>这里主要介绍 一下僵尸进程。</p>
+
+<p>僵尸进程：</p>
+
+<p>我们构建一个情景来解释这个。一个父进程，执行过程中 fork 产生一个子进程。子进程执行完毕。但是父进程，没有结束，也迟迟没有 执行 wait（后面讲）。这时候子进程就是僵尸进程。</p>
+
+<p>下面来解释下为什么会这样 。还有僵尸进程的问题是什么。</p>
+
+<p>一个进程在执行结束，或者 exit结束自己，实际上并没有真正的销毁，而是留下了一个僵尸进程的数据结构，就是前面的PCB，里面会记录一些推出，或者退出的信号，主要标记退出时候发生了什么。
+退出的进程需要他的父进程来接管，也就是父进程必须去调用wait。因为wait可以获得 子进程退出的一些信息。而如果父进程无动于衷，子进程的PCB就会一直保持着，成为所谓的僵尸进程。</p>
+
+<p>实际上，如果我们设想自己去设计这个也是合理的。这就是一个”事事有回响“的一个设计。当有人接住你的退出信息，那么你就可以安心的推出了。PCB也会被真正的清理掉。</p>
+
+<p>这里有两个问题，如果不停地 fork，但是又不wait。就会产生很多僵尸进程。僵尸进程是不好的，原因是系统产生进程的数量其实是一个有限值。而僵尸进程相当于占用了进程数量，造成了浪费。</p>
+
+<h1 id="三wait">三、wait</h1>
+
+<p>fork部分讲了 fork如果不wait会产生僵尸进程。其实这是Unix的一种机制，就是保存进程的信息，等待接管他的人处理。</p>
+
+<p>在Ruby中，<code class="language-plaintext highlighter-rouge">Process.wait</code> 以及表亲都对应于 waitpid(2)。<code class="language-plaintext highlighter-rouge">Process.wait</code> 做了什么，看下面代码：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">fork</span> <span class="k">do</span> 
+	<span class="mi">5</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span>
+		<span class="nb">sleep</span> <span class="mi">1</span>
+		<span class="nb">puts</span> <span class="s2">"I am an child!"</span> 
+	<span class="k">end</span>
+<span class="k">end</span>
+<span class="no">Process</span><span class="p">.</span><span class="nf">wait</span>
+<span class="nb">abort</span> <span class="s2">"Parent process died..."</span>
+</code></pre></div></div>
+
+<p>输出结果</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>I am an child!
+I am an child!
+I am an child!
+I am an child!
+I am an child! 
+Parent process died...
+
+</code></pre></div></div>
+<p>所有fork子进程被打印出来控制才会返回终端。</p>
+
+<p>Process.wait 是一个一直阻塞调用。该调用是的父进程一直等待它的某个子进程退出之后才继续执行。</p>
+
+<p>但是 Process.wait 只会等待一个。也就是说 wait会一直保持阻塞，直到其中任意一个子进程推出为止。如果父进程不止有一个子进程。</p>
+
+<ol>
+  <li>可以生成相应数量的Process.wait 等待每一个子进程</li>
+</ol>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">#创建 3 个子进程。 </span>
+<span class="mi">3</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span>
+	<span class="nb">fork</span> <span class="k">do</span>
+		<span class="c1"># 每个子进程随机休眠一段时间(不超过 5 秒)。 </span>
+		<span class="nb">sleep</span> <span class="nb">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+	<span class="k">end</span> 
+<span class="k">end</span>
+
+<span class="mi">3</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span>
+<span class="c1"># 等待每个子进程退出并打印其返回的pid。 </span>
+	<span class="nb">puts</span> <span class="no">Process</span><span class="p">.</span><span class="nf">wait</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<ol>
+  <li>使用 Process.wait2</li>
+</ol>
+
+<p>Process.wait 返回一个值 pid
+Process.wait2返回两个值 pid,status  这里 status是一个对象可以得到各种推出的原因，比如 status.exitstatus</p>
+
+<ol>
+  <li>等待特定的子进程 Process.waitpid,Process.waitpid2</li>
+</ol>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">favourite</span> <span class="o">=</span> <span class="nb">fork</span> <span class="k">do</span> 
+	<span class="nb">exit</span> <span class="mi">77</span>
+<span class="k">end</span>
+<span class="n">middle_child</span> <span class="o">=</span> <span class="nb">fork</span> <span class="k">do</span>
+	<span class="nb">abort</span> <span class="s2">"I want to be waited on!"</span>
+<span class="k">end</span>
+<span class="n">pid</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="no">Process</span><span class="p">.</span><span class="nf">waitpid2</span> <span class="n">favourite</span> 
+
+<span class="nb">puts</span> <span class="n">status</span><span class="p">.</span><span class="nf">exitstatus</span>
+</code></pre></div></div>
+
+<p>采用 这种方式可以实现简单的的 master/worker 模式。 父进程不断地衍生子进程。又对子进程可以维持联系保持响应。</p>
+
+<h1 id="四exec">四、exec</h1>
+
+<p>exec对应于  exec(2) 它允许你使用另一个进程来替换当前进程。换句话说 exec(2) 可以让你讲当前的进程变成另一个进程，你可以使用一个Ruby进程，然后把他变成Python进程，或者另一个Ruby进程。</p>
+
+<p>exec(2)这种转变是有去无回的，一旦转成别的再也变不回来。</p>
+
+<p>fork+exec 的组合是生成新进程常见的一种方法。唯一的缺点就是当前进程转变后再也无法恢复。而fork(2)就没有这个问题。</p>
+
+<h1 id="参考">参考</h1>
+
+<ul>
+  <li><a href="https://book.douban.com/subject/24298701/">《理解Unix进程》</a></li>
+  <li><a href="https://github.com/remzi-arpacidusseau/ostep-translations/tree/master/chinese">《操作系统导论》</a></li>
+  <li><a href="http://shihyu.github.io/books/index.html">《Linux C編程一站式學習》</a></li>
+</ul>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/2021/05/19/Ruby在Unix进程管理中应用(一)';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

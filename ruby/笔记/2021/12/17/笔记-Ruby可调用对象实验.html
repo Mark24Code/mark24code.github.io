@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>笔记:Ruby可调用对象实验</title>
+  <meta name="description" content="观点本来我的观点应该放在最后，但是这个实验不太复杂。而我下次可能也是直接看上面的。所以我简单写一点。Ruby的内部无疑是很复杂的，《Ruby原理剖析》虽然已经写的很好了，然是依然是建立在大幅简化的条件下进行讲解。即使看完我们也许依然很难真正理解Ruby的工作原理。具体的还需要查询源码。不过我觉得，最近看书自己存在...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/%E7%AC%94%E8%AE%B0/2021/12/17/%E7%AC%94%E8%AE%B0-Ruby%E5%8F%AF%E8%B0%83%E7%94%A8%E5%AF%B9%E8%B1%A1%E5%AE%9E%E9%AA%8C.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">笔记:Ruby可调用对象实验</h1>
+    <p class="artilce_meta"><time datetime="2021-12-17T18:24:47+08:00" itemprop="datePublished">Dec 17, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="观点">观点</h1>
+
+<p>本来我的观点应该放在最后，但是这个实验不太复杂。而我下次可能也是直接看上面的。所以我简单写一点。</p>
+
+<p>Ruby的内部无疑是很复杂的，《Ruby原理剖析》虽然已经写的很好了，然是依然是建立在大幅简化的条件下进行讲解。即使看完我们也许依然很难真正理解Ruby的工作原理。具体的还需要查询源码。</p>
+
+<p>不过我觉得，最近看书自己存在一个误区，或者获得了一个新的想法。</p>
+
+<p>我们想要学习和理解一个工具，更看重的是他的原理和最后黑盒的表达罢了。据个例子就像开车，你大概知道了内燃机、电动机原理，那么你踩了油门车子起步，踩了刹车车子停止。这个技能就算学会了。至于汽车内部有多么复杂，用了什么黑科技保驾护航，研究他们那是另一个课题了。</p>
+
+<p>类似，我这几天要么在入门书籍里面的一些不严谨的比喻、概念里面建立抽象的心理模型、抑或是进入《剖析》这种又是大量细节的内容里。最终有一种迷失感。</p>
+
+<p>但是这件事其实是没那么复杂的。只需要跳出来思考。</p>
+
+<p>我沉淀的一个观点是 —— 我们应该理解他的意图。</p>
+
+<p>Ruby的设计再复杂也伴随着一个目的。从Ruby的表现和应用实际上他是想表达一个简洁、又自动化搜索（深邃）的东西。</p>
+
+<p>其他的语言诸如JS是一种很混乱的存在。Ruby的作者Matz是语言的狂热粉，他写过很多书表达自己的设计思考还有对其他语言的观察。</p>
+
+<p>Ruby的东西是可以跳出来思考的——把你自己站在设计者的角度、抑或是使用者的角度，去思考合理性。</p>
+
+<p>比如可调用对象这部分。后面会总结，也是书本的摘要。我这里就直接简化的理解：</p>
+
+<p>Ruby里面 Class 其实是一种封装结构，是为了一种面向对象的风格。</p>
+
+<p>Ruby里面 承担起主要逻辑（就像JS里面的function）其实是 块（Block）</p>
+
+<p>块 就是 do ~ end 这部分代码。他像代码一样工作。在定义的词法作用域里工作。</p>
+
+<p>Proc是底层支持块的更朴素的类，相对来说一切更加宽松（或者说方法少。越继承方法约多约束也越多）。他也是在词法作用域里工作。</p>
+
+<p>块和Proc是相似的。</p>
+
+<p>其实就可以理解为 块 是我们书写的代码。 Proc是一段代码对象。</p>
+
+<p>Lambda就是 Proc的对象，表现的就像匿名函数。更确定的存在。</p>
+
+<p>Method可以说就是一个具名函数。</p>
+
+<p>Lambda和Method是相似的。</p>
+
+<p>其实就可以理解为 Lambda是匿名函数，Method是具名函数。</p>
+
+<hr />
+
+<h1 id="可调用对象总结">可调用对象总结</h1>
+
+<ul>
+  <li>代码块</li>
+</ul>
+
+<p>代码块不是真正的对象，但是他们是 可调用的，在定义他们的作用域中执行。</p>
+
+<ul>
+  <li>proc</li>
+</ul>
+
+<p>Proc类跟代码块一样，也在定义自身的作用域中执行</p>
+
+<ul>
+  <li>lambda</li>
+</ul>
+
+<p>也是Proc对象，但是他跟普通的proc有细微差别，他跟块和proc一样都是闭包，因此也在自身的作用域中执行</p>
+
+<ul>
+  <li>方法</li>
+</ul>
+
+<p>绑定于一个对象，在所绑定的对象作用域中执行。他们也可以和这个作用于解除绑定，然后再重新绑定到另一个对象的作用域。</p>
+
+<p>在方法和lambda中，return 语句从可调用对象中返回。（自身可作为函数看待）</p>
+
+<p>在块和proc中，return从定义可调用对象的原始上下文中返回。（词法代码）</p>
+
+<p>lambda、方法对参数严格。proc宽松。</p>
+
+<h1 id="proc-和-lambda-的差异性">Proc 和 Lambda 的差异性</h1>
+
+<h2 id="1-return-之处返回">1. return 之处返回</h2>
+
+<p>Lambda中 return仅仅表示从这个 lambda 中返回</p>
+
+<p>其实 Lambda 就是一个匿名函数（类比JS里面的<code class="language-plaintext highlighter-rouge">function(){}</code> 行为保持一致）</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">lambda_obj</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">10</span> <span class="p">}</span>
+
+<span class="k">def</span> <span class="nf">double</span><span class="p">(</span><span class="n">lambda_obj</span><span class="p">)</span>
+  <span class="nb">puts</span> <span class="n">lambda_obj</span><span class="p">.</span><span class="nf">call</span> <span class="o">*</span> <span class="mi">2</span>
+<span class="k">end</span>
+
+<span class="n">double</span><span class="p">(</span><span class="n">lambda_obj</span><span class="p">)</span>
+
+<span class="c1"># output &gt;&gt;&gt;</span>
+<span class="c1"># 20</span>
+
+</code></pre></div></div>
+
+<p>Proc是在定义Proc的作用域中返回（词法位置返回）。简单的说 Proc像一个代码一样，嵌入上下文中。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">double</span><span class="p">()</span>
+  <span class="n">p_obj</span> <span class="o">=</span> <span class="no">Proc</span><span class="p">.</span><span class="nf">new</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">10</span> <span class="p">}</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="n">p_obj</span><span class="p">.</span><span class="nf">call</span>
+  <span class="k">return</span> <span class="n">result</span> <span class="o">*</span> <span class="mi">2</span> <span class="c1"># 这端代码不可到达</span>
+<span class="k">end</span>
+
+<span class="nb">puts</span> <span class="n">double</span><span class="p">()</span>
+
+<span class="c1"># output &gt;&gt;&gt;</span>
+<span class="c1"># 10</span>
+</code></pre></div></div>
+
+<p><a href="https://ruby-doc.org/core-2.7.1/Proc.html#class-Proc-label-Lambda+and+non-lambda+semantics">Lambda and non-lambda semantics¶</a></p>
+
+<p>TODO直接中断？？？？？</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">double</span><span class="p">(</span><span class="n">p_obj</span><span class="p">)</span>
+  <span class="nb">puts</span> <span class="s1">'--in double-'</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="n">p_obj</span><span class="p">.</span><span class="nf">call</span>
+  <span class="nb">puts</span> <span class="s1">'--result---'</span>
+  <span class="k">return</span> <span class="n">result</span> <span class="o">*</span> <span class="mi">2</span> <span class="c1"># 这端代码不可到达</span>
+<span class="k">end</span>
+
+<span class="n">p_obj</span> <span class="o">=</span> <span class="no">Proc</span><span class="p">.</span><span class="nf">new</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s1">'--in proc--'</span><span class="p">;</span> <span class="k">return</span> <span class="mi">10</span> <span class="p">}</span>
+<span class="nb">puts</span> <span class="n">p_obj</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">double</span><span class="p">(</span><span class="n">p_obj</span><span class="p">)</span>
+
+<span class="nb">puts</span> <span class="n">result</span>
+
+<span class="c1"># output &gt;&gt;&gt;&gt;&gt;</span>
+<span class="c1"># #&lt;Proc:0x00007fece8912468 call.rb:9&gt;</span>
+<span class="c1"># --in double-</span>
+<span class="c1"># --in proc--</span>
+</code></pre></div></div>
+
+<p>对这个结果直接中断我表示不太理解 TODO</p>
+
+<h2 id="2-参数差别">2. 参数差别</h2>
+
+<p>lambda对参数数量有严格限制。</p>
+
+<p>理解 lambda是一个匿名函数就能很好的理解这个了。函数就要有函数的样子嘛。</p>
+
+<p>Proc则无所谓，参数都会变成数组，超出定义会裁减掉，少于定义会变成 nil</p>
+
+<h2 id="总结">总结</h2>
+
+<p>Lambda是你的第一选择，他工作起来就像一个匿名函数。严格的像一个方法。</p>
+
+<p>除非你需要Proc的特性，再去用Proc</p>
+
+<h1 id="method对象">Method对象</h1>
+
+<p>Ruby的方法貌似可以裁剪。</p>
+
+<p>如果说 JavaScript 其实是可以围绕着函数去做完所有事情的（本质是函数，类只是 数据+函数的封装而已，最本质还是执行栈的函数）。Ruby其实也在围绕函数。</p>
+
+<p>Ruby给我的感觉是，它已经准备好了很多方法（函数）绑定在语言基础上。可以供我们搜寻使用。我们自己建立起来的对象、类的方法，也可以搜寻使用。我们不光要关心我们要写的方法，也可以最大限度组合和利用已经存在的方法。一个不恰当的比喻，C语言是拿着一个镐子去干活，一切都要靠自己写或者引用过来联系，Ruby就是背了一个工具箱。工具箱比较智能，还会根据名字匹配工具（方法）。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">A</span>
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+    <span class="vi">@name</span> <span class="o">=</span> <span class="nb">name</span>
+  <span class="k">end</span>
+  <span class="k">def</span> <span class="nf">speak_name</span>
+    <span class="nb">puts</span> <span class="vi">@name</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">obj</span> <span class="o">=</span> <span class="no">A</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s1">'AAA'</span><span class="p">)</span>
+
+<span class="n">m</span> <span class="o">=</span> <span class="n">obj</span><span class="p">.</span><span class="nf">method</span> <span class="ss">:speak_name</span>
+
+<span class="n">m</span><span class="p">.</span><span class="nf">call</span>
+
+<span class="c1"># output &gt;&gt;&gt;&gt;</span>
+
+<span class="c1"># AAA</span>
+</code></pre></div></div>
+
+<p>Kernel#method 方法可以获得一个用Method对象表示的方法，可以在以后使用 Method#call来调用。</p>
+
+<p>Kernel#singleton_method 方法可以把单例方法转成Method对象。</p>
+
+<p>Method对象类似 代码块或者lambda，可以通过 Method#to_proc 方法将Method转为 Proc。</p>
+
+<p>另外也可以通过 define_method 方法把代码块转化为方法。</p>
+
+<p>他们之间有个重要区别：</p>
+
+<ol>
+  <li>lambda 在定义他的作用域中执行（闭包）</li>
+  <li>Method对象会在他自身所在对象的作用域中执行</li>
+</ol>
+
+<h1 id="自由方法unbound-method">自由方法（unbound method)</h1>
+
+<p>他跟普通方法类似，不过他从最初定义它的类或者模块中脱离了。</p>
+
+<p>Module#unbind 方法，可以把一个方法变成自由方法。</p>
+
+<p>也可以直接调用 Module#instance_method 获得一个自由方法</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">module</span> <span class="nn">A</span>
+  
+  <span class="k">def</span> <span class="nf">my_method</span>
+    <span class="s1">'hello'</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">unbound</span> <span class="o">=</span> <span class="no">A</span><span class="p">.</span><span class="nf">instance_method</span> <span class="ss">:my_method</span>
+
+<span class="nb">puts</span> <span class="n">unbound</span><span class="p">.</span><span class="nf">class</span>
+
+<span class="n">unbound</span><span class="p">.</span><span class="nf">call</span>
+
+<span class="c1"># output &gt;&gt;&gt;&gt;&gt;</span>
+
+<span class="c1"># UnboundMethod</span>
+<span class="c1"># Traceback (most recent call last):</span>
+<span class="c1"># call.rb:12:in `&lt;main&gt;': undefined method `call' for #&lt;UnboundMethod: A#my_method() call.rb:3&gt; (NoMethodError)</span>
+
+</code></pre></div></div>
+
+<p>UnboundMethod是无法调用的</p>
+
+<p>虽然不能调用，但是可以把它绑到一个对象上，再次成为一个Method对象</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">module</span> <span class="nn">A</span>
+  
+  <span class="k">def</span> <span class="nf">my_method</span>
+    <span class="nb">puts</span> <span class="s1">'hello'</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">unbound</span> <span class="o">=</span> <span class="no">A</span><span class="p">.</span><span class="nf">instance_method</span> <span class="ss">:my_method</span>
+
+<span class="nb">puts</span> <span class="n">unbound</span><span class="p">.</span><span class="nf">class</span>
+
+
+<span class="k">class</span> <span class="nc">B</span>
+
+<span class="k">end</span>
+
+<span class="no">B</span><span class="p">.</span><span class="nf">send</span> <span class="ss">:define_method</span><span class="p">,</span> <span class="ss">:new_my_method</span><span class="p">,</span> <span class="n">unbound</span>
+
+<span class="no">B</span><span class="p">.</span><span class="nf">new</span><span class="p">.</span><span class="nf">new_my_method</span>
+
+
+<span class="c1"># output &gt;&gt;&gt;&gt;</span>
+<span class="c1"># UnboundMethod</span>
+<span class="c1"># hello</span>
+</code></pre></div></div>
+
+<p>自由方法，意味着我们连方法都可以进行 “裁剪”操作了。</p>
+
+<p>使用的场景可能很特殊。举个例子比如 我们想要很精细的 调整方法的顺序的时候。可以派上用场。</p>
+
+<p>（JS也可以通过 call、apply来转移方法的执行。很相似）</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/%E7%AC%94%E8%AE%B0/2021/12/17/笔记:Ruby可调用对象实验';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>
