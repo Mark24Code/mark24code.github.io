@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>管窥蠡测从思考游戏到实现2048</title>
+  <meta name="description" content="大家好，我是Mark24，可以叫我MarkGithub Mark24Code前言本文比较啰嗦，更倾向于是自言自语。不过我写完回顾，这更像是这段时间，自由思考的总结 :P不过我不是游戏领域的人，这部分都是业余摸鱼思考的记录，如果有勘误，请与我联系，非常乐意交流。文章可能需要30分钟。主要涉及的主题：  游戏之难  ...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/2022/07/26/%E8%BF%99%E5%BE%97%E4%BB%8E2048%E8%AF%B4%E8%B5%B7.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">管窥蠡测从思考游戏到实现2048</h1>
+    <p class="artilce_meta"><time datetime="2022-07-26T10:37:31+08:00" itemprop="datePublished">Jul 26, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <p>大家好，我是Mark24，可以叫我Mark</p>
+
+<p><a href="https://github.com/Mark24Code">Github Mark24Code</a></p>
+
+<h1 id="前言">前言</h1>
+
+<p>本文比较啰嗦，更倾向于是自言自语。不过我写完回顾，这更像是这段时间，自由思考的总结 :P</p>
+
+<p>不过我不是游戏领域的人，这部分都是业余摸鱼思考的记录，如果有勘误，请与我联系，非常乐意交流。</p>
+
+<p>文章可能需要30分钟。</p>
+
+<p>主要涉及的主题：</p>
+
+<ul>
+  <li>游戏之难</li>
+  <li>游戏基本构成</li>
+  <li>游戏引擎</li>
+  <li>游戏与交互程序</li>
+  <li>框架和库思考</li>
+  <li>语言是否是游戏的瓶颈</li>
+  <li>双缓冲模式</li>
+  <li>线程和协程的讨论</li>
+  <li>线程队列&amp;中断</li>
+</ul>
+
+<p>使用Ruby实现demo。</p>
+
+<h1 id="rb2048">rb2048</h1>
+
+<ul>
+  <li>项目地址: <a href="https://github.com/Mark24Code/rb2048">rb2048</a></li>
+  <li>gem地址: <a href="https://gems.ruby-china.com/gems/rb2048">rb2048</a></li>
+</ul>
+
+<p>项目安装: <code class="language-plaintext highlighter-rouge">gem install rb2048</code></p>
+
+<h4 id="进入游戏">进入游戏</h4>
+
+<p>帮助信息： <code class="language-plaintext highlighter-rouge">rb2048 --help</code></p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">Usage</span><span class="p">:</span> <span class="n">rb2048</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span>
+        <span class="o">--</span><span class="n">version</span>                    <span class="n">verison</span>
+        <span class="o">--</span><span class="n">size</span> <span class="no">SIZE</span>                  <span class="no">Size</span> <span class="n">of</span> <span class="ss">board: </span><span class="mi">4</span><span class="o">-</span><span class="mi">10</span>
+        <span class="o">--</span><span class="n">level</span> <span class="no">LEVEL</span>                <span class="no">Hard</span> <span class="no">Level</span> <span class="mi">2</span><span class="o">-</span><span class="mi">5</span>
+</code></pre></div></div>
+
+<p>开始游戏 <code class="language-plaintext highlighter-rouge">rb2048</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           -- Ruby 2048 --
+
+ -------------------------------------
+ |    16  |    16  |     2  |    16  |
+ -------------------------------------
+ |     0  |     0  |     0  |     0  |
+ -------------------------------------
+ |     0  |     0  |     0  |     2  |
+ -------------------------------------
+ |     0  |     0  |     0  |     0  |
+ -------------------------------------
+
+ Score: 16              You:UP
+
+
+
+ Control: W(↑) A(←) S(↓) D(→) Q(quit) R(Restart)
+</code></pre></div></div>
+
+<p>升级难度 <code class="language-plaintext highlighter-rouge">rb2048 --size=10 --level=5</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                            -- Ruby 2048 --
+
+ -----------------------------------------------------------------------
+ |   8  |  16  |   0  |   0  |   0  |   0  |   0  |   2  |   0  |   0  |
+ -----------------------------------------------------------------------
+ |   0  |  16  |   0  |  16  |   0  |   8  |   0  |   0  |   0  |   0  |
+ -----------------------------------------------------------------------
+ |   0  |   0  |   0  |   2  |   0  |   0  |   0  |   0  |  16  |   8  |
+ -----------------------------------------------------------------------
+ |   0  |  16  |   0  |   8  |   0  |   0  |   0  |   0  |   0  |   2  |
+ -----------------------------------------------------------------------
+ |   0  |   0  |   0  |   0  |   0  |   0  |   0  |   0  |   0  |   0  |
+ -----------------------------------------------------------------------
+ |   0  |   8  |   8  |   0  |   0  |   0  |   0  |   0  |   0  |   0  |
+ -----------------------------------------------------------------------
+ |   8  |   0  |   0  |   0  |   0  |   4  |   0  |   0  |   0  |   0  |
+ -----------------------------------------------------------------------
+ |   0  |   0  |   0  |   0  |   0  |   0  |   0  |   0  |   0  |   0  |
+ -----------------------------------------------------------------------
+ |   0  |   0  |   0  |   4  |   0  |   0  |   0  |   0  |   0  |   0  |
+ -----------------------------------------------------------------------
+ |   0  |   4  |   0  |   0  |   4  |   8  |   0  |   0  |   0  |  16  |
+ -----------------------------------------------------------------------
+
+ Score: 0
+
+
+
+ Control: W(↑) A(←) S(↓) D(→) Q(quit) R(Restart)
+</code></pre></div></div>
+
+<h1 id="背景">背景</h1>
+
+<p>我觉得命令行的程序比较赛博朋克，一直想做个命令行的交互程序。
+目前在游戏公司，虽然我不是游戏工程师，但是接触了一些游戏行业的优秀小伙伴，我也忍不住思考关于游戏的主题。</p>
+
+<p>我想做的命令行交互式程序，其实和游戏的思想内核是一致的。一拍即合。</p>
+
+<p>我以前做过一点点研究。记录了一些笔记。关于Ruby中如何实现交互式命令行程序。
+本文也是建立在这个基础之上。</p>
+
+<ul>
+  <li><a href="https://mark24code.github.io/cli/tui/2022/03/01/%E5%91%BD%E4%BB%A4%E8%A1%8C%E7%95%8C%E9%9D%A2TUI&amp;CLI%E7%9B%B8%E5%85%B3%E6%94%B6%E9%9B%86.html">命令行界面TUI&amp;CLI相关收集</a></li>
+  <li><a href="https://mark24code.github.io/%E6%B8%B8%E6%88%8F/2022/03/01/%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%B8%8E%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E%E5%88%9D%E6%8E%A2.html">命令行与游戏引擎初探</a></li>
+</ul>
+
+<p>用最简单的方式实现了一个 [贪吃蛇]</p>
+<ul>
+  <li>Github: <a href="https://github.com/Mark24Code/snakes">https://github.com/Mark24Code/snakes</a></li>
+  <li>Gem: <a href="https://gems.ruby-china.com/gems/snakes">https://gems.ruby-china.com/gems/snakes</a></li>
+</ul>
+
+<h1 id="rb2048心路历程">rb2048心路历程</h1>
+
+<h2 id="rb2048-亮点">rb2048 亮点</h2>
+
+<p>rb2048有趣的地方在于，在设计的时候，没有简单实现了之。毕竟有太多2048了，不差这一个。</p>
+
+<p>对于我不是完成一个任务。由于最近两天关注于线程的使用，于是我把线程方面的使用加入到rb2048。这算是一个实验性的例子。验证我的想法：</p>
+
+<p>rb2048将:</p>
+
+<ul>
+  <li>用户I/O</li>
+  <li>游戏数据计算</li>
+  <li>游戏渲染</li>
+</ul>
+
+<p>这三部分分别用单独的线程实现，用队列通信。麻雀虽小，五脏俱全。虽然粗糙，但是代表了游戏引擎典型的设计思路。
+（虽然我了解的不多）</p>
+
+<h2 id="认知变化">认知变化</h2>
+
+<p>简单说说我最近的思考吧:</p>
+
+<p>1）对于计算机不同领域认识发生了变化</p>
+
+<p>以前会觉得：游戏是游戏，web是web，语言是语言，元编程就是元编程……也许还有很多概念，但是渐渐现在觉得无非是一件事 —— 编程罢了。</p>
+
+<p>随着看到思考的东西逐渐变多，很多计算机领域的问题，在我的角度觉得都一样。</p>
+
+<p>2）第一性原理 + 交流，向内习得</p>
+
+<p>这次摸着石头过河，比较新奇的体验就是，从当初一个想法到原理的讨论到最后实现。主要是思考推理，还有和优秀的同事的聊天中习得 （这里感谢 @谷神)。</p>
+
+<ul>
+  <li>刻意学习 VS 内在习得</li>
+</ul>
+
+<p>现实中有很多游戏引擎。他们也许内有乾坤，不过其实是否研究他们也不重要。</p>
+
+<p>我也不在乎别人的实现，或者更好地实现，是否有实现过了可以参考。其实没什么可参考的。只要我们自己想明白了，别忘了我们上面说的，他们都是一件事 —— 编程罢了。
+当我们面临新问题，我们也会加强我们的 “引擎”。从思想上，他们是平等的。:P</p>
+
+<p>可能与以前向外求知，现在会额外的向内思考。比较神奇的体验是，一些东西听个大概，也能盲猜个七八分。</p>
+
+<h1 id="从游戏开始聊吧">从游戏开始聊吧</h1>
+
+<h2 id="游戏之难">游戏之难</h2>
+
+<p>其实2048没啥好聊，写2048的背后是对游戏的一些思考。</p>
+
+<p>其实游戏是一个比较特别的存在。他是一种比较特殊的程序，特殊在哪儿呢？</p>
+
+<p>1）他是持续交互程序</p>
+
+<p>不同于简单的脚本，跑完结束。或者传递一个初始参数，就像函数一样运行完结束。</p>
+
+<p>他是一个持续交互的过程，随着时间累计游戏的方方面面都在变化。</p>
+
+<p>2）多面平衡</p>
+
+<p>不同于你写一段function就结束了。游戏要在运行的生命周期里：</p>
+
+<ul>
+  <li>用户交互事件</li>
+  <li>游戏数据计算</li>
+  <li>渲染视图</li>
+</ul>
+
+<p>在至少这三个方面互相作用。</p>
+
+<p>还可能有:</p>
+<ul>
+  <li>网络</li>
+  <li>调度</li>
+  <li>硬件CPU、GPU加速渲染</li>
+  <li>AI</li>
+  <li>资源生成</li>
+  <li>数据采集</li>
+  <li>各种优化技术</li>
+</ul>
+
+<p>其他周边并不展开</p>
+
+<p>3）稳定的帧率</p>
+
+<p>如果是60HZ的游戏，必须在 16.6ms 内完成动作进行刷新。</p>
+
+<p>这也不是普通业务脚本、程序一直跑自己的线性逻辑就算了，根本不关心时间。</p>
+
+<p>4）密集对象计算</p>
+
+<p>简单的游戏还好，传统的模式是面向对象建模，一切看起来还算自然。</p>
+
+<p>但是也出现了万人同台的游戏，这里传统的编程模式已经满足不了游戏对象的遍历了，很快会达到性能瓶颈。</p>
+
+<p>这几年，出现了ECS架构（Entity-Component-System）。</p>
+
+<blockquote>
+  <p><a href="https://blog.codingnow.com/2017/06/overwatch_ecs.html">浅谈《守望先锋》中的 ECS 构架</a></p>
+</blockquote>
+
+<p>小结：</p>
+
+<p>其实还有各种发散。如何使用CPU、GPU加速渲染，这就不再提了。</p>
+
+<p>游戏是一个非常特殊的存在，它意味着密集型计算、密集型IO混合出现的场景。我理解是比Web复杂在另一个维度上。</p>
+
+<p>游戏涉及到 编程架构、网络、图形学、美术设计、资源加载…… 诸多丰富的话题。</p>
+
+<p>这些就不是我这个门外汉靠管窥蠡测能够说得清的。我今天可以只谈谈我对游戏的理解和认识，以及构建2048的思考。</p>
+
+<h2 id="游戏基本构成">游戏基本构成</h2>
+
+<p>其实一个基本游戏可以用如下代码描述：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kp">loop</span> <span class="k">do</span>
+  <span class="no">IOEvent</span>
+  <span class="no">UpdateGameData</span>
+  <span class="no">Render</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>游戏处在一个主循环中，我们依次要处理用户输入事件，根据用户输入事件进行游戏模型的变化，最后再把数据渲染在屏幕上。</p>
+
+<p>这是一个单线程，主循环的例子。</p>
+
+<p>现实中每个部分都可以额外变得复杂。也可以用线程单独实现。一切看需求。</p>
+
+<h3 id="游戏与交互应用程序">游戏与交互应用程序</h3>
+
+<p>你会发现游戏就是交互程序。</p>
+
+<p>上面的三部分，你也可以和 MVC 强行扯在一起。</p>
+
+<ul>
+  <li>M 就是 Model 游戏数据</li>
+  <li>V 就是 View  负责渲染视图</li>
+  <li>C 就是 Controler 可以对应事件控制</li>
+</ul>
+
+<p>MVC 的典型程序，除了桌面软件，Web也算是， App也算。</p>
+
+<p>看似是在说游戏，实际上他们是一回事。</p>
+
+<h2 id="游戏引擎的秘密">游戏引擎的秘密</h2>
+
+<p>游戏引擎其实就是框架，很佩服他们会起名字。</p>
+
+<p>框架、引擎其实是一个东西，他们的特征就是一个半成品的软件。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kp">loop</span> <span class="k">do</span>
+  <span class="no">IOEvent</span>
+  <span class="no">UpdateGameData</span>
+  <span class="no">Render</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>比如这个游戏循环，如果我们封装了主循环，封装了事件对象。对外暴露了一些生命周期。
+这种半成品软件就是 所谓的框架，在游戏领域就是引擎。</p>
+
+<p>作为下游，游戏引擎/框架的使用者来说，我们写的程序就像填空一样和主循环工作在一起。</p>
+
+<h3 id="主循环决定了什么是框架什么是库">主循环决定了什么是框架、什么是库</h3>
+
+<p>所以我个人觉得，决定了什么是 框架Framework 和 库Library 的本质区别是 —— 主循环。</p>
+
+<p>当你的程序是一种可被调用的状态，那么基本上你的程序可以看成一个lib
+当你的程序如果拥有了主循环的状态，基本宣告了不可被直接调用。那么它其实是一个 Framework了。除了各种Pattern很少见到主循环的lib 展示，不存在的原因是因为拥有主循环的程序，一般以具体的软件形态出来：</p>
+
+<ol>
+  <li>某种语言，比如 自带调度的 golang、自带EventLoop的JavaScript 引擎V8</li>
+  <li>某种框架，比如 Web框架自带监听循环</li>
+  <li>某种引擎，比如 游戏引擎</li>
+</ol>
+
+<p>Framework式的程序，你的工作任务就会转向熟悉这个程序暴露的对象，期待你的程序和主循环能一起工作。</p>
+
+<h2 id="编程语言会是游戏的瓶颈么">编程语言会是游戏的瓶颈么？</h2>
+
+<p>我们再来聊聊游戏引擎和编程语言。</p>
+
+<p>Unity的背后是 C# 支撑；虚幻引擎的背后是 C++。他们采用了更底层的语言。那么问题来了，编程语言会成为制约游戏的瓶颈么？</p>
+
+<p>这也是我自己思考的一个问题。</p>
+
+<p>我们可能会很粗暴地觉得 动态语言普遍慢，当然是越接近底层越好。其实我更想知道，如此这样选择的标准在哪儿？</p>
+
+<p>其实我们可以思考下，这个结论不难获得。</p>
+
+<h3 id="动态语言真的慢么">动态语言真的慢么？</h3>
+
+<p>其实动态语言在执行一个命令的时候，Ruby这种最后C实现；Golang最后也落在C（Golang实现自举之后，那就用汇编思考吧）。其实他们在执行一个具体操作的时候，数量级一致的。</p>
+
+<p>他们其实差不多。</p>
+
+<p>速度差距在哪儿呢？</p>
+
+<p>1）载入环境</p>
+
+<p>C、Golang这种可以打包成二进制的语言。他编译阶段会把需要执行的代码编译成二进制。</p>
+
+<p>所以执行的时候载入的是所需要用到的部分功能。</p>
+
+<p>Python、Ruby 这种其实 二进制是语言的解释器。运行的时候更多的时间花费在加载解释器。</p>
+
+<p>不过，当你的程序复杂到涉及大量IO、基础库的时候，Golang的打包结果会趋向于接近一个解释器的大小，比如 Ruby 差不多在 30M左右。</p>
+
+<p>我曾经比较过：</p>
+
+<p>Golang的一个项目命令行编辑器 <a href="https://github.com/zyedidia/micro">micro</a> 、Ruby的一个项目命令行编辑器 <a href="https://www.ruby-toolbox.com/projects/diakonos">diakonos</a></p>
+
+<p>micro运行内存16M，也就是他本地大小；diakonos运行内存30M，也就是Ruby解释器差不多的大小。ruby代码会执行才加载，所以可以忽略不计。</p>
+
+<p>最大的差距，在于 30-16 的载入速度差，这个量级是不同的。</p>
+
+<p>2）语言构件</p>
+
+<p>C语言就像是一个高级一点的汇编。C的角度一切都需要手动管理。那么其实对于底层语言，更现实一点的是会自己手动实现数据结构。</p>
+
+<p>Ruby这种动态语言，内部默认会有一个数据结构。</p>
+
+<p>举个例子：</p>
+
+<p>比如 <code class="language-plaintext highlighter-rouge">a = "GAME"</code></p>
+
+<p>C语言实际上只会手动创建  “GAME” 四个字符</p>
+
+<p>Python 底层可能创建一个 20字符长度的数组。存GAME。也有好处，可以不定长支持动态扩容。</p>
+
+<p>在生成语言构建的时候存在速度差。
+动态语言等于多创建了很多语言在内存里的解构。</p>
+
+<p>3）解析时间</p>
+
+<p>二进制的文件，直接载入内存执行。</p>
+
+<p>动态语言有一个解析的过程。当然，也有优化空间，我们可以提前编译动态语言为虚拟机字节码。这样就获得了 对于解释器是二进制类似的东西。</p>
+
+<p>4）GC时间</p>
+
+<p>和C语言相比，Python、Ruby自带GC。</p>
+
+<p>他们存在一个 必须 GC 暂停的那么一个问题。C语言的策略是手动回收。</p>
+
+<h3 id="双缓冲模式">双缓冲模式</h3>
+
+<p>我们好像列举了一大堆 动态语言的缺点似的。实际上自动管理的数据结构、自带GC、可以动态的编译执行…… 这些都是动态语言的缺点。</p>
+
+<p>虽然付出了些许时间的代价。只要我们不滥用语言构件 和 特别烂的算法，真是巧妙的接近底层高效的实现。</p>
+
+<p>其实我想说，动态语言至少在目标上不是特别大的瓶颈。</p>
+
+<p>Java也有游戏的例子；C# 也是自带GC。GC不会是瓶颈。</p>
+
+<p>语言的速度不会绝对意义上成为一个游戏组成的阻碍。</p>
+
+<p>EVE 这样的大型游戏，内部使用了 巨慢的 Python 就可以说明问题。</p>
+
+<p>之所以语言不一定构成拖慢游戏的原因，还有一个就是游戏和屏幕的刷新机制 —— 双缓冲模式。</p>
+
+<p>其实可以理解为一个 内存空间，我们称之为 Buffer。我们有两个 Buffer，分别叫 A Buffer、B Buffer。</p>
+
+<p>显示器先从A Buffer中读取数据渲染屏幕。我们程序写入B Buffer，等我们真的写完了，可慢或者快，但是无所谓，反正屏幕这时候在稳定的读取 A Buffer 内容。我们计算完毕，B Buffer中写入了我们想要的东西，这时候只要把显示器读取的指针指向B Buffer，下次屏幕就会获得我们想要的画面。这就是双缓冲模式。由于存在双缓冲解构，算快和快慢，至少不会成为画面撕裂的原因。</p>
+
+<blockquote>
+  <p>rb2048 使用了 Curses 库来绘制界面，而 Curses 内部使用了双缓冲模式。</p>
+</blockquote>
+
+<h1 id="线程和协程的讨论">线程和协程的讨论</h1>
+
+<p>我们自己研究了两天线程和队列。主要是Ruby的实现。</p>
+
+<p>这里不教线程和协程，只记录我觉得好玩的交流结果。</p>
+
+<h2 id="ruby线程的问题">Ruby线程的问题</h2>
+
+<p>缺点：</p>
+
+<p>Ruby存在线程锁，这导致每一时刻只能运行一个线程。线程就像背后虽然有很多工人，但是只能交替的一人一锤子。</p>
+
+<p>这背后的原因在于 Ruby 考虑安全更多一点 —— 线程安全。</p>
+
+<p>这样的多线程无法利用CPU多核心并行的特点。希望利用多核的，可以去用 JRuby，因为Java底层没有加锁。</p>
+
+<p>Ruby3中也有了无锁线程的替代品  Ractor 也可以了解下。</p>
+
+<p>CRuby如果想利用多核心可以使用进程替代线程。如果设计得当，其实差不多。Ruby里面Webserver有名气的Puma采用的就是多进程实现。</p>
+
+<p>优点：</p>
+
+<p>加上锁最大好处是线程安全，你可以自由的编码，Ruby帮你加锁。这样多线程访问变量的时候，不会出错。</p>
+
+<p>但是你退出来想，反正你自己也要加锁啊，谁加不是加。Ruby默认的线程其实书写起来非常友好。</p>
+
+<h2 id="进程线程协程-傻傻分不清楚">进程、线程、协程 傻傻分不清楚</h2>
+
+<p>我觉得再这样介绍这三个概念，这文章太冗长了。</p>
+
+<p>直接说结论吧，直观上，这三者存在量级差，不仅体现在空间资源，时间资源都差不多。</p>
+
+<p>进程 » 线程 » 协程</p>
+
+<p>比如一台机器4G内存：</p>
+
+<p>可能只能实际生成几百个进程就不太行了。
+同样，可以生成几千个线程，就动不了了。
+协程可以生成几十万个。</p>
+
+<p>他们大概就是这个差距(有更好数据支持的，请联系我)。</p>
+
+<p>他们切换上下文的时间也遵循这个比较关系。</p>
+
+<p>所以我们一般的策略，尽量多用协程&amp;线程，少用进程。</p>
+
+<p>如果任务独立运行还好，就怕彼此还要通信，出现互相等待的局面。</p>
+
+<p>线程具有CPU亲和性（一般语言来讲）。</p>
+
+<p>比如 Golang的 M:N 模型，主张 先生成 M 个线程，M 是机器CPU核心数，然后再在M个线程之间调度实际产生的N个任务。</p>
+
+<p>比如 Nginx 的配置也主张 配置线程核心数和CPU核心数一致。</p>
+
+<h3 id="什么时候用线程什么时候用协程">什么时候用线程、什么时候用协程？</h3>
+
+<p>线程、协程产生的原因是什么？</p>
+
+<p>其实还是为了调度。</p>
+
+<p>线程是细分进程下共享内存的场景；协程是为了细化调度。</p>
+
+<p>因为进程、线程本质上是操作系统在调度。操作系统并不清楚什么时候应该调度。只能采用各种优先计算法、平均算法。再怎么算，也是盲人摸象罢了。</p>
+
+<p>协程给了程序员一个口子，你可以用 协程在 涉及阻塞部分进行让出控制权。</p>
+
+<p>简而言之，经验之谈：</p>
+
+<p>涉及到 计算密集型 请用线程。</p>
+
+<p>如果涉及到IO阻塞密集，请用协程。</p>
+
+<p>我们的目的不是为了用而用，而是使用调度，提高我们代码执行的效率，减少等待。</p>
+
+<h3 id="硬件中断">硬件中断</h3>
+
+<p>如果说其实没有 if-else\switch\while，计算机器其实只有  goto。</p>
+
+<p>如果你看过汇编，大概理解我是什么意思。</p>
+
+<p>同样，计算机里进程、线程、协程背后调度的秘密，都来自于 CPU的硬件中断功能。</p>
+
+<p>只不过是上下文快速切换，切换上下文多和少罢了。</p>
+
+<h1 id="2048-的实现">2048 的实现</h1>
+
+<p>其实2048的关键就是相邻元素合并，实现这么一个算法，反复执行到无元素可以继续合并。再把这个应用到 x\y 方向所有行列就好了。</p>
+
+<h2 id="具体线程">具体线程</h2>
+
+<p>目前实现成通过队列来实现通信：</p>
+
+<p>IO线程，用户产生一个输入，进入事件队列。
+游戏读取事件队列，开始计算游戏数据，把结果塞入渲染队列。
+渲染线程，读取渲染队列数据进行渲染。</p>
+
+<h2 id="后续讨论">后续讨论</h2>
+
+<p>我和同事交流了一下，就2048而言其实可以很多方式做：</p>
+
+<p>1) 如果是队列依赖式</p>
+
+<p>我们等于做出一个pipline的方式了</p>
+
+<p>2) 我们也可以解开队列阻塞</p>
+
+<p>真正的自由渲染。虽然2048看不出效果</p>
+
+<h2 id="队列追赶问题">队列追赶问题</h2>
+
+<p>用户不断地敲击，产生时间，如果队列里一致产生数据，那不是渲染永远追不上？</p>
+
+<p>多线程队列需要思考 生产者、消费者模型，需要设计匹配的方式。</p>
+
+<p>解决方法</p>
+
+<p>1）控制生产频率，生产和消耗相抵消</p>
+
+<p>事件采样、渲染 可以保持一个频率</p>
+
+<p>2）不控制生产，但是跳过生产</p>
+
+<p>事件采样，可以携带时间戳。</p>
+
+<p>如果渲染的时候，每次时间超时，跳过关键帧。</p>
+
+<p>当然这些都是很细化的问题了。</p>
+
+<h1 id="总结">总结</h1>
+
+<p>我倾向于研究一个东西，思考他的全部，寻找最佳的路径。
+这些都是摸鱼结果，简单分享下。更深的感受还需要实践和交流。</p>
+
+<h1 id="后续">后续</h1>
+
+<p>上文提到游戏里面最新流行 ECS 架构。ECS 抛弃了面向对象的思想，把同类数据摆放在一起，亲和CPU运行机制，方便大规模属性遍历。</p>
+
+<p>ECS 应该如何用Ruby实现呢？</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/2022/07/26/这得从2048说起';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

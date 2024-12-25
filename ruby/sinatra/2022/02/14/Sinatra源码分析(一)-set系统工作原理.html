@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Sinatra源码分析(一):set系统工作原理</title>
+  <meta name="description" content="前言大家好，我是MARK24 。可以叫我 MARK。这是我研究Sinatra的笔记。阅读过程大约 10 分钟。基于 Sinatra 2.1.0 进行讨论Sinatra v2.1.0 Fork代码地址Sinatra set 介绍set 系统可以让Sinatra在自身自由的定义 设置相关的变量。比如定义模板所在：se...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/sinatra/2022/02/14/Sinatra%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(%E4%B8%80)-set%E7%B3%BB%E7%BB%9F%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">Sinatra源码分析(一):set系统工作原理</h1>
+    <p class="artilce_meta"><time datetime="2022-02-14T14:27:22+08:00" itemprop="datePublished">Feb 14, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="前言">前言</h1>
+
+<p>大家好，我是MARK24 。可以叫我 MARK。这是我研究Sinatra的笔记。</p>
+
+<p>阅读过程大约 10 分钟。</p>
+
+<p>基于 Sinatra 2.1.0 进行讨论</p>
+
+<p><a href="https://github.com/Mark24Code/sinatra-code-review">Sinatra v2.1.0 Fork代码地址</a></p>
+
+<h1 id="sinatra-set-介绍">Sinatra set 介绍</h1>
+
+<p>set 系统可以让Sinatra在自身自由的定义 设置相关的变量。</p>
+
+<p>比如定义模板所在：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">set</span> <span class="ss">:views</span><span class="p">,</span> <span class="n">settings</span><span class="p">.</span><span class="nf">root</span> <span class="o">+</span> <span class="s1">'/templates'</span>
+</code></pre></div></div>
+
+<p>定义 session secret：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">set</span> <span class="ss">:session_secret</span><span class="p">,</span> <span class="no">ENV</span><span class="p">.</span><span class="nf">fetch</span><span class="p">(</span><span class="s1">'SESSION_SECRET'</span><span class="p">)</span> <span class="p">{</span> <span class="no">SecureRandom</span><span class="p">.</span><span class="nf">hex</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>等等，非常自由且灵活。</p>
+
+<p>set 系统这部分的源码恰巧是可以简单修改之后独立工作的。摘要如下：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># https://github.com/Mark24Code/sinatra-code-review/blob/master/lib/sinatra/base.rb#L1267</span>
+
+
+<span class="k">def</span> <span class="nf">define_singleton</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">content</span> <span class="o">=</span> <span class="no">Proc</span><span class="p">.</span><span class="nf">new</span><span class="p">)</span>
+  <span class="n">singleton_class</span><span class="p">.</span><span class="nf">class_eval</span> <span class="k">do</span>
+    <span class="n">undef_method</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span> <span class="k">if</span> <span class="nb">method_defined?</span> <span class="nb">name</span>
+    <span class="no">String</span> <span class="o">===</span> <span class="n">content</span> <span class="p">?</span> <span class="nb">class_eval</span><span class="p">(</span><span class="s2">"def </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">() </span><span class="si">#{</span><span class="n">content</span><span class="si">}</span><span class="s2">; end"</span><span class="p">)</span> <span class="p">:</span> <span class="n">define_method</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">content</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="n">not_set</span> <span class="o">=</span> <span class="kp">true</span><span class="p">),</span> <span class="n">ignore_setter</span> <span class="o">=</span> <span class="kp">false</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="k">raise</span> <span class="no">ArgumentError</span> <span class="k">if</span> <span class="n">block</span> <span class="ow">and</span> <span class="o">!</span><span class="n">not_set</span>
+  <span class="n">value</span><span class="p">,</span> <span class="n">not_set</span> <span class="o">=</span> <span class="n">block</span><span class="p">,</span> <span class="kp">false</span> <span class="k">if</span> <span class="n">block</span>
+
+  <span class="k">if</span> <span class="n">not_set</span>
+    <span class="k">raise</span> <span class="no">ArgumentError</span> <span class="k">unless</span> <span class="n">option</span><span class="p">.</span><span class="nf">respond_to?</span><span class="p">(</span><span class="ss">:each</span><span class="p">)</span>
+    <span class="n">option</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="o">|</span> <span class="n">set</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="p">}</span>
+    <span class="k">return</span> <span class="nb">self</span>
+  <span class="k">end</span>
+
+  <span class="k">if</span> <span class="nb">respond_to?</span><span class="p">(</span><span class="s2">"</span><span class="si">#{</span><span class="n">option</span><span class="si">}</span><span class="s2">="</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ignore_setter</span>
+    <span class="k">return</span> <span class="nb">__send__</span><span class="p">(</span><span class="s2">"</span><span class="si">#{</span><span class="n">option</span><span class="si">}</span><span class="s2">="</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="n">setter</span> <span class="o">=</span> <span class="nb">proc</span> <span class="p">{</span> <span class="o">|</span><span class="n">val</span><span class="o">|</span> <span class="n">set</span> <span class="n">option</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="kp">true</span> <span class="p">}</span>
+  <span class="n">getter</span> <span class="o">=</span> <span class="nb">proc</span> <span class="p">{</span> <span class="n">value</span> <span class="p">}</span>
+
+  <span class="k">case</span> <span class="n">value</span>
+  <span class="k">when</span> <span class="no">Proc</span>
+    <span class="n">getter</span> <span class="o">=</span> <span class="n">value</span>
+  <span class="k">when</span> <span class="no">Symbol</span><span class="p">,</span> <span class="no">Integer</span><span class="p">,</span> <span class="no">FalseClass</span><span class="p">,</span> <span class="no">TrueClass</span><span class="p">,</span> <span class="no">NilClass</span>
+    <span class="n">getter</span> <span class="o">=</span> <span class="n">value</span><span class="p">.</span><span class="nf">inspect</span>
+  <span class="k">when</span> <span class="no">Hash</span>
+    <span class="n">setter</span> <span class="o">=</span> <span class="nb">proc</span> <span class="k">do</span> <span class="o">|</span><span class="n">val</span><span class="o">|</span>
+      <span class="n">val</span> <span class="o">=</span> <span class="n">value</span><span class="p">.</span><span class="nf">merge</span> <span class="n">val</span> <span class="k">if</span> <span class="no">Hash</span> <span class="o">===</span> <span class="n">val</span>
+      <span class="n">set</span> <span class="n">option</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="kp">true</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">define_singleton</span><span class="p">(</span><span class="s2">"</span><span class="si">#{</span><span class="n">option</span><span class="si">}</span><span class="s2">="</span><span class="p">,</span> <span class="n">setter</span><span class="p">)</span>
+  <span class="n">define_singleton</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="n">getter</span><span class="p">)</span>
+  <span class="c1"># 原始代码放在一个类中， 如果我们想放在单文件执行，需要 改写为 `self.class.method_defined?` 调用到方法</span>
+  <span class="c1"># define_singleton("#{option}?", "!!#{option}") unless method_defined? "#{option}?"</span>
+  <span class="n">define_singleton</span><span class="p">(</span><span class="s2">"</span><span class="si">#{</span><span class="n">option</span><span class="si">}</span><span class="s2">?"</span><span class="p">,</span> <span class="s2">"!!</span><span class="si">#{</span><span class="n">option</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">unless</span> <span class="nb">self</span><span class="p">.</span><span class="nf">class</span><span class="p">.</span><span class="nf">method_defined?</span> <span class="s2">"</span><span class="si">#{</span><span class="n">option</span><span class="si">}</span><span class="s2">?"</span>
+  <span class="nb">self</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<h1 id="set源码分析">set源码分析</h1>
+
+<p>Sinatra 内部实现了一套 配置系统，基于一个 DSL 语法 set。 这是Sinatra Class部分初始化之后唯一的初始化的DSL。Sinatra没有做很多复杂的前置工作。</p>
+
+<p>一致很让我疑惑的是，这里的 getter、setter。我们传统理解的 是这样工作的：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">Sample</span>
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">()</span>
+    <span class="vi">@name</span>
+  <span class="k">end</span>
+
+  <span class="c1"># getter</span>
+  <span class="k">def</span> <span class="nf">name</span>
+    <span class="vi">@name</span>
+  <span class="k">end</span>
+
+  <span class="c1"># setter</span>
+  <span class="k">def</span> <span class="nf">name</span><span class="o">=</span><span class="p">(</span><span class="n">new_name</span><span class="p">)</span>
+    <span class="vi">@name</span> <span class="o">=</span> <span class="n">new_name</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>但是Sinatra这里似乎是一个循环一样的，你会发现他的 setter 永远在调用 set 这是为什么呢？我一度非常迷惑。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">setter</span> <span class="o">=</span> <span class="nb">proc</span> <span class="p">{</span> <span class="o">|</span><span class="n">val</span><span class="o">|</span> <span class="n">set</span> <span class="n">option</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="kp">true</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>我刚开始进入这段是百思不得其解。但事实证明我格局小了。这部分其实根本不是传统的 setter, 我们观察传统的 setter 他的问题是必须要以一个实例变量为依托。所以他才必须写成这样。
+如果是下面这样呢？</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Sample</span>
+
+  <span class="c1"># getter</span>
+  <span class="k">def</span> <span class="nf">name</span>
+    <span class="s2">"new value"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># setter</span>
+  <span class="k">def</span> <span class="nf">name</span><span class="o">=</span><span class="p">(</span><span class="n">new_name</span><span class="p">)</span>
+    <span class="c1"># setter 的逻辑，就是覆盖式定义一个 新的 直接返回新值的 getter</span>
+    <span class="n">re_define_name_getter</span><span class="p">(</span><span class="n">new_name</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>直接伪代码，我们每次调用 setter， setter的任务不是去修改一个 中间值，而是每次去重新定义 新的 getter方法，定义的时候就塞入新的值。</p>
+
+<p>这样依然保持了 getter 的功能！豁然开朗！</p>
+
+<p>Sinatra的 set系统就是这样工作的，不论是 set 函数定义本身，还是 set 内部调用的 set，还是用户最终在外部书写 <code class="language-plaintext highlighter-rouge">set xxx, new_value</code> 最终殊途同归的进入 <code class="language-plaintext highlighter-rouge">set option, value, true</code> 然后都会走到最后一部分，重新定义三个方法。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">define_singleton</span><span class="p">(</span><span class="s2">"</span><span class="si">#{</span><span class="n">option</span><span class="si">}</span><span class="s2">="</span><span class="p">,</span> <span class="n">setter</span><span class="p">)</span>
+  <span class="n">define_singleton</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="n">getter</span><span class="p">)</span>
+  <span class="n">define_singleton</span><span class="p">(</span><span class="s2">"</span><span class="si">#{</span><span class="n">option</span><span class="si">}</span><span class="s2">?"</span><span class="p">,</span> <span class="s2">"!!</span><span class="si">#{</span><span class="n">option</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">unless</span> <span class="nb">method_defined?</span> <span class="s2">"</span><span class="si">#{</span><span class="n">option</span><span class="si">}</span><span class="s2">?"</span>
+</code></pre></div></div>
+
+<p>setter方法的作用就是调用set自身，这样只要被调用，时间上可以完成了一种循环。闭环调用（原谅我用了闭环这个词 :P）
+getter方法 是以新的值直接返回，respond_to 方法同理，以新值计算返回。</p>
+
+<h1 id="补充">补充</h1>
+
+<p>1.定义处有趣的写法 <code class="language-plaintext highlighter-rouge">value = (not_set = true)</code></p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="n">not_set</span> <span class="o">=</span> <span class="kp">true</span><span class="p">),</span> <span class="n">ignore_setter</span> <span class="o">=</span> <span class="kp">false</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="c1"># ....</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>可以通过实验证实这种写法的特点是：</p>
+
+<p>如果 value 赋值 比如是 99，那么  value = 99, not_set = nil</p>
+
+<p>如果 value 没有赋值， 那么 value = not_set = true</p>
+
+<p>这里主要是没有赋值，not_set 开始发挥逻辑上的作用。</p>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/sinatra/2022/02/14/Sinatra源码分析(一):set系统工作原理';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

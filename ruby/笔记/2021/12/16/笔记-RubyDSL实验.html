@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>笔记:RubyDSL实验</title>
+  <meta name="description" content="导航关联Ruby特性和实验分析汇总我觉得这篇比我弄的要详细，详细参考这篇《baya-一步一步DSL》DSL形态常见的DSL形态，Rails风格常见的DSL形式如下，在Rails中很常见：something *args do |*items|  ...end具体代码实现：# 这种以 yield、block.call...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/%E7%AC%94%E8%AE%B0/2021/12/16/%E7%AC%94%E8%AE%B0-RubyDSL%E5%AE%9E%E9%AA%8C.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">笔记:RubyDSL实验</h1>
+    <p class="artilce_meta"><time datetime="2021-12-16T19:20:37+08:00" itemprop="datePublished">Dec 16, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="导航关联">导航关联</h1>
+
+<p><a href="/ruby/%E7%AC%94%E8%AE%B0/2021/12/16/Ruby%E7%89%B9%E6%80%A7%E5%92%8C%E5%AE%9E%E9%AA%8C%E5%88%86%E6%9E%90%E6%B1%87%E6%80%BB.html">Ruby特性和实验分析汇总</a></p>
+
+<p>我觉得这篇比我弄的要详细，详细参考这篇</p>
+
+<p><a href="/ruby/2021/12/18/baya-%E4%B8%80%E6%AD%A5%E4%B8%80%E6%AD%A5DSL.html">《baya-一步一步DSL》</a></p>
+
+<hr />
+
+<h1 id="dsl形态">DSL形态</h1>
+
+<h2 id="常见的dsl形态rails风格">常见的DSL形态，Rails风格</h2>
+
+<p>常见的DSL形式如下，在Rails中很常见：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">something</span> <span class="o">*</span><span class="n">args</span> <span class="k">do</span> <span class="o">|*</span><span class="n">items</span><span class="o">|</span>
+  <span class="o">...</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>具体代码实现：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c1"># 这种以 yield、block.call 为载体的DSL 会伴随着把自己传给外部的块</span>
+
+<span class="c1"># 情况1. 带参数</span>
+
+<span class="k">class</span> <span class="nc">A</span>
+
+  <span class="nb">attr_accessor</span> <span class="ss">:name</span>
+
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="vi">@name</span> <span class="o">=</span> <span class="nb">name</span>
+
+    <span class="k">if</span> <span class="nb">block_given?</span>
+      <span class="n">block</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="nb">self</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">work</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+    <span class="nb">puts</span> <span class="n">arg</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="no">A</span><span class="p">.</span><span class="nf">new</span> <span class="s2">"Atom"</span> <span class="k">do</span> <span class="o">|</span><span class="n">s</span><span class="o">|</span>
+
+  <span class="n">s</span><span class="p">.</span><span class="nf">work</span> <span class="s2">"hello from dsl"</span>
+
+<span class="k">end</span>
+
+
+<span class="c1"># 情况 2. 不带参数</span>
+
+<span class="k">class</span> <span class="nc">B</span>
+  <span class="nb">attr_accessor</span> <span class="ss">:name</span>
+
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="vi">@name</span> <span class="o">=</span> <span class="nb">name</span>
+
+    <span class="k">if</span> <span class="nb">block_given?</span>
+      <span class="n">block</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="nb">self</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">work</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+    <span class="nb">puts</span> <span class="n">arg</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="no">B</span><span class="p">.</span><span class="nf">new</span> <span class="k">do</span> <span class="o">|</span><span class="n">s</span><span class="o">|</span>
+  <span class="n">s</span><span class="p">.</span><span class="nf">work</span> <span class="s2">"hello from btom dsl"</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<h2 id="上下文中的dslrack中间件风格">上下文中的DSL，Rack中间件风格</h2>
+
+<p>其实只要没有显式的参数传递，那么就可以理解为其实是在一个上下文中进行。</p>
+
+<p>DSL总是通过块传递。所以这里的关键就是 block 在那里执行。</p>
+
+<p>这里其实就是 block 在 *eval 中执行。</p>
+
+<p>比如 Rack</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">app</span> <span class="o">=</span> <span class="no">Rack</span><span class="o">::</span><span class="no">Builder</span><span class="p">.</span><span class="nf">new</span> <span class="k">do</span>
+  <span class="n">use</span> <span class="no">Rack</span><span class="o">::</span><span class="no">CommonLogger</span>
+  <span class="n">use</span> <span class="no">Rack</span><span class="o">::</span><span class="no">ShowExceptions</span>
+  <span class="n">map</span> <span class="s2">"/lobster"</span> <span class="k">do</span>
+    <span class="n">use</span> <span class="no">Rack</span><span class="o">::</span><span class="no">Lint</span>
+    <span class="n">run</span> <span class="no">Rack</span><span class="o">::</span><span class="no">Lobster</span><span class="p">.</span><span class="nf">new</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="c1"># 效果等价于</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="no">Rack</span><span class="o">::</span><span class="no">Builder</span><span class="p">.</span><span class="nf">new</span>
+<span class="n">app</span><span class="p">.</span><span class="nf">use</span> <span class="no">Rack</span><span class="o">::</span><span class="no">CommonLogger</span>
+<span class="n">app</span><span class="p">.</span><span class="nf">use</span> <span class="no">Rack</span><span class="o">::</span><span class="no">ShowExceptions</span>
+<span class="n">app</span><span class="p">.</span><span class="nf">map</span> <span class="s2">"/lobster"</span> <span class="k">do</span>
+  <span class="n">use</span> <span class="no">Rack</span><span class="o">::</span><span class="no">Lint</span>
+<span class="n">run</span> <span class="no">Rack</span><span class="o">::</span><span class="no">Lobster</span><span class="p">.</span><span class="nf">new</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>模拟实现</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">A</span>
+
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="vi">@name</span> <span class="o">=</span> <span class="s2">"Atom"</span>
+    <span class="nb">instance_eval</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span> <span class="k">if</span> <span class="nb">block_given?</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">work</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+    <span class="nb">puts</span> <span class="s2">"work call: </span><span class="si">#{</span><span class="n">arg</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="n">a</span> <span class="o">=</span> <span class="no">A</span><span class="p">.</span><span class="nf">new</span> <span class="k">do</span>
+  <span class="n">work</span> <span class="s2">"FFFFF"</span> <span class="c1">#执行了实例内部的方法</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>写一个菜狗语言</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c1">#!/usr/bin/env ruby</span>
+
+<span class="n">script_file</span> <span class="o">=</span> <span class="no">ARGF</span><span class="p">.</span><span class="nf">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">script_code</span> <span class="o">=</span> <span class="no">File</span><span class="p">.</span><span class="nf">read</span><span class="p">(</span><span class="n">script_file</span><span class="p">)</span>
+
+
+<span class="k">module</span> <span class="nn">DSL</span>
+  <span class="k">def</span> <span class="err">说</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="vi">@count</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span>
+      <span class="nb">puts</span> <span class="n">text</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="err">循环</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+    <span class="vi">@count</span> <span class="o">=</span> <span class="n">count</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="err">计算</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
+    <span class="nb">puts</span> <span class="n">expr</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="kp">extend</span> <span class="no">DSL</span>
+
+<span class="nb">instance_eval</span><span class="p">(</span><span class="n">script_code</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+循环 10
+
+说 "我是菜狗"
+
+计算 1+10+12
+
+计算 22*15
+</code></pre></div></div>
+
+<p>这段文本可以被真的执行</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ sudo chmod +x ./dsl.rb
+
+$ ./dsl.rb demo.xlang 
+我是菜狗
+我是菜狗
+我是菜狗
+我是菜狗
+我是菜狗
+我是菜狗
+我是菜狗
+我是菜狗
+我是菜狗
+我是菜狗
+23
+330
+</code></pre></div></div>
+
+<p>我最后的感觉就是，DSL 其实就是一段Ruby代码（比如这里的表达式计算，其实就是Ruby）。我们要做的就是把 我们设计的目标 DSL 放入一段我们自己的上下文中执行。</p>
+
+<p>我们自己能做的只是增加了各别方法罢了。</p>
+
+<p>归根结底是利用Ruby的语法特点写程序而已。</p>
+
+<h1 id="rake风格缓存并集中执行">Rake风格，缓存并集中执行</h1>
+
+<p>rake的风格，模拟如下。</p>
+
+<p>主要是以 block的形式把任务缓存起来，然后集中执行。</p>
+
+<p>把task委托在top level可以方便书写任务。执行的时候交给工作类。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">module</span> <span class="nn">FakeRake</span>
+  <span class="k">module</span> <span class="nn">DSL</span>
+    <span class="k">def</span> <span class="nf">task</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+      <span class="no">FakeRake</span><span class="o">::</span><span class="no">Task</span><span class="p">.</span><span class="nf">define_task</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">class</span> <span class="nc">Task</span>
+    <span class="vi">@task_queue</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># 这是以Proc的形式把任务给缓存起来，然后集中执行</span>
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">define_task</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+      <span class="vi">@task_queue</span> <span class="o">&lt;&lt;</span> <span class="n">block</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">execute</span>
+      <span class="vi">@task_queue</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">task</span><span class="o">|</span>
+        <span class="n">task</span><span class="p">.</span><span class="nf">call</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="c1"># 这里是为了</span>
+<span class="nb">self</span><span class="p">.</span><span class="nf">extend</span> <span class="no">FakeRake</span><span class="o">::</span><span class="no">DSL</span>
+
+<span class="n">task</span> <span class="ss">:wakeup</span> <span class="k">do</span>
+  <span class="nb">puts</span> <span class="s2">"wakeup"</span>
+<span class="k">end</span>
+
+<span class="n">task</span> <span class="ss">:eat_breafast</span> <span class="k">do</span>
+  <span class="nb">puts</span> <span class="s2">"eat_breafast"</span>
+<span class="k">end</span>
+
+<span class="c1"># 最后一起执行</span>
+<span class="no">FakeRake</span><span class="o">::</span><span class="no">Task</span><span class="p">.</span><span class="nf">execute</span>
+
+<span class="c1"># output &gt;&gt;&gt;&gt;&gt;</span>
+<span class="c1"># ➜  ruby-test ruby test.rb</span>
+<span class="c1"># wakeup</span>
+<span class="c1"># eat_breafast</span>
+</code></pre></div></div>
+
+<h1 id="rspec-风格">Rspec 风格</h1>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">describe</span> <span class="no">Bowling</span><span class="p">,</span> <span class="s2">"#score"</span> <span class="k">do</span>
+  <span class="n">it</span> <span class="s2">"returns 0 for all gutter game"</span> <span class="k">do</span>
+    <span class="n">bowling</span> <span class="o">=</span> <span class="no">Bowling</span><span class="p">.</span><span class="nf">new</span>
+    <span class="mi">20</span><span class="p">.</span><span class="nf">times</span> <span class="p">{</span> <span class="n">bowling</span><span class="p">.</span><span class="nf">hit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">}</span>
+    <span class="n">bowling</span><span class="p">.</span><span class="nf">score</span><span class="p">.</span><span class="nf">should</span> <span class="n">eq</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<hr />
+<h2 id="评论">评论</h2>
+
+<ol>
+  <li>神奇的搜索 —— 是便利链表指针</li>
+</ol>
+
+<p>看到Rspec的风格，复杂的嵌套产生疑问：为什么Ruby可以把作用域来回串联，方法又可以随意绑定到main等对象上？</p>
+
+<p>我想归根结底的原因是 —— 指针</p>
+
+<p>extend 之类方法的作用就是 把指针和对象关联起来。</p>
+
+<p>而块这种语法，也是在背后记录了指针。</p>
+
+<p>函数可以调用函数自己是因为 指针。函数可以循环是以为它记住了自己的指针。而这里，事物之间能够建立联系执行，也是因为指针。</p>
+
+<p>只要关联上指针，那么寻找方法的过程看起来就是在指针链条上搜索罢了。</p>
+
+<p>这种“魔法”，并非并非什么魔法，而是在一种约定中遍历特殊结构但是本质依然是链表。</p>
+
+<ol>
+  <li>DSL和元编程</li>
+</ol>
+
+<p>元编程 在Ruby里面侧重的是 运行时修改 语言构建。Ruby的几乎所有构件都可以通过内部提供的方法和自省来控制。</p>
+
+<p>DSL的特点是建立在 元编程的基础之上， 把一段 Ruby风格的代码（主要由 方法+参数）暴露在外部成为 看起来如文本一般的语言 当成一种方言。</p>
+
+<p>DSL的组成是定义和预先准备好方法。然后把 这段DSL方言，放在实现定义好方法的比如某个工作类的 上下文中 eval 执行。</p>
+
+<p>我们写的归根结底是Ruby罢了。</p>
+
+<hr />
+
+<p>TODO</p>
+
+<h1 id="链式风格dsl">链式风格DSL</h1>
+
+<p>比如ORM的形态</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">Person</span><span class="p">.</span><span class="nf">where</span><span class="p">(</span><span class="ss">category: </span><span class="n">categories</span><span class="p">,</span> <span class="ss">name: </span><span class="n">params</span><span class="p">[</span><span class="ss">:name</span><span class="p">]).</span><span class="nf">order</span><span class="p">(</span><span class="s1">'created_at DESC'</span><span class="p">).</span><span class="nf">limit</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">module</span> <span class="nn">FakeActiveRecord</span>
+  <span class="k">class</span> <span class="nc">Model</span> 
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">where</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">)</span>
+      <span class="nb">puts</span> <span class="s2">"where call</span><span class="si">#{</span><span class="n">arg</span><span class="si">}</span><span class="s2">"</span>
+      <span class="nb">self</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">order</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">)</span>
+      <span class="nb">puts</span> <span class="s2">"order call:</span><span class="si">#{</span><span class="n">arg</span><span class="si">}</span><span class="s2">"</span>
+      <span class="nb">self</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">limit</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">)</span>
+      <span class="nb">puts</span> <span class="s2">"limit call:</span><span class="si">#{</span><span class="n">arg</span><span class="si">}</span><span class="s2">"</span>
+      <span class="nb">self</span>
+    <span class="k">end</span>
+    
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="k">class</span> <span class="nc">Person</span> <span class="o">&lt;</span> <span class="no">FakeActiveRecord</span><span class="o">::</span><span class="no">Model</span>
+
+<span class="k">end</span>
+
+<span class="no">Person</span><span class="p">.</span><span class="nf">where</span><span class="p">(</span><span class="ss">category: </span><span class="s1">'categories'</span><span class="p">,</span> <span class="ss">name: </span><span class="s1">'name'</span><span class="p">).</span><span class="nf">order</span><span class="p">(</span><span class="s2">"created_at DESC"</span><span class="p">).</span><span class="nf">limit</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+
+
+<span class="c1"># output &gt;&gt;&gt;&gt;&gt;</span>
+<span class="c1"># ➜  ruby-test ruby chain.rb</span>
+<span class="c1"># where call[{:category=&gt;"categories", :name=&gt;"name"}]</span>
+<span class="c1"># order call:["created_at DESC"]</span>
+<span class="c1"># limit call:[50]</span>
+</code></pre></div></div>
+
+<h1 id="类宏风格">类宏风格</h1>
+
+<p>例如</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  
+<span class="c1"># Rails AR的</span>
+
+<span class="k">class</span> <span class="nc">Contest</span> <span class="o">&lt;</span> <span class="no">ActivieRecord</span><span class="o">::</span><span class="no">Base</span>
+
+  <span class="n">has_many</span> <span class="ss">:votes</span>
+  <span class="n">has_many</span> <span class="ss">:entites</span>
+
+  <span class="n">validate_presence_of</span> <span class="ss">:title</span>
+  
+<span class="k">end</span>
+
+<span class="c1"># Ruby自己的</span>
+<span class="k">class</span> <span class="nc">Book</span>
+  <span class="nb">attr_reader</span> <span class="ss">:name</span>
+<span class="k">end</span>
+
+
+</code></pre></div></div>
+
+<p>模拟 Ruby的 attr_accesstor</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">module</span> <span class="nn">Macro</span>
+  <span class="k">def</span> <span class="nf">fake_attr_accessor</span> <span class="o">*</span><span class="n">method_names</span>
+    <span class="n">method_names</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">m_name</span><span class="o">|</span>
+      <span class="nb">puts</span> <span class="n">m_name</span>
+      <span class="nb">instance_eval</span><span class="p">(</span><span class="o">&lt;&lt;-</span><span class="no">DEF</span><span class="sh">
+        define_method :</span><span class="si">#{</span><span class="n">m_name</span><span class="si">}</span><span class="sh"> do
+          @</span><span class="si">#{</span><span class="n">m_name</span><span class="si">}</span><span class="sh">
+        end
+
+        define_method :</span><span class="si">#{</span><span class="n">m_name</span><span class="si">}</span><span class="sh">= do |name|
+          @</span><span class="si">#{</span><span class="n">m_name</span><span class="si">}</span><span class="sh"> = name
+        end
+</span><span class="no">      DEF</span>
+    <span class="p">)</span>
+
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="c1"># 想把 类宏方法捆绑到 MyClass</span>
+<span class="k">class</span> <span class="nc">MyClass</span>
+  <span class="k">def</span> <span class="nf">initialize</span>
+    <span class="vi">@name</span> <span class="o">=</span> <span class="s1">'I;m MyClass'</span>
+    <span class="vi">@age</span> <span class="o">=</span> <span class="mi">100</span>
+  <span class="k">end</span>
+  <span class="nb">class_eval</span> <span class="k">do</span>
+    <span class="c1"># 在类作用域上下文中执行，并且编辑 self</span>
+    <span class="c1"># 使用 self.extend 给 self增加方法</span>
+    <span class="c1"># 这个方法即 可以动态生存方法的类宏</span>
+    <span class="c1"># *_eval 传入字符串执行、或者传入 块 执行。</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">extend</span><span class="p">(</span><span class="no">Macro</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="n">fake_attr_accessor</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:age</span>
+<span class="k">end</span>
+
+
+<span class="c1"># 验证我们的类宏是否其作用</span>
+
+<span class="n">demo</span> <span class="o">=</span> <span class="no">MyClass</span><span class="p">.</span><span class="nf">new</span>
+<span class="nb">puts</span> <span class="n">demo</span><span class="p">.</span><span class="nf">name</span>
+
+<span class="n">demo</span><span class="p">.</span><span class="nf">name</span> <span class="o">=</span> <span class="s1">'AAAA'</span>
+
+
+<span class="nb">puts</span> <span class="n">demo</span><span class="p">.</span><span class="nf">name</span>
+
+<span class="nb">puts</span> <span class="n">demo</span><span class="p">.</span><span class="nf">age</span>
+
+
+<span class="c1"># output &gt;&gt;&gt;&gt;</span>
+
+<span class="c1"># ➜  ruby-test ruby macro.rb</span>
+<span class="c1"># name</span>
+<span class="c1"># age</span>
+<span class="c1"># I;m MyClass</span>
+<span class="c1"># AAAA</span>
+<span class="c1"># 100</span>
+</code></pre></div></div>
+
+<h1 id="补丁风格执行预留方法-activerecordmigration">补丁风格，执行预留方法 ActiveRecord::Migration</h1>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+ 
+<span class="k">class</span> <span class="nc">CreateCategories</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Migration</span>
+  <span class="k">def</span> <span class="nf">change</span>
+    <span class="n">create_table</span> <span class="ss">:categories</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+      <span class="n">t</span><span class="p">.</span><span class="nf">string</span>      <span class="ss">:name</span>
+      <span class="n">t</span><span class="p">.</span><span class="nf">timestamps</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">AddRoleToUsers</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Migration</span>
+  <span class="k">def</span> <span class="nf">change</span>
+    <span class="n">add_column</span> <span class="ss">:users</span><span class="p">,</span> <span class="ss">:role</span><span class="p">,</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">default: </span><span class="s1">'user'</span> <span class="c1"># 账号角色, user 普通用户, admin 管理员, sponsor 赞助商</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>模拟 Migration风格</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+
+<span class="k">module</span> <span class="nn">ActiveRecord</span>
+  <span class="k">class</span> <span class="nc">Migration</span>
+
+    <span class="k">def</span> <span class="nf">change</span>
+
+    <span class="k">end</span>
+
+
+    <span class="k">def</span> <span class="nf">create_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+        <span class="nb">puts</span> <span class="s2">"create_table call :</span><span class="si">#{</span><span class="n">table_name</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">block</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="nb">self</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+<span class="k">end</span>
+
+
+<span class="k">class</span> <span class="nc">CreateTable</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Migration</span>
+
+  <span class="k">def</span> <span class="nf">change</span>
+    <span class="n">create_table</span> <span class="s2">"user_table"</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+         
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="no">CreateTable</span><span class="p">.</span><span class="nf">new</span><span class="p">.</span><span class="nf">change</span>
+
+
+<span class="c1"># output &gt;&gt;&gt;</span>
+<span class="c1"># ➜  ruby-test ruby macro.rb</span>
+<span class="c1"># create_table call :user_table</span>
+
+</code></pre></div></div>
+
+<hr />
+
+<p>我的原始笔记</p>
+
+<hr />
+
+<h1 id="补充">补充</h1>
+
+<p>DSL主要用了元编程技巧</p>
+
+<ul>
+  <li><a href="/ruby/%E7%AC%94%E8%AE%B0/2021/12/16/%E7%AC%94%E8%AE%B0-Ruby%E5%85%83%E7%BC%96%E7%A8%8B%E5%AE%9E%E9%AA%8C.html">4-Ruby元编程实验</a></li>
+</ul>
+
+<h1 id="绑定到全局或者叫顶层-top-level的dsl">绑定到全局（或者叫顶层 top level)的DSL</h1>
+
+<p>比如我想要制作一个 备份的 DSL</p>
+
+<p>DSL的脚本看起来像这样</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># backup.dsl</span>
+
+<span class="n">backup</span> <span class="s1">'/path/to/my/document'</span>
+
+<span class="n">to</span> <span class="s1">'/path/to/my/mobile-disk'</span>
+
+<span class="n">interval</span> <span class="mi">60</span>
+
+</code></pre></div></div>
+<p>非常简单, 而且直接可以阅读。</p>
+
+<p>想让Ruby读取这样的DSL，看怎么进行</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># backup_robot.rb</span>
+
+<span class="k">def</span> <span class="nf">backup</span><span class="p">(</span><span class="n">dir</span><span class="p">)</span>
+  <span class="c1"># 做读取目录的逻辑</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">to</span><span class="p">(</span><span class="n">dir</span><span class="p">)</span>
+  <span class="c1"># 做写入目录的逻辑</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">interval</span><span class="p">(</span><span class="n">minutes</span><span class="p">)</span>
+  <span class="c1"># 相关间隔时间的逻辑</span>
+<span class="k">end</span>
+
+
+<span class="nb">eval</span><span class="p">(</span><span class="no">File</span><span class="p">.</span><span class="nf">read</span><span class="p">(</span><span class="s1">'backup.dsl'</span><span class="p">))</span>
+</code></pre></div></div>
+
+<p>这就是一个挂载在 顶层（Top Level）的DSL最简单的实现模板。</p>
+
+<h1 id="多个工作实例的dsl">多个工作实例的DSL</h1>
+
+<p>上面假设我们做了备份这件事，只能去做一个备份实例。如果我们希望定义多个备份实例怎么办？</p>
+
+<p>看起来DSL也可以写成下面的目标，新建三个Backup任务，每个任务内部独立的进行前面的备份逻辑。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="no">Backup</span><span class="p">.</span><span class="nf">new</span> <span class="k">do</span> <span class="o">|</span><span class="n">b</span><span class="o">|</span>
+  <span class="n">b</span><span class="p">.</span><span class="nf">backup</span> <span class="s1">'/path/to/my/document/A'</span>
+
+  <span class="n">b</span><span class="p">.</span><span class="nf">to</span> <span class="s1">'/path/to/my/mobile-disk/A'</span>
+<span class="k">end</span>
+
+
+<span class="no">Backup</span><span class="p">.</span><span class="nf">new</span> <span class="k">do</span> <span class="o">|</span><span class="n">b</span><span class="o">|</span>
+  <span class="n">b</span><span class="p">.</span><span class="nf">backup</span> <span class="s1">'/path/to/my/document/B'</span>
+
+  <span class="n">b</span><span class="p">.</span><span class="nf">to</span> <span class="s1">'/path/to/my/mobile-disk/B'</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>紧接着看如果想要Ruby支持读取这样的DSL，我们应该如何写Ruby</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Backup</span>
+  <span class="k">def</span> <span class="nf">initialize</span>
+    <span class="k">yield</span><span class="p">(</span><span class="nb">self</span><span class="p">)</span> <span class="k">if</span> <span class="nb">block_given?</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">backup</span><span class="p">(</span><span class="n">dir</span><span class="p">)</span>
+    <span class="nb">puts</span> <span class="s2">"backup method : </span><span class="si">#{</span><span class="n">dir</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">to</span><span class="p">(</span><span class="n">dir</span><span class="p">)</span>
+    <span class="nb">puts</span> <span class="s2">"to method :</span><span class="si">#{</span><span class="n">dir</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="no">Backup</span><span class="p">.</span><span class="nf">new</span> <span class="k">do</span> <span class="o">|</span><span class="n">b</span><span class="o">|</span>
+  <span class="nb">puts</span> <span class="s1">'---Backup Instance---'</span>
+  <span class="n">pp</span> <span class="nb">self</span>
+
+  <span class="n">b</span><span class="p">.</span><span class="nf">backup</span> <span class="s1">'call backup in dsl'</span>
+
+  <span class="n">b</span><span class="p">.</span><span class="nf">to</span> <span class="s1">'call to in dsl'</span>
+<span class="k">end</span>
+
+
+<span class="c1"># output &gt;&gt;&gt;&gt;</span>
+
+<span class="c1"># ---Backup Instance---</span>
+<span class="c1"># main</span>
+<span class="c1"># backup method : call backup in dsl</span>
+<span class="c1"># to method :call to in dsl</span>
+
+</code></pre></div></div>
+<p>我们的实例中开放实例属性允许读取。通过块的方式读取DSL，然后把注册完的实例，注入真正工作的实例。传入self是为了方便，按照约定 工作实例 读取需要的约定接口就可以开始工作了。</p>
+
+<h2 id="不传入-b-会如何">不传入 |b| 会如何</h2>
+
+<table>
+  <tbody>
+    <tr>
+      <td>另外，其实这里的</td>
+      <td>b</td>
+      <td>不传入将会无法工作。裸词标识符调用，会被默认当成 self 调用。而块中的 self 指向了 main，而main上没有方法会报错。</td>
+    </tr>
+  </tbody>
+</table>
+
+<h1 id="rails风格-dsl-模拟">Rails风格 DSL 模拟</h1>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># 模拟一个 Rails的 ActiveRecord</span>
+<span class="k">module</span> <span class="nn">ActiveRecord</span>
+  <span class="k">class</span> <span class="nc">Base</span>
+    <span class="k">def</span> <span class="nf">belongs_to</span><span class="p">(</span><span class="n">who</span><span class="p">)</span>
+      <span class="nb">puts</span> <span class="s2">"Base.belongs_to call :</span><span class="si">#{</span><span class="n">who</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">has_one</span><span class="p">(</span><span class="n">who</span><span class="p">)</span>
+      <span class="nb">puts</span> <span class="s2">"Base.has_one call :</span><span class="si">#{</span><span class="n">who</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="k">class</span> <span class="nc">Book</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+  <span class="n">belongs_to</span> <span class="ss">:user</span>
+  <span class="n">has_one</span> <span class="ss">:author</span>
+<span class="k">end</span>
+
+
+</code></pre></div></div>
+
+<h1 id="sinatra风格模拟">Sinatra风格模拟</h1>
+
+<p>Sinatra 把方法委托到 top level 并且执行的时候又是一个工作实例在响应。这是怎么做到的呢？</p>
+
+<p>可以看下面实现的一个代理器。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">App</span>
+  <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="nb">puts</span> <span class="s2">"get call :</span><span class="si">#{</span><span class="n">ctx</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="nb">puts</span> <span class="s2">"post call :</span><span class="si">#{</span><span class="n">ctx</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="no">BaseApp</span> <span class="o">=</span> <span class="no">App</span><span class="p">.</span><span class="nf">new</span>
+
+
+<span class="k">module</span> <span class="nn">Delegator</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">delegate</span><span class="p">(</span><span class="n">baseApp</span><span class="p">,</span> <span class="o">*</span><span class="nb">methods</span><span class="p">)</span>
+    <span class="no">Array</span><span class="p">(</span><span class="nb">methods</span><span class="p">).</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">method_name</span><span class="o">|</span>
+      <span class="n">define_method</span><span class="p">(</span><span class="n">method_name</span><span class="p">)</span> <span class="k">do</span> <span class="o">|*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="o">|</span>
+        <span class="n">baseApp</span><span class="p">.</span><span class="nf">send</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+      <span class="k">end</span>
+
+      <span class="kp">private</span> <span class="n">method_name</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">delegate</span> <span class="no">BaseApp</span><span class="p">,</span> <span class="ss">:get</span><span class="p">,</span> <span class="ss">:post</span> <span class="c1"># :patch, :put, :delete, :head</span>
+<span class="k">end</span>
+
+<span class="kp">extend</span> <span class="no">Delegator</span>
+
+
+<span class="c1"># --- DSL -----</span>
+
+<span class="n">get</span> <span class="s2">"hello world"</span>
+
+</code></pre></div></div>
+
+<p>这里主要使用 <a href="https://devdocs.io/ruby~3/object#method-i-extend">extend</a></p>
+
+<p>extend 是裸词调用，默认的对象self是top level的 main 所以 这里是给 main 增加了方法。而这个方法就是动态定义了 :get :post 并且使用了BaseApp去 send执行。</p>
+
+<p>变相的给 main 增加了委托方法。</p>
+
+<h2 id="备注">备注</h2>
+
+<p>Ruby的工作特点是动态性 —— 我们更需要关注的是 “意图”。 我们可以使用Ruby的动态方法去逼近我们的意图。 因为Ruby提供的方法特别多，并且都允许修改。</p>
+
+<p>Ruby的方法并不应该死记硬背、而是灵活理解 搜索使用。</p>
+
+<p>用Ruby的原则去思考，而不是记忆他的形态。</p>
+
+<p>Sinatra的例子里</p>
+
+<ol>
+  <li>extend可以给具体实例增加方法</li>
+  <li>define_method 嵌套  #send 就可以定义 转发方法</li>
+</ol>
+
+<h1 id="rake风格模拟">Rake风格模拟</h1>
+
+<h1 id="minitest风格模拟">MiniTest风格模拟</h1>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/%E7%AC%94%E8%AE%B0/2021/12/16/笔记:RubyDSL实验';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+提示：使用 ‘master’ 作为初始分支的名称。这个默认分支名称可能会更改。要在新仓库中
+提示：配置使用初始分支名，并消除这条警告，请执行：
+提示：
+提示： git config --global init.defaultBranch <名称>
+提示：
+提示：除了 ‘master’ 之外，通常选定的名字有 ‘main’、‘trunk’ 和 ‘development’。
+提示：可以通过以下命令重命名刚创建的分支：
+提示：
+提示： git branch -m 
+————————————————
+版权声明：本文为CSDN博主「songyuc」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/songyuc/article/details/115251254
