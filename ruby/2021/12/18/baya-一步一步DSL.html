@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>【转载】一步一步DSL</title>
+  <meta name="description" content="作者 @baya原文地址12年的10月份，我准备为公司的彩票和话费充值等业务写一套DSL(Domain Specific Languages)，顺路研究了一下Ruby特色的DSL技术，有些收获，于是写些东西作为资料备份。Ruby中常见的DSL风格及其技术实现我将通过一些例子来分析各个风格DSL的常见的技术实现，这...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/2021/12/18/baya-%E4%B8%80%E6%AD%A5%E4%B8%80%E6%AD%A5DSL.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">【转载】一步一步DSL</h1>
+    <p class="artilce_meta"><time datetime="2021-12-18T01:18:25+08:00" itemprop="datePublished">Dec 18, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <p>作者 @baya</p>
+
+<p><a href="https://github.com/baya/baya.github.io/blob/master/_posts/2013-12-06-%E4%B8%80%E6%AD%A5%E4%B8%80%E6%AD%A5dsl.md">原文</a></p>
+
+<p><a href="http://baya.github.io/2013/12/06/%E4%B8%80%E6%AD%A5%E4%B8%80%E6%AD%A5dsl.html">地址</a></p>
+
+<p>12年的10月份，我准备为公司的彩票和话费充值等业务写一套DSL(Domain Specific Languages)，顺路研究了一下Ruby特色的DSL技术，有些收获，于是写些东西作为资料备份。</p>
+
+<h3 id="ruby中常见的dsl风格及其技术实现">Ruby中常见的DSL风格及其技术实现</h3>
+
+<p>我将通过一些例子来分析各个风格DSL的常见的技术实现，这些例子主要来自一些我们常用的gem的源代码，为了方便分析，我会对其中的代码做一些精简，后面
+就不做一一说明了。</p>
+
+<h4 id="嵌套风格">嵌套风格</h4>
+
+<p>嵌套风格的DSL给人的印象大概是这样，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">something</span> <span class="o">*</span><span class="n">args</span> <span class="k">do</span> <span class="o">|*</span><span class="n">items</span><span class="o">|</span>
+  <span class="o">...</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<ul>
+  <li><strong>yield</strong></li>
+</ul>
+
+<blockquote>
+  <p>通过yield obj或者block.call(obj)抛出待操作的对象</p>
+</blockquote>
+
+<p>我们看一个来自<a href="https://github.com/sferik/rails_admin">rails_admin</a>的例子:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">RailsAdmin</span><span class="p">.</span><span class="nf">config</span> <span class="k">do</span> <span class="o">|</span><span class="n">config</span><span class="o">|</span>
+  <span class="n">config</span><span class="p">.</span><span class="nf">main_app_name</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Cool app"</span><span class="p">,</span> <span class="s2">"BackOffice"</span><span class="p">]</span>
+  <span class="n">config</span><span class="p">.</span><span class="nf">authorize_with</span> <span class="ss">:cancan</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>下面的代码来自<a href="https://github.com/sferik/rails_admin/blob/master/lib/rails_admin.rb">RailsAdmin</a>，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="c1"># 为了分析, 省略了一些代码</span>
+  <span class="k">module</span> <span class="nn">RailsAdmin</span>
+	<span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">config</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+	  <span class="n">block</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="no">RailsAdmin</span><span class="o">::</span><span class="no">Config</span><span class="p">)</span>
+	<span class="k">end</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<p>代码中block.call(RailsAdmin::Config)的作用和yield RailsAdmin::Config一样，统一称为yield。
+可以看出, RailsAdmin.config抛出的config对象就是RailsAdmin::Config,</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  config.main_app_name = ["Cool app", "BackOffice"]
+</code></pre></div></div>
+
+<p>等同于</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  RailsAdmin::Config.main_app_name = ["Cool app", "BackOffice"]
+</code></pre></div></div>
+
+<ul>
+  <li>
+    <p><strong>instance_eval</strong></p>
+
+    <blockquote>
+      <p>将&amp;block嵌入到待操作对象的上下文环境中</p>
+    </blockquote>
+
+    <p>下面的代码来自<a href="https://github.com/rack/rack/blob/master/lib/rack/builder.rb">Rack::Builder</a>，
+注意Rack::Builder#initialize方法的实现，</p>
+  </li>
+</ul>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">app</span> <span class="o">=</span> <span class="no">Rack</span><span class="o">::</span><span class="no">Builder</span><span class="p">.</span><span class="nf">new</span> <span class="k">do</span>
+  <span class="n">use</span> <span class="no">Rack</span><span class="o">::</span><span class="no">CommonLogger</span>
+  <span class="n">use</span> <span class="no">Rack</span><span class="o">::</span><span class="no">ShowExceptions</span>
+	<span class="n">map</span> <span class="s2">"/lobster"</span> <span class="k">do</span>
+	  <span class="n">use</span> <span class="no">Rack</span><span class="o">::</span><span class="no">Lint</span>
+	  <span class="n">run</span> <span class="no">Rack</span><span class="o">::</span><span class="no">Lobster</span><span class="p">.</span><span class="nf">new</span>
+	<span class="k">end</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">class</span> <span class="nc">Rack::Builder</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">default_app</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+      <span class="vi">@use</span><span class="p">,</span> <span class="vi">@map</span><span class="p">,</span> <span class="vi">@run</span> <span class="o">=</span> <span class="p">[],</span> <span class="kp">nil</span><span class="p">,</span> <span class="n">default_app</span>
+	  <span class="nb">instance_eval</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span> <span class="k">if</span> <span class="nb">block_given?</span>
+	<span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">use</span><span class="p">(</span><span class="n">middleware</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+       <span class="o">...</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">map</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+	  <span class="o">...</span>
+    <span class="k">end</span>
+
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<p>instance_eval会将&amp;block嵌入到方法调用者的上下文环境中，所以方法use 和 map 是在Rack::Builder.new创建的实例对象里执行的，效果类似于，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">app</span> <span class="o">=</span> <span class="no">Rack</span><span class="o">::</span><span class="no">Builder</span><span class="p">.</span><span class="nf">new</span>
+  <span class="n">app</span><span class="p">.</span><span class="nf">use</span> <span class="no">Rack</span><span class="o">::</span><span class="no">CommonLogger</span>
+  <span class="n">app</span><span class="p">.</span><span class="nf">use</span> <span class="no">Rack</span><span class="o">::</span><span class="no">ShowExceptions</span>
+  <span class="n">app</span><span class="p">.</span><span class="nf">map</span> <span class="s2">"/lobster"</span> <span class="k">do</span>
+    <span class="n">use</span> <span class="no">Rack</span><span class="o">::</span><span class="no">Lint</span>
+	<span class="n">run</span> <span class="no">Rack</span><span class="o">::</span><span class="no">Lobster</span><span class="p">.</span><span class="nf">new</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<ul>
+  <li>
+    <p>转储&amp;block</p>
+
+    <blockquote>
+      <p>将&amp;block转化为一个对象存起来，并在适当的时候使用。</p>
+    </blockquote>
+  </li>
+</ul>
+
+<p>我们看看来自<a href="https://github.com/jimweirich/rake">rake</a>的例子，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">task</span> <span class="ss">:clobber</span> <span class="o">=&gt;</span> <span class="p">[</span><span class="ss">:clean</span><span class="p">]</span> <span class="k">do</span>
+     <span class="n">rm_rf</span> <span class="s2">"html"</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<p>task 方法定义在<a href="https://github.com/jimweirich/rake/blob/master/lib/rake/dsl_definition.rb">dsl_definition.rb</a>文件中，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">module</span> <span class="nn">Rake</span>
+    <span class="k">module</span> <span class="nn">DSL</span>
+	  <span class="k">def</span> <span class="nf">task</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+	    <span class="no">Rake</span><span class="o">::</span><span class="no">Task</span><span class="p">.</span><span class="nf">define_task</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+	  <span class="k">end</span>
+	<span class="k">end</span>
+  <span class="k">end</span>
+  <span class="nb">self</span><span class="p">.</span><span class="nf">extend</span> <span class="no">Rake</span><span class="o">::</span><span class="no">DSL</span>
+
+</code></pre></div></div>
+
+<p>Rake::Task.define_task(*args, &amp;block)最终在<a href="https://github.com/jimweirich/rake/blob/master/lib/rake/task.rb#L96">Rake::Task#enhance</a>里实现, 而<a href="https://github.com/jimweirich/rake/blob/master/lib/rake/task.rb#L223">Rake::Task#execute</a>将触发&amp;block执行。
+  self.extend Rake::DSL 为当前的main对象扩展出task方法，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">module</span> <span class="nn">Rake</span>
+    <span class="k">class</span> <span class="nc">Task</span>
+	  <span class="k">def</span> <span class="nf">enhance</span><span class="p">(</span><span class="n">deps</span><span class="o">=</span><span class="kp">nil</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+        <span class="vi">@actions</span> <span class="o">&lt;&lt;</span> <span class="n">block</span> <span class="k">if</span> <span class="nb">block_given?</span>
+        <span class="nb">self</span>
+      <span class="k">end</span>
+
+     <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="kp">nil</span><span class="p">)</span>
+        <span class="vi">@actions</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">act</span><span class="o">|</span>
+          <span class="k">case</span> <span class="n">act</span><span class="p">.</span><span class="nf">arity</span>
+          <span class="k">when</span> <span class="mi">1</span>
+            <span class="n">act</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="nb">self</span><span class="p">)</span>
+          <span class="k">else</span>
+            <span class="n">act</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+          <span class="k">end</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+
+	<span class="k">end</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<p>我们可以看到&amp;block在Rake::Task#enhance方法里被转换为Proc对象后追加到了@actions这个数组的后面。
+将&amp;block转化为Proc对象存起来是件很容易的事情，&amp;block去掉&amp;就获得了一个Proc对象，接下来我们还可以看到使用其他手段转储&amp;block。
+我们熟悉的rspec中的describe和it等方法是通过使用module_eval转储&amp;block来实现DSL的，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="n">describe</span> <span class="no">Bowling</span><span class="p">,</span> <span class="s2">"#score"</span> <span class="k">do</span>
+     <span class="n">it</span> <span class="s2">"returns 0 for all gutter game"</span> <span class="k">do</span>
+       <span class="n">bowling</span> <span class="o">=</span> <span class="no">Bowling</span><span class="p">.</span><span class="nf">new</span>
+       <span class="mi">20</span><span class="p">.</span><span class="nf">times</span> <span class="p">{</span> <span class="n">bowling</span><span class="p">.</span><span class="nf">hit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">}</span>
+       <span class="n">bowling</span><span class="p">.</span><span class="nf">score</span><span class="p">.</span><span class="nf">should</span> <span class="n">eq</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+     <span class="k">end</span>
+   <span class="k">end</span>
+</code></pre></div></div>
+
+<p>现在我们来分析下describe和it的大概实现过程。
+describe方法是在Rspec::Core::DSL中定义的，然后通过extend RSpec::Core::DSL变成了main对象的一个方法:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">module</span> <span class="nn">RSpec</span>
+     <span class="k">module</span> <span class="nn">Core</span>
+      <span class="k">module</span> <span class="nn">DSL</span>
+        <span class="k">def</span> <span class="nf">describe</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">example_group_block</span><span class="p">)</span>
+         <span class="no">RSpec</span><span class="o">::</span><span class="no">Core</span><span class="o">::</span><span class="no">ExampleGroup</span><span class="p">.</span><span class="nf">describe</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">example_group_block</span><span class="p">).</span><span class="nf">register</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+   <span class="k">end</span>
+
+   <span class="kp">extend</span> <span class="no">RSpec</span><span class="o">::</span><span class="no">Core</span><span class="o">::</span><span class="no">DSL</span>
+   <span class="no">Module</span><span class="p">.</span><span class="nf">send</span><span class="p">(</span><span class="ss">:include</span><span class="p">,</span> <span class="no">RSpec</span><span class="o">::</span><span class="no">Core</span><span class="o">::</span><span class="no">DSL</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>&amp;example_group_block这个block被传递到RSpec::Core::ExampleGroup.describe方法里，我们看看在RSpec::Core::ExampleGroup.describe方法里能否找到我们想要的东西，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">module</span> <span class="nn">Rspec</span>
+	 <span class="k">module</span> <span class="nn">Core</span>
+	   <span class="k">class</span> <span class="nc">ExampleGroup</span>
+
+		 <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">describe</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">example_group_block</span><span class="p">)</span>
+		   <span class="n">child</span> <span class="o">=</span> <span class="nb">const_set</span><span class="p">(</span>
+			 <span class="s2">"Nested_</span><span class="si">#{</span><span class="vi">@_subclass_count</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+			 <span class="n">subclass</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">example_group_block</span><span class="p">)</span>
+		   <span class="p">)</span>
+		   <span class="n">children</span> <span class="o">&lt;&lt;</span> <span class="n">child</span>
+		   <span class="n">child</span>
+		 <span class="k">end</span>
+
+		 <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">subclass</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">example_group_block</span><span class="p">)</span>
+		   <span class="n">subclass</span> <span class="o">=</span> <span class="no">Class</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+		   <span class="n">subclass</span><span class="p">.</span><span class="nf">module_eval</span><span class="p">(</span><span class="o">&amp;</span><span class="n">example_group_block</span><span class="p">)</span> <span class="k">if</span> <span class="n">example_group_block</span>
+		   <span class="n">subclass</span>
+		 <span class="k">end</span>
+
+	   <span class="k">end</span>
+	 <span class="k">end</span>
+   <span class="k">end</span>
+</code></pre></div></div>
+
+<p>在subclass方法中&amp;example_group_block被转储到了Rspec::Core::ExampleGroup的一个匿名子类中去了。describe方法执行后将会生成一个
+Rspec::Core::ExampleGroup的子类并返回，并且此子类包含&amp;example_group_block。</p>
+
+<p>再看看it的实现,</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">module</span> <span class="nn">Rspec</span>
+    <span class="k">module</span> <span class="nn">Core</span>
+	  <span class="k">class</span> <span class="nc">ExampleGroup</span>
+
+	    <span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="nb">self</span>
+
+		  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">define_example_method</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">extra_options</span><span class="o">=</span><span class="p">{})</span>
+			<span class="nb">module_eval</span><span class="p">(</span><span class="o">&lt;&lt;-</span><span class="no">END_RUBY</span><span class="p">,</span> <span class="kp">__FILE__</span><span class="p">,</span> <span class="kp">__LINE__</span><span class="p">)</span><span class="sh">
+			  def </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="sh">(desc=nil, *args, &amp;block)
+				examples &lt;&lt; RSpec::Core::Example.new(self, desc, options, block)
+				examples.last
+			  end
+</span><span class="no">			END_RUBY</span>
+		  <span class="k">end</span>
+
+		  <span class="n">define_example_method</span> <span class="ss">:it</span>
+
+		<span class="k">end</span>
+	  <span class="k">end</span>
+	<span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">module</span> <span class="nn">Rspec</span>
+    <span class="k">module</span> <span class="nn">Core</span>
+	  <span class="k">class</span> <span class="nc">Example</span>
+		<span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">example_group_class</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">example_block</span><span class="o">=</span><span class="kp">nil</span><span class="p">)</span>
+		  <span class="vi">@example_group_class</span><span class="p">,</span> <span class="vi">@options</span><span class="p">,</span> <span class="vi">@example_block</span> <span class="o">=</span> <span class="n">example_group_class</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">example_block</span>
+		<span class="k">end</span>
+	  <span class="k">end</span>
+	<span class="k">end</span>
+  <span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>通过 define_example_method :it, it成为了Rspec::Core::ExampleGroup的一个实例方法，it方法执行后会生成一个Rsepc::Core::Example实例对象, it后面挂的&amp;block会被转储到此实例对象里。</p>
+
+<ul>
+  <li>
+    <p>method_missing</p>
+
+    <blockquote>
+      <p>调用不存在的方法其实不可怕</p>
+    </blockquote>
+  </li>
+</ul>
+
+<p><a href="https://github.com/rails/jbuilder">jbuilder</a>是使用method_missing实现嵌套风格DSL的典型例子。
+不过<a href="https://github.com/rails/jbuilder/blob/master/lib/jbuilder.rb#L69">Jbuilder#method_missing</a>是一个比较复杂的实现, 为了更容易的理解method_missing的作用机制, 我参照jbuilder的源码写了一个简化版: jbuilder_mini，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nb">require</span> <span class="s1">'multi_json'</span>
+
+  <span class="k">class</span> <span class="nc">JbuilderMini</span>
+
+	<span class="k">def</span> <span class="nf">initialize</span>
+	  <span class="vi">@attributes</span> <span class="o">=</span> <span class="p">{}</span>
+	  <span class="k">yield</span> <span class="nb">self</span>
+	<span class="k">end</span>
+
+	<span class="k">def</span> <span class="nf">target!</span>
+	  <span class="o">::</span><span class="no">MultiJson</span><span class="p">.</span><span class="nf">dump</span> <span class="vi">@attributes</span>
+	<span class="k">end</span>
+
+	<span class="kp">private</span>
+
+	<span class="k">def</span> <span class="nf">method_missing</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kp">nil</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+	  <span class="n">result</span> <span class="o">=</span> <span class="k">if</span> <span class="n">block</span>
+				 <span class="n">_scope</span> <span class="p">{</span> <span class="k">yield</span> <span class="p">}</span>
+			   <span class="k">else</span>
+				 <span class="n">value</span>
+			   <span class="k">end</span>
+	  <span class="vi">@attributes</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+	<span class="k">end</span>
+
+	<span class="k">def</span> <span class="nf">_scope</span>
+	  <span class="n">parent_attributes</span> <span class="o">=</span> <span class="vi">@attributes</span>
+	  <span class="vi">@attributes</span> <span class="o">=</span> <span class="p">{}</span>
+	  <span class="k">yield</span>
+	  <span class="vi">@attributes</span>
+	<span class="k">ensure</span>
+	  <span class="vi">@attributes</span> <span class="o">=</span> <span class="n">parent_attributes</span>
+	<span class="k">end</span>
+
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<p>jbuilder_mini只能实现一些很简单的json字符串,</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">json</span> <span class="o">=</span> <span class="no">JbuilderMini</span><span class="p">.</span><span class="nf">new</span> <span class="k">do</span> <span class="o">|</span><span class="n">json</span><span class="o">|</span>
+	<span class="n">json</span><span class="p">.</span><span class="nf">author</span> <span class="k">do</span>
+	  <span class="n">json</span><span class="p">.</span><span class="nf">name</span> <span class="s1">'David'</span>
+	  <span class="n">json</span><span class="p">.</span><span class="nf">age</span>  <span class="mi">32</span>
+	  <span class="n">json</span><span class="p">.</span><span class="nf">book</span> <span class="k">do</span>
+		<span class="n">json</span><span class="p">.</span><span class="nf">name</span> <span class="s1">'ruby'</span>
+		<span class="n">json</span><span class="p">.</span><span class="nf">price</span> <span class="mf">100.0</span>
+	  <span class="k">end</span>
+	<span class="k">end</span>
+  <span class="k">end</span><span class="p">.</span><span class="nf">target!</span>
+
+  <span class="c1"># {"author":{"name":"David","age":32,"book":{"name":"ruby","price":100.0}}}</span>
+
+</code></pre></div></div>
+
+<p>JbuilderMini.new会抛出一个JbuilderMini的实例对象json，因为author不是JbuilderMini的实例方法, 所以json.author执行时会调用method_missing。
+通过method_missing我们能够拿到未定义的方法名:key，方法的参数:value, *args和块: &amp;block，然后在method_missing里实现我们想要的东西。</p>
+
+<h4 id="链式风格">链式风格</h4>
+
+<blockquote>
+  <p>链条，鞭子，蜡烛，你懂的</p>
+</blockquote>
+
+<p>在rails2.x时代，写一个稍微复杂的查询是一件让人比较头疼的事情，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="no">Person</span><span class="p">.</span><span class="nf">find</span><span class="p">(</span><span class="ss">:all</span><span class="p">,</span> <span class="ss">:conditions</span> <span class="o">=&gt;</span> <span class="p">[</span> <span class="s2">"category IN (?) and name = ?"</span><span class="p">,</span> <span class="n">categories</span><span class="p">,</span>  <span class="n">parmas</span><span class="p">[</span><span class="ss">:name</span><span class="p">]],</span> <span class="ss">:limit</span> <span class="o">=&gt;</span> <span class="mi">50</span><span class="p">,</span> <span class="ss">:order</span> <span class="o">=&gt;</span> <span class="s2">"created_at DESC"</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<p>而如今我们可以优雅灵活地构造查询语句，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+  <span class="no">Person</span><span class="p">.</span><span class="nf">where</span><span class="p">(</span><span class="ss">category: </span><span class="n">categories</span><span class="p">,</span> <span class="ss">name: </span><span class="n">params</span><span class="p">[</span><span class="ss">:name</span><span class="p">]).</span><span class="nf">order</span><span class="p">(</span><span class="s1">'created_at DESC'</span><span class="p">).</span><span class="nf">limit</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+  
+</code></pre></div></div>
+
+<p>这种便利正是链式风格的DSL带来的。</p>
+
+<p>ActiveRecord::Base的子类使用的各种可以链式调用的方法比如where, select, group, order, limit, joins等都是通过delegate被代理到了ActiveRecord::Relation的实例上去了。我们做一个简化版的ActiveRecord::Relation,</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  
+  <span class="k">module</span> <span class="nn">ActiveRecord</span>
+    <span class="k">class</span> <span class="nc">Relation</span>
+
+	  <span class="k">def</span> <span class="nf">where</span><span class="p">(</span><span class="n">opts</span><span class="o">=</span><span class="ss">:chain</span><span class="p">,</span> <span class="o">*</span><span class="n">rest</span><span class="p">)</span>
+	    <span class="o">...</span>
+		<span class="nb">self</span>
+	  <span class="k">end</span>
+
+      <span class="k">def</span> <span class="nf">select</span><span class="p">(</span><span class="o">*</span><span class="n">fields</span><span class="p">)</span>
+	    <span class="o">...</span>
+	    <span class="nb">self</span>
+	  <span class="k">end</span>
+
+      <span class="k">def</span> <span class="nf">group</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+	    <span class="o">...</span>
+		<span class="nb">self</span>
+	  <span class="k">end</span>
+
+      <span class="k">def</span> <span class="nf">order</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+	    <span class="o">...</span>
+		<span class="nb">self</span>
+	  <span class="k">end</span>
+
+      <span class="k">def</span> <span class="nf">limit</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+	    <span class="o">...</span>
+		<span class="nb">self</span>
+	  <span class="k">end</span>
+
+      <span class="k">def</span> <span class="nf">joins</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+	    <span class="o">...</span>
+		<span class="nb">self</span>
+	  <span class="k">end</span>
+
+	<span class="k">end</span>
+  <span class="k">end</span>
+  
+</code></pre></div></div>
+
+<p>可以看到这些能够链式调用的方法都有一个共同点就是它们最后都会返回self，返回self是构造链式DSL的一个比较方便自然的手段。</p>
+
+<h4 id="类宏风格">类宏风格</h4>
+
+<blockquote>
+  <p>类里面不加self调用类方法</p>
+</blockquote>
+
+<p>在Ruby中类宏风格的DSL常见且重要，比如我们经常用到的has_many, validate_presence_of, attr_reader等等就是类宏风格的DSL,</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  
+<span class="k">class</span> <span class="nc">Contest</span> <span class="o">&lt;</span> <span class="no">ActivieRecord</span><span class="o">::</span><span class="no">Base</span>
+
+  <span class="n">has_many</span> <span class="ss">:votes</span>
+  <span class="n">has_many</span> <span class="ss">:entites</span>
+
+  <span class="n">validate_presence_of</span> <span class="ss">:title</span>
+  
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Book</span>
+  <span class="nb">attr_reader</span> <span class="ss">:name</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<ul>
+  <li>ClassMethods 和 InstanceMethods</li>
+</ul>
+
+<p>类宏风格DSL的经典实现是写一个module, 然后在这个module里定义两个module: ClassMethods, InstanceMethods, 以及一个included钩子，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  
+    <span class="k">module</span> <span class="nn">MaRo</span>
+	  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">included</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+	    <span class="n">base</span><span class="p">.</span><span class="nf">extend</span> <span class="no">ClassMethods</span>
+		<span class="n">base</span><span class="p">.</span><span class="nf">send</span><span class="p">(</span><span class="ss">:include</span><span class="p">,</span> <span class="no">InstanceMethods</span><span class="p">)</span>
+	  <span class="k">end</span>
+
+      <span class="k">module</span> <span class="nn">ClassMethods</span>
+	    <span class="k">def</span> <span class="nf">act_as_something</span>
+		  <span class="o">...</span>
+		<span class="k">end</span>
+	  <span class="k">end</span>
+
+      <span class="k">module</span> <span class="nn">InstanceMethods</span>
+	    <span class="k">def</span> <span class="nf">im</span>
+		  <span class="o">...</span>
+		<span class="k">end</span>
+	  <span class="k">end</span>
+   <span class="k">end</span>
+
+   <span class="k">class</span> <span class="nc">A</span>
+     <span class="kp">include</span> <span class="no">MaRo</span>
+	 <span class="n">act_as_something</span>
+   <span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>在ActiveRecord::Base中与associations这一块相关的DSL,比如has_many, has_one, belongs_to, has_and_belongs_to_many实现的方式和上面类似，
+但是它引入了<a href="http://api.rubyonrails.org/classes/ActiveSupport/Concern.html">ActiveSupport::Concern</a>机制从而使得这一过程简便和标准化了，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">module</span> <span class="nn">ActiveRecord</span>
+     <span class="k">module</span> <span class="nn">Associations</span>
+	   <span class="kp">extend</span> <span class="no">ActiveSupport</span><span class="o">::</span><span class="no">Concern</span>
+
+       <span class="k">module</span> <span class="nn">ClassMethods</span>
+
+	    <span class="k">def</span> <span class="nf">has_many</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">scope</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{},</span> <span class="o">&amp;</span><span class="n">extension</span><span class="p">)</span>
+          <span class="no">Builder</span><span class="o">::</span><span class="no">HasMany</span><span class="p">.</span><span class="nf">build</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="nb">name</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">extension</span><span class="p">)</span>
+        <span class="k">end</span>
+
+        <span class="k">def</span> <span class="nf">has_one</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">scope</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
+          <span class="no">Builder</span><span class="o">::</span><span class="no">HasOne</span><span class="p">.</span><span class="nf">build</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="nb">name</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+        <span class="k">end</span>
+
+        <span class="k">def</span> <span class="nf">belongs_to</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">scope</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
+          <span class="no">Builder</span><span class="o">::</span><span class="no">BelongsTo</span><span class="p">.</span><span class="nf">build</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="nb">name</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+        <span class="k">end</span>
+
+		<span class="k">def</span> <span class="nf">has_and_belongs_to_many</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">scope</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{},</span> <span class="o">&amp;</span><span class="n">extension</span><span class="p">)</span>
+          <span class="no">Builder</span><span class="o">::</span><span class="no">HasAndBelongsToMany</span><span class="p">.</span><span class="nf">build</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="nb">name</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">extension</span><span class="p">)</span>
+        <span class="k">end</span>
+
+	   <span class="k">end</span>
+	 <span class="k">end</span>
+   <span class="k">end</span>
+
+   <span class="k">module</span> <span class="nn">ActiveRecord</span>
+     <span class="k">class</span> <span class="nc">Base</span>
+	   <span class="kp">include</span> <span class="no">Associations</span>
+	 <span class="k">end</span>
+   <span class="k">end</span>
+</code></pre></div></div>
+
+<ul>
+  <li>define_method</li>
+</ul>
+
+<p>用 define_method 实现一个类似attr_reader的宏，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">class</span> <span class="nc">A</span>
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">aattr_reader</span> <span class="o">*</span><span class="n">attrs</span>
+	  <span class="n">attrs</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span><span class="o">|</span><span class="kp">attr</span><span class="o">|</span>
+	    <span class="n">define_method</span> <span class="kp">attr</span> <span class="k">do</span>
+		  <span class="nb">instance_variable_get</span> <span class="s2">"@</span><span class="si">#{</span><span class="kp">attr</span><span class="si">}</span><span class="s2">"</span>
+		<span class="k">end</span>
+	  <span class="p">}</span>
+	<span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">class</span> <span class="nc">B</span> <span class="o">&lt;</span> <span class="no">A</span>
+    <span class="n">aattr_reader</span> <span class="ss">:foo</span><span class="p">,</span> <span class="ss">:bar</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span>
+	  <span class="vi">@foo</span> <span class="o">=</span> <span class="s2">"foo"</span>
+	  <span class="vi">@bar</span> <span class="o">=</span> <span class="s2">"bar"</span>
+	<span class="k">end</span>
+
+  <span class="k">end</span>
+
+  <span class="n">b</span> <span class="o">=</span> <span class="no">B</span><span class="p">.</span><span class="nf">new</span>
+  <span class="n">b</span><span class="p">.</span><span class="nf">foo</span> <span class="c1">#=&gt; foo</span>
+  <span class="n">b</span><span class="p">.</span><span class="nf">bar</span> <span class="c1">#=&gt; bar</span>
+
+</code></pre></div></div>
+
+<h4 id="补丁风格">补丁风格</h4>
+
+<blockquote>
+  <p>子类通过特定的实例方法实现自己的特性</p>
+</blockquote>
+
+<p>ActiveRecord::Migration是补丁风格DSL的一个很好的例子，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 
+<span class="k">class</span> <span class="nc">CreateCategories</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Migration</span>
+  <span class="k">def</span> <span class="nf">change</span>
+    <span class="n">create_table</span> <span class="ss">:categories</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+      <span class="n">t</span><span class="p">.</span><span class="nf">string</span>      <span class="ss">:name</span>
+      <span class="n">t</span><span class="p">.</span><span class="nf">timestamps</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">AddRoleToUsers</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Migration</span>
+  <span class="k">def</span> <span class="nf">change</span>
+    <span class="n">add_column</span> <span class="ss">:users</span><span class="p">,</span> <span class="ss">:role</span><span class="p">,</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">default: </span><span class="s1">'user'</span> <span class="c1"># 账号角色, user 普通用户, admin 管理员, sponsor 赞助商</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>CreateCategories和AddRoleToUsers这个两个migration class继承自ActiveRecord::Migration，但是它们各自通过<code class="language-plaintext highlighter-rouge">change</code>这个补丁实现了
+不同的功能，CreateCategories可以创建和销毁categories表，AddRoleToUsers可以增加和移除users表的role字段。通过打补丁，每个子类都可以
+拥有一份自留地，种白菜，种萝卜，种点草都行。现在我们分析下ActiveRecord::Migration中补丁风格DSL实现的大致手段，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+ <span class="k">module</span> <span class="nn">ActiveRecord</span>
+   <span class="k">class</span> <span class="nc">Migration</span>
+
+     <span class="c1"># direction 为 :up或者:down, 其中:down表示回滚</span>
+     <span class="k">def</span> <span class="nf">migrate</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span>
+       <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span><span class="p">.</span><span class="nf">connection_pool</span><span class="p">.</span><span class="nf">with_connection</span> <span class="k">do</span> <span class="o">|</span><span class="n">conn</span><span class="o">|</span>
+		   <span class="n">exec_migration</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span>
+		 <span class="k">end</span>
+	   <span class="k">end</span>
+
+      <span class="k">def</span> <span class="nf">exec_migration</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span>
+        <span class="vi">@connection</span> <span class="o">=</span> <span class="n">conn</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="ss">:down</span>
+          <span class="n">revert</span> <span class="p">{</span> <span class="n">change</span> <span class="p">}</span>
+        <span class="k">else</span>
+          <span class="n">change</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+
+      <span class="k">def</span> <span class="nf">connection</span>
+        <span class="vi">@connection</span> <span class="o">||</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span><span class="p">.</span><span class="nf">connection</span>
+      <span class="k">end</span>
+
+      <span class="k">def</span> <span class="nf">method_missing</span><span class="p">(</span><span class="nb">method</span><span class="p">,</span> <span class="o">*</span><span class="n">arguments</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+        <span class="n">connection</span><span class="p">.</span><span class="nf">send</span><span class="p">(</span><span class="nb">method</span><span class="p">,</span> <span class="o">*</span><span class="n">arguments</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+      <span class="k">end</span>
+
+	 <span class="k">end</span>
+   <span class="k">end</span>
+</code></pre></div></div>
+
+<p>change方法执行的入口在exec_migration这个方法中，在exec_migration方法里，如果direction是:down即回滚，则以revert的形式执行change，否则直接执行change。</p>
+
+<p>我们要知道诸如create_table, add_column, change_column这些方法并没有直接定义在ActivieRecord::Migration中，而是定义在module ActivieRecord::ConnectionAdapeters::SchemaStatements中的,
+ActiveRecord::ConnectionAdapters::AbstractAdapter include了模块 ActivieRecord::ConnectionAdapeters::SchemaStatements,</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  
+  <span class="k">module</span> <span class="nn">ActiveRecord</span>
+    <span class="k">module</span> <span class="nn">ConnectionAdapters</span>
+	  <span class="k">module</span> <span class="nn">SchemaStatements</span>
+
+         <span class="k">def</span> <span class="nf">create_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
+		   <span class="o">...</span>
+		 <span class="k">end</span>
+
+         <span class="k">def</span> <span class="nf">add_column</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
+		   <span class="o">...</span>
+		 <span class="k">end</span>
+
+         <span class="k">def</span> <span class="nf">change_cloumn</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
+		   <span class="o">...</span>
+		 <span class="k">end</span>
+
+	  <span class="k">end</span>
+	<span class="k">end</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">module</span> <span class="nn">ActiveRecord</span>
+    <span class="k">module</span> <span class="nn">ConnectionAdapters</span>
+	  <span class="k">class</span> <span class="nc">AbstractAdapter</span>
+	    <span class="kp">include</span> <span class="no">SchemaStatements</span>
+	  <span class="k">end</span>
+	<span class="k">end</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<p>最后, ActiveRecord::Base.connection.class.supperclass 就是 ActiveRecord::ConnectionAdapters::AbstractAdapter，
+所以我们不难明白为什么ActiveRecord::Migration的实例调用的create_table, add_column等方法是通过method_missing代理到
+ActiveRecord::Base.connection这个实例上去的。</p>
+
+<hr />
+
+<h3 id="dsl实践">DSL实践</h3>
+
+<p>ActiveRecord::Base是一个非常大的class，它所包含的那一套DSL内容非常丰富，包括了表间关系，字段验证，回调，事务等很多东西，我们暂且把这种
+体积大的DSL叫做Big DSL，接下来我们要来实践一种小DSL，即Small DSL。</p>
+
+<ul>
+  <li>
+    <p><strong><em>(D)omain</em></strong>, <strong>域</strong></p>
+
+    <p>实现Small DSL首先应该确保Domain足够的准确和足够的具体，这要求Domain不能太大并且保有一定的复杂性。
+拿彩票来说，彩票这个域有点大，我们可以对它进行细化,比如细化为<strong>注码的生成</strong>，<strong>注码的投注</strong>等等。
+其中<strong>注码的生成</strong>这个域也很大，可以继续细化为<strong>双色球注码生成</strong>，   <strong>福彩3D注码生成</strong>等等，
+注码的生成即使细化到了彩种可能还是不够，还可以针对渠道做进一步细化，比如说<strong>渠道A的双色球的注码生成</strong>，
+此时这个域就比较具体，可以写代码实现了。</p>
+  </li>
+  <li>
+    <p><strong><em>(S)pecific</em></strong>, <strong>专</strong></p>
+
+    <p>只做一件事情并且把这件事情做好。</p>
+  </li>
+  <li>
+    <p><strong><em>(L)anguages</em></strong>, <strong>言</strong></p>
+
+    <p>有可以重复使用的语法和词汇。</p>
+  </li>
+</ul>
+
+<h4 id="samll-dsl的domain在ruby中是什么样子">Samll DSL的Domain在ruby中是什么样子?</h4>
+
+<ul>
+  <li>是一个class</li>
+  <li>可以接收外部数据</li>
+</ul>
+
+<p>根据上面的定义我写了一个叫<a href="https://github.com/baya/dun/blob/master/lib/dun.rb">Dun::Land</a>的class，可以用Dun::Land对Domain进行封装。
+Dun::Land来自于一个叫<a href="https://github.com/baya/dun">dun</a>的gem，可以通过gem install dun安装。
+dun的详细用法可以看看<a href="https://github.com/baya/dun/blob/master/README.md">README</a>。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">SomeDomain</span> <span class="o">&lt;</span> <span class="no">Dun</span><span class="o">::</span><span class="no">Land</span>
+  <span class="n">data_reader</span> <span class="ss">:image</span><span class="p">,</span> <span class="ss">:name</span>
+
+  <span class="k">def</span> <span class="nf">call</span>
+    <span class="nb">puts</span> <span class="s2">"</span><span class="si">#{</span><span class="n">image</span><span class="si">}</span><span class="s2"> </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="no">SomeDoamin</span> <span class="ss">image: </span><span class="s1">'fly.jpg'</span><span class="p">,</span> <span class="ss">name: </span><span class="s1">'秋天的味道'</span>
+</code></pre></div></div>
+
+<p>data_reader 的作用是把外部数据变成域的实例方法，方便读取数据，
+例如<code class="language-plaintext highlighter-rouge">data_reader :image, :name</code> 把image和name变成了SomeDomain的两个实例方法。
+继承自Dun::Land的子类会自动拥有一个和类同名的全局方法，比如，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Foo</span> <span class="o">&lt;</span> <span class="no">Dun</span><span class="o">::</span><span class="no">Land</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>会生成一个叫<code class="language-plaintext highlighter-rouge">Foo</code>的全局方法。</p>
+
+<h4 id="简单例子-用户验证">简单例子: 用户验证</h4>
+
+<p>用户登录时，我们需要判断用户的邮箱和密码是否匹配，如何实现这个功能呢? 传统的实现方法如下，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">User</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">authenticate</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">find_by_email</span><span class="p">(</span><span class="n">email</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">user</span> <span class="o">&amp;&amp;</span> <span class="n">user</span><span class="p">.</span><span class="nf">password_hash</span> <span class="o">==</span> <span class="no">BCrypt</span><span class="o">::</span><span class="no">Engine</span><span class="p">.</span><span class="nf">hash_secret</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">user</span><span class="p">.</span><span class="nf">password_salt</span><span class="p">)</span>
+      <span class="n">user</span>
+    <span class="k">else</span>
+      <span class="kp">nil</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">user</span> <span class="o">=</span> <span class="no">User</span><span class="p">.</span><span class="nf">authenticate</span> <span class="s2">"jim@126.com"</span><span class="p">,</span> <span class="s2">"secret"</span>
+</code></pre></div></div>
+
+<p>现在我们用另一种方式去实现这个功能，首先将用户验证抽象为一个域: AuthenticateUser,</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">AuthenticateUser</span> <span class="o">&lt;</span> <span class="no">Dun</span><span class="o">::</span><span class="no">Land</span>
+    <span class="n">data_reader</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:password</span>
+
+    <span class="k">def</span> <span class="nf">call</span>
+      <span class="n">user</span> <span class="o">=</span> <span class="no">User</span><span class="p">.</span><span class="nf">find_by_email</span><span class="p">(</span><span class="n">email</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">user</span> <span class="o">&amp;&amp;</span> <span class="n">user</span><span class="p">.</span><span class="nf">password_hash</span> <span class="o">==</span> <span class="no">BCrypt</span><span class="o">::</span><span class="no">Engine</span><span class="p">.</span><span class="nf">hash_secret</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">user</span><span class="p">.</span><span class="nf">password_salt</span><span class="p">)</span>
+        <span class="n">user</span>
+      <span class="k">else</span>
+        <span class="kp">nil</span>
+      <span class="k">end</span>
+
+    <span class="k">end</span>
+
+  <span class="k">end</span>
+
+<span class="n">user</span> <span class="o">=</span> <span class="no">AuthenticateUser</span> <span class="ss">email: </span><span class="s1">'jim@126.com'</span><span class="p">,</span><span class="ss">password: </span><span class="s1">'secret'</span>
+</code></pre></div></div>
+
+<p>看起来和传统实现方法没有太大的区别。现在我们有了(D)omain，那么(L)anguages在哪呢? 语法和词汇在哪呢?
+为了让这个例子能够进行下去，我们想像数据库里还有一个叫admins的表，admins表里存放着系统管理员的帐号，
+同样当这些管理员登录后台时，我们需要对其进行验证，按传统的方法，我们又写了下面的代码,</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Admin</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">authenticate</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+    <span class="n">admin</span> <span class="o">=</span> <span class="n">find_by_name</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">admin</span> <span class="o">&amp;&amp;</span> <span class="n">admin</span><span class="p">.</span><span class="nf">password_hash</span> <span class="o">==</span> <span class="no">BCrypt</span><span class="o">::</span><span class="no">Engine</span><span class="p">.</span><span class="nf">hash_secret</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">admin</span><span class="p">.</span><span class="nf">password_salt</span><span class="p">)</span>
+      <span class="n">admin</span>
+    <span class="k">else</span>
+      <span class="kp">nil</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">admin</span> <span class="o">=</span> <span class="no">Admin</span><span class="p">.</span><span class="nf">authenticate</span> <span class="s2">"admin01"</span><span class="p">,</span> <span class="s2">"secret"</span>
+</code></pre></div></div>
+
+<p>如果又出现其他的模型需要认证，那么我们需要按照同样的步骤去添加代码，这些代码不完全相同，但是逻辑和控制结构几乎完全相同，
+我们应该怎样去消除代码在逻辑和结构上的重复呢?在传统的方法上面去解决这类问题比较麻烦，原因在于User, Admin这些类相对于验证这个域体积过大了。
+那我们用第二种方法试试，依葫芦画瓢, 我们封装域: AuthenticateAdmin，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">AuthenticateAdmin</span> <span class="o">&lt;</span> <span class="no">Dun</span><span class="o">::</span><span class="no">Land</span>
+    <span class="n">data_reader</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:password</span>
+
+    <span class="k">def</span> <span class="nf">call</span>
+      <span class="n">admin</span> <span class="o">=</span> <span class="no">Admin</span><span class="p">.</span><span class="nf">find_by_name</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">admin</span> <span class="o">&amp;&amp;</span> <span class="n">admin</span><span class="p">.</span><span class="nf">password_hash</span> <span class="o">==</span> <span class="no">BCrypt</span><span class="o">::</span><span class="no">Engine</span><span class="p">.</span><span class="nf">hash_secret</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">admin</span><span class="p">.</span><span class="nf">password_salt</span><span class="p">)</span>
+        <span class="n">admin</span>
+      <span class="k">else</span>
+        <span class="kp">nil</span>
+      <span class="k">end</span>
+
+    <span class="k">end</span>
+
+  <span class="k">end</span>
+
+<span class="n">admin</span> <span class="o">=</span> <span class="no">AuthenticateAdmin</span> <span class="ss">name: </span><span class="s1">'admin01'</span><span class="p">,</span> <span class="ss">password: </span><span class="s1">'secret'</span>
+</code></pre></div></div>
+
+<p>用户认证这个域很小，很快我们就成为了其中的砖家，我们开始为其造些语法和词汇吧，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">AuthenticateUser</span>
+
+  <span class="n">auth</span> <span class="ss">:user</span><span class="p">,</span> <span class="ss">with: </span><span class="s1">'email'</span>
+
+<span class="k">end</span>
+</code></pre></div></div>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">AuthenticateAdmin</span>
+
+  <span class="n">auth</span> <span class="ss">:admin</span><span class="p">,</span> <span class="ss">with: </span><span class="s1">'name'</span>
+
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">auth model_name, with: col_name</code>，读起来还算通顺。 现在有了语法和词汇，接下来我们开始写解释器! 由于只有一条语法，两个词(auth和with)，这个解释器应该不会很复杂。
+但是不管怎么说，我们要写的东西是一个解释器，好像很牛逼的样子，可是我对解释器一窍不通，有时连字节和位的关系都拈不清，
+能写出解释器吗? 不过不要顾虑太多，因为我们马上要写的解释器是一个很普通，很简单的class。</p>
+
+<p>定义Authenticate域，它将作为AuthenticateUser和AuthenticateAdmin的父类，对，Authenticate就是我们
+要写的解释器。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Authenticate</span> <span class="o">&lt;</span> <span class="no">Dun</span><span class="o">::</span><span class="no">Land</span>
+  <span class="n">data_reader</span> <span class="ss">:password</span>
+
+  <span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="nb">self</span>
+
+    <span class="k">def</span> <span class="nf">auth</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+      <span class="n">col_name</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="ss">:with</span><span class="p">]</span>
+      <span class="n">data_reader</span> <span class="n">col_name</span>
+
+      <span class="n">define_method</span> <span class="ss">:model</span> <span class="k">do</span>
+        <span class="vi">@model</span> <span class="o">||=</span> <span class="no">Object</span><span class="p">.</span><span class="nf">const_get</span> <span class="n">model_name</span><span class="p">.</span><span class="nf">capitalize</span>
+      <span class="k">end</span>
+
+      <span class="n">define_method</span> <span class="ss">:auth_obj</span> <span class="k">do</span>
+        <span class="vi">@auth_obj</span> <span class="o">||=</span> <span class="n">model</span><span class="p">.</span><span class="nf">send</span><span class="p">(</span><span class="s2">"find_by_</span><span class="si">#{</span><span class="n">col_name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="nb">send</span><span class="p">(</span><span class="n">col_name</span><span class="p">))</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">call</span>
+    <span class="k">if</span> <span class="n">auth_obj</span> <span class="o">&amp;&amp;</span> <span class="n">password_match?</span>
+      <span class="n">auth_obj</span>
+    <span class="k">else</span>
+      <span class="kp">nil</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span>
+
+  <span class="k">def</span> <span class="nf">password_match?</span>
+    <span class="n">auth_obj</span><span class="p">.</span><span class="nf">password_hash</span> <span class="o">==</span> <span class="no">BCrypt</span><span class="o">::</span><span class="no">Engine</span><span class="p">.</span><span class="nf">hash_secret</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">auth_obj</span><span class="p">.</span><span class="nf">password_salt</span><span class="p">)</span>
+  <span class="k">end</span>
+
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>不超过30行代码，我们就拥有了一个用户验证方面的解释器，看来Small DSL不难实现嘛。虽然这个解释器只能解释一条语法，两个词汇，但是它功能强健，
+可以想象，如果系统加入了一个新的模型Account需要验证，我们只需要增加一个AuthenticateAccount域就可以了，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">AuthenticateAccount</span> <span class="o">&lt;</span> <span class="no">Authenticate</span>
+  <span class="n">auth</span> <span class="ss">:account</span><span class="p">,</span> <span class="ss">with: </span><span class="s1">'login'</span>
+<span class="k">end</span>
+<span class="no">AuthenticateAccount</span> <span class="ss">login: </span><span class="s1">'liliy20'</span><span class="p">,</span> <span class="ss">password: </span><span class="s1">'secret'</span>
+</code></pre></div></div>
+
+<h4 id="有点复杂的例子-积分分配">有点复杂的例子: 积分分配</h4>
+
+<p>这个例子来自一个自线上产品。为了鼓励用户踊跃创建比赛，我们的比赛系统需要实现一个奖励积分的功能, 也就是当比赛结束后，如果用户创建的比赛的浏览人数达到一定数值后,
+系统会给创建者奖励积分。</p>
+
+<p>比赛的浏览人数与系统奖励积分的关系如下所示:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>非调查类比赛：
+浏览数小于10,000不奖励积分；
+浏览数大于10,000小于25,000,奖励50分;
+浏览数大于25,000小于50,000,奖励100分;
+浏览数大于50,000 奖励200分；
+
+调查类比赛：
+浏览数不到1000, 不奖励积分,
+浏览数大于1000小于5000,奖励25分;
+浏览数大于5000小于10,000,奖励50分；
+浏览数大于10,000小于50,000,奖励100分；
+浏览数大于50,000 奖励300分；
+
+非调查类比赛,系统奖励的积分有多种分配方式：
+1、比赛创建者得到10%积分,排名第一的图片的上传者得45%,第二得30%
+2、比赛创建者得到10%积分,排名第一的图片的上传者得35%,第二得25%
+3、比赛创建者得到10%积分,排名第一的图片的上传者得25%,第二得18%
+4、最后各人得分比例之和为100%
+</code></pre></div></div>
+
+<p>首先确定两个域NoSuerveyContestCreditAllocate和SuerveyContestCreditAllocate。</p>
+
+<p>先实现SuerveyContestCreditAllocate。一阵鼓捣之后，写出的代码大致如下:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">NonSurveyContestCreditAllocation</span> <span class="o">&lt;</span> <span class="no">Dun</span><span class="o">::</span><span class="no">Land</span>
+
+    <span class="n">data_reader</span> <span class="ss">:contest</span>
+
+    <span class="k">def</span> <span class="nf">call</span>
+	  <span class="n">allocate_mapper</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span><span class="o">|</span><span class="n">mapper</span><span class="o">|</span> <span class="n">allocate_credit</span> <span class="n">mapper</span> <span class="p">}</span>
+	<span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">allocate_mapper</span>
+	  <span class="o">...</span> <span class="c1"># 省略具体实现</span>
+	<span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">allocate_credit</span><span class="p">(</span><span class="n">mapper</span><span class="p">)</span>
+	  <span class="o">...</span> <span class="c1"># 省略具体实现</span>
+	<span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">credit</span>
+      <span class="n">get_or_set</span> <span class="ss">:credit</span> <span class="k">do</span>
+        <span class="k">if</span> <span class="n">view_count</span> <span class="o">&lt;</span> <span class="mi">25_000</span>
+          <span class="mi">0</span>
+        <span class="k">elsif</span> <span class="n">view_count</span>  <span class="o">&lt;</span> <span class="mi">50_000</span> <span class="ow">and</span> <span class="n">view_count</span> <span class="o">&gt;=</span> <span class="mi">25_000</span>
+          <span class="mi">100</span>
+        <span class="k">elsif</span> <span class="n">view_count</span> <span class="o">&gt;=</span> <span class="mi">50_000</span>
+          <span class="mi">200</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">rates</span>
+      <span class="n">get_or_set</span> <span class="ss">:rates</span> <span class="k">do</span>
+        <span class="k">if</span> <span class="n">view_count</span> <span class="o">&lt;</span> <span class="mi">25_000</span>
+          <span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.45</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">]</span>
+        <span class="k">elsif</span> <span class="n">view_count</span> <span class="o">&lt;</span> <span class="mi">50_000</span> <span class="ow">and</span> <span class="n">view_count</span> <span class="o">&gt;=</span> <span class="mi">25_000</span>
+          <span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">]</span>
+        <span class="k">elsif</span> <span class="n">view_count</span> <span class="o">&gt;=</span> <span class="mi">50_000</span>
+          <span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.18</span><span class="p">,</span> <span class="mf">0.47</span><span class="p">]</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+  <span class="k">end</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>在实现此功能的过程中，写了比较完善的单元测试。</p>
+
+<p>然后又是一阵鼓捣，实现了SuerveyContestCreditAllocate，同样写了比较完善的单元测试，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">SurveyContestCreditAllocation</span> <span class="o">&lt;</span> <span class="no">Dun</span><span class="o">::</span><span class="no">Land</span>
+
+   <span class="n">data_reader</span> <span class="ss">:contest</span>
+
+    <span class="k">def</span> <span class="nf">call</span>
+	  <span class="n">allocate_mapper</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span><span class="o">|</span><span class="n">mapper</span><span class="o">|</span> <span class="n">allocate_credit</span> <span class="n">mapper</span> <span class="p">}</span>
+	<span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">allocate_mapper</span>
+	  <span class="o">...</span> <span class="c1"># 省略具体实现</span>
+	<span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">allocate_credit</span><span class="p">(</span><span class="n">mapper</span><span class="p">)</span>
+	  <span class="o">...</span> <span class="c1"># 省略具体实现</span>
+	<span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">credit</span>
+      <span class="n">get_or_set</span> <span class="ss">:credit</span> <span class="k">do</span>
+        <span class="k">if</span> <span class="n">view_count</span> <span class="o">&lt;</span> <span class="mi">50_00</span>
+          <span class="mi">0</span>
+        <span class="k">elsif</span> <span class="n">view_count</span> <span class="o">&lt;</span> <span class="mi">50_00</span> <span class="ow">and</span> <span class="n">view_count</span> <span class="o">&gt;=</span> <span class="mi">10_000</span>
+          <span class="mi">50</span>
+        <span class="k">elsif</span> <span class="n">view_count</span> <span class="o">&gt;=</span> <span class="mi">10_000</span> <span class="ow">and</span> <span class="n">view_count</span> <span class="o">&lt;=</span> <span class="mi">50_000</span>
+          <span class="mi">200</span>
+        <span class="k">elsif</span> <span class="n">view_count</span> <span class="o">&gt;=</span> <span class="mi">50_000</span> <span class="ow">and</span> <span class="n">view_count</span> <span class="o">&lt;</span> <span class="mi">100_000</span>
+          <span class="mi">300</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">rates</span>
+      <span class="n">get_or_set</span> <span class="ss">:rates</span> <span class="k">do</span>
+        <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+  <span class="k">end</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>通过前面的开发实践，我对积分分配这个问题理解清楚了，测试也达到了预期的效果，并且了解到NonSurveyContestCreditAllocation和SurveyContestCreditAllocation这两个域的区别就在于credit和rates这两个补丁方法上面，于是开始造语法和词汇，</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">NonSurveyContestCreditAllocation</span>
+
+  <span class="n">credit</span> <span class="ss">view_count_less_than: </span><span class="mi">10_000</span><span class="p">,</span> <span class="ss">then: </span><span class="mi">0</span>
+  <span class="n">credit</span> <span class="ss">view_count_between: </span><span class="p">[</span><span class="mi">10_000</span><span class="p">,</span> <span class="mi">25_000</span><span class="p">],</span> <span class="ss">then: </span><span class="mi">50</span>
+  <span class="n">credit</span> <span class="ss">view_count_between: </span><span class="p">[</span><span class="mi">25_001</span><span class="p">,</span> <span class="mi">50_000</span><span class="p">],</span> <span class="ss">then: </span><span class="mi">100</span>
+  <span class="n">credit</span> <span class="ss">view_count_more_than: </span><span class="mi">50_000</span><span class="p">,</span> <span class="ss">then: </span><span class="mi">200</span>
+
+  <span class="n">rate</span> <span class="ss">view_count_less_than: </span><span class="mi">25_000</span><span class="p">,</span> <span class="ss">then: </span><span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.45</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">]</span>
+  <span class="n">rate</span> <span class="ss">view_count_between: </span><span class="p">[</span><span class="mi">25_000</span><span class="p">,</span> <span class="mi">50_000</span><span class="p">],</span> <span class="ss">then: </span><span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">]</span>
+  <span class="n">rate</span> <span class="ss">view_count_more_than: </span><span class="mi">50_000</span><span class="p">,</span> <span class="ss">then: </span><span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.18</span><span class="p">,</span> <span class="mf">0.47</span><span class="p">]</span>
+
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">SurveyContestCreditAllocation</span>
+
+  <span class="n">credit</span> <span class="ss">view_count_less_than: </span><span class="mi">1000</span><span class="p">,</span> <span class="ss">then: </span><span class="mi">0</span>
+  <span class="n">credit</span> <span class="ss">view_count_between: </span><span class="p">[</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">5000</span><span class="p">],</span> <span class="ss">then: </span><span class="mi">25</span>
+  <span class="n">credit</span> <span class="ss">view_count_between: </span><span class="p">[</span><span class="mi">5001</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">],</span> <span class="ss">then: </span><span class="mi">50</span>
+  <span class="n">credit</span> <span class="ss">view_count_between: </span><span class="p">[</span><span class="mi">10_001</span><span class="p">,</span> <span class="mi">50_000</span><span class="p">],</span> <span class="ss">then: </span><span class="mi">100</span>
+  <span class="n">credit</span> <span class="ss">view_count_more_than: </span><span class="mi">50_000</span><span class="p">,</span> <span class="ss">then: </span><span class="mi">300</span>
+
+  <span class="n">rate</span> <span class="ss">default: </span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>读起来还蛮通顺的，剩下的工作就是写解释器来实现自己刚才读到的语言。这个小语言有两条语法: credit 和 rate；七个词汇: credit, rate, view_count_less_than, view_count_between, view_count_more_than，then 和 default。
+首先定义一个叫CreditAllocation的域，这个域就是我们要实现的解释器，同时CreditAllocation还可以作为上面两个域的namespace。接下来一阵鼓捣，感谢前面写的单元测试，我们的CreditAllocation解释器通过测试，顺利完成了，最终的代码如下,</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">CreditAllocation</span>
+  <span class="k">class</span> <span class="nc">NonSurveyContest</span> <span class="o">&lt;</span> <span class="nb">self</span>
+
+    <span class="n">credit</span> <span class="ss">view_count_less_than: </span><span class="mi">10_000</span><span class="p">,</span> <span class="ss">then: </span><span class="mi">0</span>
+    <span class="n">credit</span> <span class="ss">view_count_between: </span><span class="p">[</span><span class="mi">10_000</span><span class="p">,</span> <span class="mi">25_000</span><span class="p">],</span> <span class="ss">then: </span><span class="mi">50</span>
+    <span class="n">credit</span> <span class="ss">view_count_between: </span><span class="p">[</span><span class="mi">25_001</span><span class="p">,</span> <span class="mi">50_000</span><span class="p">],</span> <span class="ss">then: </span><span class="mi">100</span>
+    <span class="n">credit</span> <span class="ss">view_count_more_than: </span><span class="mi">50_000</span><span class="p">,</span> <span class="ss">then: </span><span class="mi">200</span>
+
+    <span class="n">rate</span> <span class="ss">view_count_less_than: </span><span class="mi">25_000</span><span class="p">,</span> <span class="ss">then: </span><span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.45</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">]</span>
+    <span class="n">rate</span> <span class="ss">view_count_between: </span><span class="p">[</span><span class="mi">25_000</span><span class="p">,</span> <span class="mi">50_000</span><span class="p">],</span> <span class="ss">then: </span><span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">]</span>
+    <span class="n">rate</span> <span class="ss">view_count_more_than: </span><span class="mi">50_000</span><span class="p">,</span> <span class="ss">then: </span><span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.18</span><span class="p">,</span> <span class="mf">0.47</span><span class="p">]</span>
+
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="no">CreditAllocation</span><span class="o">::</span><span class="no">NonSurveyContest</span> <span class="ss">contest: </span><span class="n">non_suervey_contest</span>
+
+<span class="k">class</span> <span class="nc">CreditAllocation</span>
+  <span class="k">class</span> <span class="nc">SurveyContest</span> <span class="o">&lt;</span> <span class="nb">self</span>
+
+    <span class="n">credit</span> <span class="ss">view_count_less_than: </span><span class="mi">1000</span><span class="p">,</span> <span class="ss">then: </span><span class="mi">0</span>
+    <span class="n">credit</span> <span class="ss">view_count_between: </span><span class="p">[</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">5000</span><span class="p">],</span> <span class="ss">then: </span><span class="mi">25</span>
+    <span class="n">credit</span> <span class="ss">view_count_between: </span><span class="p">[</span><span class="mi">5001</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">],</span> <span class="ss">then: </span><span class="mi">50</span>
+    <span class="n">credit</span> <span class="ss">view_count_between: </span><span class="p">[</span><span class="mi">10_001</span><span class="p">,</span> <span class="mi">50_000</span><span class="p">],</span> <span class="ss">then: </span><span class="mi">100</span>
+    <span class="n">credit</span> <span class="ss">view_count_more_than: </span><span class="mi">50_000</span><span class="p">,</span> <span class="ss">then: </span><span class="mi">300</span>
+
+    <span class="n">rate</span> <span class="ss">default: </span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="no">CreditAllocation</span><span class="o">::</span><span class="no">SurveyContest</span> <span class="ss">contest: </span><span class="n">suervey_contest</span>
+
+</code></pre></div></div>
+
+<p>现在我们有积分奖励语言并且有健壮的CreditAllocation解释器(通过了完善的单元测试)，那么我们会发现给系统增加一种新的，有不同积分奖励规则的比赛是一件令人愉快的事情。</p>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/2021/12/18/baya:一步一步DSL';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Roda源码分析(二)请求响应</title>
+  <meta name="description" content="前言大家好，我是MARK24 。可以叫我 MARK。这是我研究Roda的笔记。这是我研究Roda，做的记录。水平有限，欢迎指正。主要分为两篇以及有价值的引用，相关系列目录：  Roda源码分析目录研究的Roda源码版本 2022年2月9日 Roda v3.52.0 dc600b763ebf4f15e11c0428...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/roda/2022/02/09/Roda%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(%E4%BA%8C)%E8%AF%B7%E6%B1%82%E5%93%8D%E5%BA%94.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">Roda源码分析(二)请求响应</h1>
+    <p class="artilce_meta"><time datetime="2022-02-09T17:54:18+08:00" itemprop="datePublished">Feb 9, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h2 id="前言">前言</h2>
+
+<p>大家好，我是MARK24 。可以叫我 MARK。这是我研究Roda的笔记。</p>
+
+<p>这是我研究Roda，做的记录。水平有限，欢迎指正。</p>
+
+<p>主要分为两篇以及有价值的引用，相关系列目录：</p>
+
+<ul>
+  <li><a href="/ruby/roda/2022/02/09/Roda%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.html">Roda源码分析目录</a></li>
+</ul>
+
+<p>研究的Roda源码版本 <a href="https://github.com/Mark24Code/roda?organization=Mark24Code&amp;organization=Mark24Code">2022年2月9日 Roda v3.52.0 dc600b763ebf4f15e11c0428e26b812b9d140911</a></p>
+
+<p>阅读本文章，你可能获得</p>
+
+<ol>
+  <li>Rack 应用概念的了解</li>
+  <li>Roda 树形路由的原理</li>
+  <li>Ruby Class中 extend、include 的技巧</li>
+  <li>Ruby 中 catch、throw 的使用</li>
+  <li>阅读源码的方法</li>
+</ol>
+
+<p>以及欣赏 Roda 的设计等。</p>
+
+<p>我个人水平和精力有限，研究Ruby时间不长，自认还是个小学生。如有错误欢迎指正，欢迎交流~</p>
+
+<h1 id="一预备知识rack工作原理">一、预备知识：Rack工作原理</h1>
+
+<p>熟悉的可以跳过 Rack 部分。</p>
+
+<p>Roda本质上还是有一个 <a href="https://github.com/rack/rack">Rack</a> 的应用。用户请求发送至我们的服务器，首先经过 Rack，所以先要明白 Rack的工作原理。</p>
+
+<p><img src="/assets/blog/roda_workflow/rack_flow.png" alt="rack_flow" /></p>
+
+<p>这篇文章简单的介绍了 Rack的工作流程</p>
+
+<ul>
+  <li><a href="https://www.zingtech.co.nz/blog/2017/02/intro_into_rack">intro_into_rack</a> 【<a href="https://app.yinxiang.com/shard/s66/nl/15344178/20a641bc-f160-4ee6-a31f-bf4f15423ed2/">intro_into_rack 印象笔记备份</a>】</li>
+</ul>
+
+<p>想要深入了解 Rack 可以查看官网源码</p>
+
+<ul>
+  <li><a href="https://github.com/rack/rack">github rack</a></li>
+</ul>
+
+<p>有一部国人编写的笔记也可以提供很大的帮助，可以下载：【<a href="/assets/files/rack/RackProgram.pdf">RackProgram.pdf</a>
+】</p>
+
+<h1 id="二研究方法总结">二、研究方法总结</h1>
+
+<p>Roda只是一个研究对象，研究方法是通用的。</p>
+
+<p>1.把握宏观，要分清楚几个大类，每个方法在哪个大类下工作，决定了理解他们的角色</p>
+
+<p>大概只需要关注，大类、和 initialize 方法。这里决定了他们初始化的值。</p>
+
+<p>可以理解未来都是围绕着 initialize 里面的数据。</p>
+
+<p>2.从入口开始往上找调用方法看看调用关系</p>
+
+<p>阅读代码不应该从代码层面的 从上往下读。这是错误的。</p>
+
+<p>根据语言的运行特点，以Ruby为例。应该以 解释器或者编译的运行顺序来观察源码。</p>
+
+<p>1）代码初始化，进行了什么</p>
+
+<p>class类声明、以及类中可执行语句在运行。可以关注下 class 中 initialize 中声明的变量，以及动态生成的代码。（Ruby和其他语言不一样，class内部也有代码在运行，你应该知道的。）</p>
+
+<p>2) 入口开始，调用关系</p>
+
+<p>建立完内存中初始化的 class 等对象。就可以站在程序运行的角度，从入口调用的顺序 依次查看源码。</p>
+
+<p>3.分析工具</p>
+
+<p>主要使用他们的一些功能帮助阅读。有人可能觉得 DEBUG 工具就够了，我的体会不是这样，DBEUG 的切入点太细碎，而且不够准（我总是这个感觉）。跳转的地方往往涉及面太广，出错了要再次重来。当然可能我不会用啦。不过这些不重要。</p>
+
+<p>真正重要的部分其实是明白Ruby工作的机制，以及按照Ruby运行的规律，去解读源码的主要部分，识别作者的意图。我觉得这个才比较重要。</p>
+
+<p>1）VScode 编辑器</p>
+
+<ul>
+  <li>全局搜索变量、函数定义</li>
+  <li>查看单个代码文件的 大纲（Outline）即 类、方法 定义一览</li>
+</ul>
+
+<p>2）RubyMine（或者一款IDE）</p>
+
+<ul>
+  <li>DEBUG 功能，可以查看过程（不过这不是万能的，因为 DEBUG 对窥探全局并不好用。实际结果还是要以阅读为主）</li>
+  <li>跳转定义或者使用</li>
+  <li>修改我们使用的 lib库 即 Roda 源码，验证自己的猜想（动态语言的优势，一切都是透明的。使用完可以重新安装）</li>
+</ul>
+
+<p>3) 草稿纸</p>
+
+<p>记录重要的引用关系，记录分析和思考。</p>
+
+<h1 id="三roda中使用的ruby的知识">三、Roda中使用的Ruby的知识</h1>
+
+<p>1.class的上下文中，attr语句会执行、@语句会执行、def语句会注册但是不会执行（实例化被实例调用执行），class上下文的  define_method 会执行</p>
+
+<p>2.def 首次运行只注册不允许，具体的 def 的方法调用顺序，根据 启动app的顺序依次调用</p>
+
+<p>3.Ruby的对象模型，以及 extend、include</p>
+
+<p>这部分主要看插件系统好了。作者在 Ruby 的模型基础上巧妙使用他们构建了自己的插件系统。</p>
+
+<ul>
+  <li><a href="/ruby/roda/2022/02/09/Roda%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(%E4%B8%80)%E6%8F%92%E4%BB%B6%E7%B3%BB%E7%BB%9F.html">Roda源码分析(一)插件系统</a></li>
+</ul>
+
+<p>4.cath和throw</p>
+
+<p>比如源码的这部分</p>
+
+<p><a href="https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L494">master/lib/roda.rb#L494</a></p>
+
+<p>其实相当核心, 我单独介绍了一下 cath 和 throw 的使用</p>
+
+<p><a href="/ruby/2022/02/09/Ruby的catch与throw.html">Ruby的catch与throw</a></p>
+
+<h1 id="四roda-的运行流程">四、Roda 的运行流程</h1>
+
+<h2 id="41-大致的宏观描述">4.1 大致的宏观描述</h2>
+
+<p>Roda主要做四部分工作也对应着他的三个核心类、和一个插件系统</p>
+
+<ul>
+  <li>class Roda</li>
+  <li>class RodaRequest</li>
+  <li>class RodaResponse</li>
+  <li>Plugins</li>
+</ul>
+
+<p>1.class Roda &amp; Plugins</p>
+
+<p>其中 class Roda 的代码非常少，主要起到一个协调和名字空间的作用。</p>
+
+<p>主要的代码 在 <a href="https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L29">roda/lib/roda.rb#L29</a> 把主要的路基都放在了 module Base 中。</p>
+
+<p>为什么这样做？ 因为 如果在 Roda 的 class 上下文中定义自己的类方法、实例方法，会成为最高优先级，会覆盖自己的祖先类。</p>
+
+<p>于是 Roda 使用了一个小技巧，把自己的 行为 封装在 Base 模块中，也<a href="https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L574">当成插件 expand 进来</a>。</p>
+
+<p>这样插件也可以被 expand， 这样就可以实现 插件对 Roda 的方法进行覆盖、或者添加方法，从而实现了插件机制。</p>
+
+<p>2.class RodaRequest</p>
+
+<p>RodaRequest 继承自 Rack::Request 主要添加了 Roda 特色的 路由方法 <code class="language-plaintext highlighter-rouge">route.on/is/get/post</code> 等，还有匹配路由的适配器。</p>
+
+<p>3.class RodaResponse</p>
+
+<p>RodaResponse 继承自 Rack::Response</p>
+
+<h2 id="42-响应过程">4.2 响应过程</h2>
+
+<h3 id="421-生成响应的rackapp">4.2.1 生成响应的RackApp</h3>
+
+<p>我们知道要想成为 Rack 的应用，必须实现一个 call 方法。这部分可以参考 Rack 的工作原理。</p>
+
+<p>Roda 作为 Rack 应用要遵循这套。</p>
+
+<p>Roda 在 Base 的 ClassMethods 实现了 call 方法</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L52</span>
+
+  <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+    <span class="n">app</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<p>call方法的调用方式是 返回 <code class="language-plaintext highlighter-rouge">app.call(env)</code></p>
+
+<p>我们寻找 app 是一个方法：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L33</span>
+  <span class="k">def</span> <span class="nf">app</span>
+    <span class="vi">@app</span> <span class="o">||</span> <span class="n">build_rack_app</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+<p>他返回了一个 <code class="language-plaintext highlighter-rouge">@app || build_rack_app</code></p>
+
+<p>这是一个技巧就是 如果 @app 有值即返回，无值 则 构建一个 rack_app，我们再看看 <code class="language-plaintext highlighter-rouge">build_rack_app</code> 方法做了什么</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L388</span>
+
+<span class="c1"># Build the rack app to use</span>
+<span class="k">def</span> <span class="nf">build_rack_app</span>
+  <span class="n">app</span> <span class="o">=</span> <span class="n">base_rack_app_callable</span><span class="p">(</span><span class="n">use_new_dispatch_api?</span><span class="p">)</span>
+
+  <span class="vi">@middleware</span><span class="p">.</span><span class="nf">reverse_each</span> <span class="k">do</span> <span class="o">|</span><span class="n">args</span><span class="p">,</span> <span class="n">bl</span><span class="o">|</span>
+    <span class="n">mid</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">mid</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">bl</span><span class="p">)</span>
+    <span class="n">app</span><span class="p">.</span><span class="nf">freeze</span> <span class="k">if</span> <span class="n">opts</span><span class="p">[</span><span class="ss">:freeze_middleware</span><span class="p">]</span>
+  <span class="k">end</span>
+
+  <span class="vi">@app</span> <span class="o">=</span> <span class="n">app</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>做的事情就是 去构建一个 Rack 应用。把中间件套成 app 并且返回。</p>
+
+<p>其中又用到了一个方法 <code class="language-plaintext highlighter-rouge">base_rack_app_callable</code></p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L378</span>
+
+  <span class="c1"># The base rack app to use, before middleware is added.</span>
+  <span class="k">def</span> <span class="nf">base_rack_app_callable</span><span class="p">(</span><span class="n">new_api</span><span class="o">=</span><span class="kp">true</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">new_api</span>
+      <span class="nb">lambda</span><span class="p">{</span><span class="o">|</span><span class="n">env</span><span class="o">|</span> <span class="n">new</span><span class="p">(</span><span class="n">env</span><span class="p">).</span><span class="nf">_roda_handle_main_route</span><span class="p">}</span>
+    <span class="k">else</span>
+      <span class="n">block</span> <span class="o">=</span> <span class="vi">@rack_app_route_block</span>
+      <span class="nb">lambda</span><span class="p">{</span><span class="o">|</span><span class="n">env</span><span class="o">|</span> <span class="n">new</span><span class="p">(</span><span class="n">env</span><span class="p">).</span><span class="nf">call</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)}</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<p>这里似乎运行到核心了，在这里我们要 返回一个基础的 Rack App 而这个基础的 App是：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L380</span>
+
+<span class="nb">lambda</span><span class="p">{</span><span class="o">|</span><span class="n">env</span><span class="o">|</span> <span class="n">new</span><span class="p">(</span><span class="n">env</span><span class="p">).</span><span class="nf">_roda_handle_main_route</span><span class="p">}</span>
+</code></pre></div></div>
+<p>new 方法等于隐形的调用 self 即 Roada自己。这里等价于</p>
+
+<p><code class="language-plaintext highlighter-rouge">Roda.new(env)._roda_handle_main_route</code></p>
+
+<p>这样我们就明白了，原来绕来绕去要生成的基础 Rack App 竟是我自己。</p>
+
+<p>Roda 的初始化函数，来自于前面提到的 Base module</p>
+
+<p>他是被 include 到 Roda 中才会发挥作用的，没有直接定义。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L485</span>
+
+<span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+  <span class="n">klass</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nf">class</span>
+  <span class="vi">@_request</span> <span class="o">=</span> <span class="n">klass</span><span class="o">::</span><span class="no">RodaRequest</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">env</span><span class="p">)</span>
+  <span class="vi">@_response</span> <span class="o">=</span> <span class="n">klass</span><span class="o">::</span><span class="no">RodaResponse</span><span class="p">.</span><span class="nf">new</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>哈哈这里面做的事情其实也挺简单，记录了自己的 class，生成了一个 @_request、@_response</p>
+
+<p>这里就是另外两个重要的类罢了。</p>
+
+<p>额外提一嘴，之所以用下划线开头，这是一个技巧就是暗示这是内部变量，减少名字冲突的。
+Python里面更常见，还喜欢用双下划线。</p>
+
+<p>如果认真了解了 Rack 工作原理，到这里大概就明白了，或者能猜到 Roda 后面要做什么了。</p>
+
+<p>他要做的就是 拿到 RodaRequest 这里携带了 Rack传递过来的环境变量 env。</p>
+
+<p>每一次的用户请求，都会创建一个 Rack App 实例，进而创建一个 RodaRequest 实例，携带请求的 env，这里有一些 UA、HTTP_PATH 之类的消息。</p>
+
+<p>我们要做一些工作，比如路由处理，一些中间件处理。</p>
+
+<p>然后访问数据库，获得数据，然后把结果 写入 RodaResponse 返回给 Rack。</p>
+
+<p>这就完成了 RackApp 的一次工作循环。</p>
+
+<h2 id="422-处理路由">4.2.2 处理路由</h2>
+
+<p>我们讲完生成 Rack Base App 的事情，别忘了，他还调用了一个 方法 <code class="language-plaintext highlighter-rouge">_roda_handle_main_route</code></p>
+
+<p>那么 <code class="language-plaintext highlighter-rouge">_roda_handle_main_route</code> 从名字上看就是处理主路由。来看看它是怎么执行路由的。</p>
+
+<p>Roda 特别的就在于他的 树状结构的路由。下面让我们看下:</p>
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L493</span>
+
+
+<span class="c1"># Handle dispatching to the main route, catching :halt and handling</span>
+<span class="c1"># the result of the block.</span>
+<span class="k">def</span> <span class="nf">_roda_handle_main_route</span>
+  <span class="kp">catch</span><span class="p">(</span><span class="ss">:halt</span><span class="p">)</span> <span class="k">do</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="vi">@_request</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">block_result</span><span class="p">(</span><span class="n">_roda_run_main_route</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+    <span class="vi">@_response</span><span class="p">.</span><span class="nf">finish</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>其实这句很关键，几乎可以说，这句直接闭环了整个Rack流程。</p>
+
+<p>block_result是一个方法，他的作用就是判断返回是字符串就按照规定写入 @_response.body，不符合的返回报错。空返回则 返回 nil 这个会触发 404 中间件工作。</p>
+
+<p>这里就是 获得  request对象，传入路由，进行求值，然后把返回传递给 response 对象，完成了整个 Rack的流程。</p>
+
+<p>这里面使用了 catch、 throw。我大概描述下，这部分有趣的可能需要后面展开才会知道。但是不妨碍我在这里提一嘴为什么这里非要用 catch&amp;throw 包裹程序。</p>
+
+<p>一个简单的 Roda程序看起来像这样:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s2">"roda"</span>
+
+<span class="k">class</span> <span class="nc">App</span> <span class="o">&lt;</span> <span class="no">Roda</span>
+
+  <span class="n">route</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"a"</span> <span class="k">do</span>
+      <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"b"</span> <span class="k">do</span>
+        <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"c"</span> <span class="k">do</span>
+          <span class="c1"># /a/b/c</span>
+          <span class="nb">puts</span> <span class="s2">"hello world"</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>简单说，Roda 处理路由看起来就像是一个 一环扣一环的调用。</p>
+
+<p>它先匹配到 “a” 如果 “a” 匹配路径，就会执行 它的块，即 “b” 部分，然后再匹配 “b” 以此类推。只要匹配中，就对他的块求值。</p>
+
+<p>我们知道，块 是 Ruby特有的概念，但是实际上在底层，他的工作方式看起来就像一个 匿名函数 lambda。</p>
+
+<p>这里就像一个一个函数彼此链式的调用。一直到触达最底层，比如 C。</p>
+
+<p>在 Ruby 的视角这是个深层嵌套的字面解构了。我们想从 “c” 处直接返回，这是用就使用到了 catch、throw技巧。 别忘了，我们可是在最外侧，早已注册了 catch(:halt)</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L493</span>
+
+
+<span class="c1"># Handle dispatching to the main route, catching :halt and handling</span>
+<span class="c1"># the result of the block.</span>
+<span class="k">def</span> <span class="nf">_roda_handle_main_route</span>
+  <span class="kp">catch</span><span class="p">(</span><span class="ss">:halt</span><span class="p">)</span> <span class="k">do</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="vi">@_request</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">block_result</span><span class="p">(</span><span class="n">_roda_run_main_route</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+    <span class="vi">@_response</span><span class="p">.</span><span class="nf">finish</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>我们只需要在 内部，不论多么深的嵌套里面调用 <code class="language-plaintext highlighter-rouge">throw :halt, response_value</code> 程序就会跳出来，并且携带者我们的 response_value 作为返回值。这个效果有点像其他语言的 <code class="language-plaintext highlighter-rouge">goto</code> 。</p>
+
+<p>好了，我们已经大致描述了其实最关键的流程了。下面来详细看下 Roda 如何做到这些的。继续分析 <code class="language-plaintext highlighter-rouge">_roda_run_main_route</code> 方法。这是 被 <code class="language-plaintext highlighter-rouge">_roda_handle_main_route</code> 调用到的方法。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L517</span>
+
+
+<span class="c1"># Run the main route block with the request.  Designed for</span>
+<span class="c1"># extension by plugins</span>
+<span class="k">def</span> <span class="nf">_roda_run_main_route</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+  <span class="n">_roda_main_route</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>源码的注释顺便告诉我们这是一个预留的接口，可以给插件做拓展。不影响我们继续看 <code class="language-plaintext highlighter-rouge">_roda_main_route</code></p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L512</span>
+
+<span class="c1"># Default implementation of the main route, usually overridden</span>
+<span class="c1"># by Roda.route.</span>
+<span class="k">def</span> <span class="nf">_roda_main_route</span><span class="p">(</span><span class="n">_</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>这个函数竟然是空的，什么都不执行。一切竟然就此打住了。 WTF ???</p>
+
+<p>不过注释说了，这也是类似一个接口。他是预留给 Roda.route 覆盖的。他的实现在另一处，在 Roda初始化的时候，就会覆盖这个方法，从而依然可以完成被调用的实名。我们去看看 Roda.route：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L316</span>
+
+<span class="c1"># Setup routing tree for the current Roda application, and build the</span>
+<span class="c1"># underlying rack application using the stored middleware. Requires</span>
+<span class="c1"># a block, which is yielded the request.  By convention, the block</span>
+<span class="c1"># argument should be named +r+.  Example:</span>
+<span class="c1">#</span>
+<span class="c1">#   Roda.route do |r|</span>
+<span class="c1">#     r.root do</span>
+<span class="c1">#       "Root"</span>
+<span class="c1">#     end</span>
+<span class="c1">#   end</span>
+<span class="c1">#</span>
+<span class="c1"># This should only be called once per class, and if called multiple</span>
+<span class="c1"># times will overwrite the previous routing.</span>
+<span class="k">def</span> <span class="nf">route</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="k">unless</span> <span class="n">block</span>
+    <span class="no">RodaPlugins</span><span class="p">.</span><span class="nf">warn</span> <span class="s2">"no block passed to Roda.route"</span>
+    <span class="k">return</span>
+  <span class="k">end</span>
+
+  <span class="vi">@raw_route_block</span> <span class="o">=</span> <span class="n">block</span>
+  <span class="vi">@route_block</span> <span class="o">=</span> <span class="n">block</span> <span class="o">=</span> <span class="n">convert_route_block</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+  <span class="vi">@rack_app_route_block</span> <span class="o">=</span> <span class="n">block</span> <span class="o">=</span> <span class="n">rack_app_route_block</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+  <span class="kp">public</span> <span class="n">define_roda_method</span><span class="p">(</span><span class="ss">:_roda_main_route</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="vi">@app</span> <span class="o">=</span> <span class="kp">nil</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>route 做的事情确实是除了缓存 block 之外，就是动态的定义了 <code class="language-plaintext highlighter-rouge">_roda_main_route</code> 方法。</p>
+
+<p>并且 route 定义在  ClassMethods 部分，他会在 Roda 第一次进行初始化的时候就运行，也就是 <code class="language-plaintext highlighter-rouge">define_roda_method(:_roda_main_route, 1, &amp;block)</code> 这句定义的方法会在实例产生之前就绪可用。</p>
+
+<p>但是这里 不是用  <code class="language-plaintext highlighter-rouge">define_method</code> 而是 <code class="language-plaintext highlighter-rouge">define_roda_method</code></p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda.rb#L85</span>
+
+<span class="k">def</span> <span class="nf">define_roda_method</span><span class="p">(</span><span class="n">meth</span><span class="p">,</span> <span class="n">expected_arity</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">meth</span><span class="p">.</span><span class="nf">is_a?</span><span class="p">(</span><span class="no">String</span><span class="p">)</span>
+    <span class="n">meth</span> <span class="o">=</span> <span class="n">roda_method_name</span><span class="p">(</span><span class="n">meth</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="n">call_meth</span> <span class="o">=</span> <span class="n">meth</span>
+
+  <span class="c1"># ..... 省略 .....</span>
+  <span class="c1"># 此处做了参数检查</span>
+  <span class="c1"># ...... 省略 ....</span>
+
+  <span class="n">call_meth</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">define_roda_method</code> 稍微复杂一点，我简化了一下，简单的说就是如果传入的是Symbol就会直接使用这个方法，如果传入的是字符串会生成唯一的方法名，再使用。还做了一些参数校验的工作。</p>
+
+<p>我们这里 传入的是 <code class="language-plaintext highlighter-rouge">:_roda_main_route</code> 相当于直接使用了这个方法。而这个方法的内容就是 route 声明的 block 罢了。</p>
+
+<p>所以我们根据上文的链路可以简单总结下：</p>
+
+<p>像下面的这样的程序，当第一次开始运行的时候，ruby 会先 require 整个 roda 进行 class Roda 的初始化工作。 App 作为  Roda 的子类，在 Roda 中会做一些额外的工作，把 共享变量 复制一份给子类。这个可以在源码中看到。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s2">"roda"</span>
+
+<span class="k">class</span> <span class="nc">App</span> <span class="o">&lt;</span> <span class="no">Roda</span>
+
+  <span class="n">route</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"a"</span> <span class="k">do</span>
+      <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"b"</span> <span class="k">do</span>
+        <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"c"</span> <span class="k">do</span>
+          <span class="c1"># /a/b/c</span>
+          <span class="nb">puts</span> <span class="s2">"hello world"</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+<p>在初始化 Roda 的过程中，Roda::Base 会作为插件 先在 Roda 的上下文中运行，提供了 实例方法、类方法，分别通过  include、extend 去插入。这部分可以参考 <a href="/ruby/roda/2022/02/09/Roda%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(%E4%B8%80)%E6%8F%92%E4%BB%B6%E7%B3%BB%E7%BB%9F.html">Roda源码分析(一)插件系统</a>。</p>
+
+<p>route 部分相当于运行在 Roda class 上下文中，route 的块，被当做 <code class="language-plaintext highlighter-rouge">:_roda_main_route</code>方法进行了注册。</p>
+
+<p>当用户的请求打过来，经过 HTTP Server（可能是 Puma、Thin、WEBrick…) 调用 Rack，Rack再调用 Roda，  Road.call 方法实际上返回的是  <code class="language-plaintext highlighter-rouge">Roda.new(env)._roda_handle_main_route</code> 而 <code class="language-plaintext highlighter-rouge">_roda_handle_main_route</code> 最终转发到了 <code class="language-plaintext highlighter-rouge">_roda_main_route</code> 其实就是 route 中声明的块。等于直接运行了 route中定义的块。</p>
+
+<p>好家伙，这跟传球一样，踢来踢去的，终于要到了处理路由的部分了。</p>
+
+<p>那么 树状路由 到底如何处理的呢？ 咱们接着往下看吧：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">route</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"a"</span> <span class="k">do</span>
+      <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"b"</span> <span class="k">do</span>
+        <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"c"</span> <span class="k">do</span>
+          <span class="c1"># /a/b/c</span>
+          <span class="nb">puts</span> <span class="s2">"hello world"</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<p>route 代码部分是真实直接被调用的函数。为什么这样说，我们要看看 route 的 block 一旦开始被调用，那么代码就会运行到 第一句 <code class="language-plaintext highlighter-rouge">r.on "a"</code>， 我们知道 <code class="language-plaintext highlighter-rouge">r</code> 其实就是 <code class="language-plaintext highlighter-rouge">RodaRequest</code> 实例。这部分应该去关注 <code class="language-plaintext highlighter-rouge">RodaRequest</code> 里面 关于 <code class="language-plaintext highlighter-rouge">on</code> 方法的定义。 其实 Roda 里面主要是  <code class="language-plaintext highlighter-rouge">on</code> 、<code class="language-plaintext highlighter-rouge">is</code> 两个方法， <code class="language-plaintext highlighter-rouge">on</code> 方法代表着 类似 <code class="language-plaintext highlighter-rouge">/path/*</code> 粗匹配。 而 <code class="language-plaintext highlighter-rouge">is</code> 方法代表类似 <code class="language-plaintext highlighter-rouge">/path</code> 精确匹配。由于我是看过的，所以可以直接横向比较两个。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda/request.rb#L207</span>
+<span class="k">def</span> <span class="nf">on</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">args</span><span class="p">.</span><span class="nf">empty?</span>
+    <span class="n">always</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="k">else</span>
+    <span class="n">if_match</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="c1"># .... 省略 他们之间的代码 ...</span>
+
+<span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda/request.rb#L162</span>
+<span class="k">def</span> <span class="nf">is</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">args</span><span class="p">.</span><span class="nf">empty?</span>
+    <span class="k">if</span> <span class="n">empty_path?</span>
+      <span class="n">always</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">else</span>
+    <span class="n">args</span> <span class="o">&lt;&lt;</span> <span class="no">TERM</span>
+    <span class="n">if_match</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>is 其实比 on 多不了多少。其实看 on 好了比较好理解。可以先看他做了什么，on 的第一个参数 其实就是 Roda 语法里面，填写匹配的一个字段。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"a"</span> <span class="k">do</span>
+  <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"b"</span> <span class="k">do</span>
+    <span class="c1"># 匹配 /a/b</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>args 就是 “a”，”b” 之类的。如果他是 空字符串，也就是 <code class="language-plaintext highlighter-rouge">args.empty?</code> 是 <code class="language-plaintext highlighter-rouge">true</code> ，那意味着到头了，匹配到了。直接对 block进行求值。 always 里面做的就是求值返回。不信我们看下:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># .... 省略 他们之间的代码 ...</span>
+
+<span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda/request.rb#L495</span>
+<span class="c1"># Yield to the match block and return rack response after the block returns.</span>
+<span class="k">def</span> <span class="nf">always</span>
+  <span class="n">block_result</span><span class="p">(</span><span class="k">yield</span><span class="p">)</span>
+  <span class="kp">throw</span> <span class="ss">:halt</span><span class="p">,</span> <span class="n">response</span><span class="p">.</span><span class="nf">finish</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>always 里面使用了 <a href="/ruby/2022/02/09/Ruby的catch与throw.html">Ruby的catch与throw</a> 技巧。如果写的很夸张，路由这部分是个复杂的树结构，throw 可以带着值直接返回到 外部定义的 <code class="language-plaintext highlighter-rouge">catch(:halt)</code> 的地方，这个地方我们上面提到过。不信你可以搜一下。这其实就像是 <code class="language-plaintext highlighter-rouge">goto</code> 语句。</p>
+
+<p>额外提一嘴，学习编程很多年，我水平不行但是还是看了很多书的，书本上都会提到尽量不要用 <code class="language-plaintext highlighter-rouge">goto</code>, 这里用 <code class="language-plaintext highlighter-rouge">goto</code> 就非常合适，简直比较巧妙。对于标准、规范这件事不要迷信要辩证看。Linus就喜欢用 <code class="language-plaintext highlighter-rouge">goto</code>。当然我们水平比较差的时候，还是老老实实遵守规范。希望我们都可以达到随意使用<code class="language-plaintext highlighter-rouge">goto</code> 的水平 :)</p>
+
+<hr />
+
+<p>PS: 我不重要的观点:</p>
+
+<p>我最近觉得写程序这件事，要有点 <em><font size="5">灵动感</font></em>  在里面。要灵动，只有灵动能表达出我内心的意思。不要把自己变成机器一样死板。</p>
+
+<p>随着职业生涯变长，看到过越来越多不是就事论事，实事求是，解决问题的程序员。他们要么畏首畏尾，要么迷信最佳实践。喜欢把书上的印刷字氛围圭臬。喜欢追求符号式的宗教感。喜欢茴字有几种写法，但是缺乏对东西的热爱和洞见。无法区分丑陋与美。</p>
+
+<p>我们要做的是把机器变成人，而不是要把人变成机器。人变成机器那就悲剧了。</p>
+
+<hr />
+
+<p><code class="language-plaintext highlighter-rouge">is</code> 相比于 <code class="language-plaintext highlighter-rouge">on</code> 额外做了一个是否全匹配的检查，以及全匹配插入一个 <code class="language-plaintext highlighter-rouge">TERM</code> 的自定义类对象。其实是为了方便后面的 <code class="language-plaintext highlighter-rouge">if_match</code> 方法。下面就要讲到。</p>
+
+<p>其实路由匹配，就发生在 <code class="language-plaintext highlighter-rouge">is_match</code> 这里面了，终于到这里了。不光你看的要睡着了，我手都要写麻了。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c1"># .... 省略 他们之间的代码 ...</span>
+
+<span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda/request.rb#L555</span>
+<span class="k">def</span> <span class="nf">if_match</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+  <span class="n">path</span> <span class="o">=</span> <span class="vi">@remaining_path</span>
+  <span class="c1"># For every block, we make sure to reset captures so that</span>
+  <span class="c1"># nesting matchers won't mess with each other's captures.</span>
+  <span class="n">captures</span> <span class="o">=</span> <span class="vi">@captures</span><span class="p">.</span><span class="nf">clear</span>
+
+  <span class="k">if</span> <span class="n">match_all</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">block_result</span><span class="p">(</span><span class="k">yield</span><span class="p">(</span><span class="o">*</span><span class="n">captures</span><span class="p">))</span>
+    <span class="kp">throw</span> <span class="ss">:halt</span><span class="p">,</span> <span class="n">response</span><span class="p">.</span><span class="nf">finish</span>
+  <span class="k">else</span>
+    <span class="vi">@remaining_path</span> <span class="o">=</span> <span class="n">path</span>
+    <span class="kp">false</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">is_match</code> 也做了一点事情，要说下 <code class="language-plaintext highlighter-rouge">@captures</code> 就是一个数组存储已经匹配的字符串的，主要是注入给当下要工作的块的。知道一下就好。<code class="language-plaintext highlighter-rouge">block_result</code> 做的事情就是把 <code class="language-plaintext highlighter-rouge">yield</code> 求值块的返回值正确的加入到 RodaResponse 的实例里，按照 Rack 的要求写入 response， 很好理解。</p>
+
+<p>所以整体的意思就是，如果 <code class="language-plaintext highlighter-rouge">match_all</code> (因为 args 可以是个数组，甚至比较复杂的。我们前面只说了 “a”) 全匹配，那么就开始向内求解他的块。敏感的同学能不能意识到，随着 route 书写路由的是一个嵌套的结构，这里相当于一种嵌套式的调用。</p>
+
+<p>简单的说，就拿一路顺利的情况来说, 一旦我们访问的是 “/a/b/c”，Roda 工作起来像什么呢？</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">route</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+  <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"a"</span> <span class="k">do</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"b"</span> <span class="k">do</span>
+      <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"c"</span> <span class="k">do</span>
+        <span class="c1"># do sth ...</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"e"</span> <span class="k">do</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"f"</span> <span class="k">do</span>
+      <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"g"</span> <span class="k">do</span>
+        <span class="c1"># do sth ...</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>拿 《Mastering Roda》 作者说的，求解的过程就像一个毛毛虫，他首先爬到了 “a”, 接着 匹配到了，就爬到了 “b”, 如此往复，他沿着正确的路线，一直抵达到目标。
+而他的工作方式就是匹配，然后开始调用块。逐步向内调用。</p>
+
+<p>块，是Ruby里面的概念，其实就是 lambda 抑或有个名字——匿名函数。 以JavaScript作为类比就是 ` function(){ }` 这个就是一个 函数调用的行为，一级一级往里链式调用。</p>
+
+<p>我们都知道，这种执行栈式的调用，其实是比较快的。他没有复杂的初始化等更加消耗时间的行为。而且很简单粗暴。</p>
+
+<p>这就是Roda巧妙地地方。</p>
+
+<p>说道这里，我都觉得差不多了。大概的概念已经明白了。那么 <code class="language-plaintext highlighter-rouge">match_all</code> 发生了什么呢? 猜猜也知道大概做了一些匹配呗。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c1"># .... 省略 他们之间的代码 ...</span>
+
+
+<span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda/request.rb#L600</span>
+<span class="k">def</span> <span class="nf">match_all</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+  <span class="n">args</span><span class="p">.</span><span class="nf">all?</span><span class="p">{</span><span class="o">|</span><span class="n">arg</span><span class="o">|</span> <span class="n">match</span><span class="p">(</span><span class="n">arg</span><span class="p">)}</span>
+<span class="k">end</span>
+
+
+<span class="c1"># .... 省略 他们之间的代码 ...</span>
+
+<span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda/request.rb#L572</span>
+<span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="n">matcher</span><span class="p">)</span>
+  <span class="k">case</span> <span class="n">matcher</span>
+  <span class="k">when</span> <span class="no">String</span>
+    <span class="n">_match_string</span><span class="p">(</span><span class="n">matcher</span><span class="p">)</span>
+  <span class="k">when</span> <span class="no">Class</span>
+    <span class="n">_match_class</span><span class="p">(</span><span class="n">matcher</span><span class="p">)</span>
+  <span class="k">when</span> <span class="no">TERM</span>
+    <span class="n">empty_path?</span>
+  <span class="k">when</span> <span class="no">Regexp</span>
+    <span class="n">_match_regexp</span><span class="p">(</span><span class="n">matcher</span><span class="p">)</span>
+  <span class="k">when</span> <span class="kp">true</span>
+    <span class="n">matcher</span>
+  <span class="k">when</span> <span class="no">Array</span>
+    <span class="n">_match_array</span><span class="p">(</span><span class="n">matcher</span><span class="p">)</span>
+  <span class="k">when</span> <span class="no">Hash</span>
+    <span class="n">_match_hash</span><span class="p">(</span><span class="n">matcher</span><span class="p">)</span>
+  <span class="k">when</span> <span class="no">Symbol</span>
+    <span class="n">_match_symbol</span><span class="p">(</span><span class="n">matcher</span><span class="p">)</span>
+  <span class="k">when</span> <span class="kp">false</span><span class="p">,</span> <span class="kp">nil</span>
+    <span class="n">matcher</span>
+  <span class="k">when</span> <span class="no">Proc</span>
+    <span class="n">matcher</span><span class="p">.</span><span class="nf">call</span>
+  <span class="k">else</span>
+    <span class="n">unsupported_matcher</span><span class="p">(</span><span class="n">matcher</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="c1"># .... 省略 他们之间的代码 ...</span>
+
+<span class="c1"># https://github.com/Mark24Code/roda/blob/master/lib/roda/request.rb#L428</span>
+<span class="k">def</span> <span class="nf">_match_string</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
+  <span class="n">rp</span> <span class="o">=</span> <span class="vi">@remaining_path</span>
+  <span class="n">length</span> <span class="o">=</span> <span class="n">str</span><span class="p">.</span><span class="nf">length</span>
+
+  <span class="n">match</span> <span class="o">=</span> <span class="k">case</span> <span class="n">rp</span><span class="p">.</span><span class="nf">rindex</span><span class="p">(</span><span class="n">str</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+  <span class="k">when</span> <span class="kp">nil</span>
+    <span class="c1"># segment does not match, most common case</span>
+    <span class="k">return</span>
+  <span class="k">when</span> <span class="mi">1</span>
+    <span class="c1"># segment matches, check first character is /</span>
+    <span class="n">rp</span><span class="p">.</span><span class="nf">getbyte</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">47</span>
+  <span class="k">else</span> <span class="c1"># must be 0</span>
+    <span class="c1"># segment matches at first character, only a match if</span>
+    <span class="c1"># empty string given and first character is /</span>
+    <span class="n">length</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">rp</span><span class="p">.</span><span class="nf">getbyte</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">47</span>
+  <span class="k">end</span>
+
+  <span class="k">if</span> <span class="n">match</span> 
+    <span class="n">length</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">case</span> <span class="n">rp</span><span class="p">.</span><span class="nf">getbyte</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>
+    <span class="k">when</span> <span class="mi">47</span>
+      <span class="c1"># next character is /, update remaining path to rest of string</span>
+      <span class="vi">@remaining_path</span> <span class="o">=</span> <span class="n">rp</span><span class="p">[</span><span class="n">length</span><span class="p">,</span> <span class="mi">100000000</span><span class="p">]</span>
+    <span class="k">when</span> <span class="kp">nil</span>
+      <span class="c1"># end of string, so remaining path is empty</span>
+      <span class="vi">@remaining_path</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="c1"># else</span>
+      <span class="c1"># Any other value means this was partial segment match,</span>
+      <span class="c1"># so we return nil in that case without updating the</span>
+      <span class="c1"># remaining_path.  No need for explicit else clause.</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">match_all</code> 把数组按顺序遍历的匹配，调用的其实是 <code class="language-plaintext highlighter-rouge">match</code> ,而 <code class="language-plaintext highlighter-rouge">match</code> 方法会根据每个 输入的 <code class="language-plaintext highlighter-rouge">matcher</code> 也就是路由里 <code class="language-plaintext highlighter-rouge">/a/b/c</code> 里面的比如 “a” 开始做匹配。
+我们摘要了最基础的 <code class="language-plaintext highlighter-rouge">_match_string</code> 看看具体的匹配策略里面到底做了什么。</p>
+
+<p>看起来好像做了很多事情，其实就是一单匹配，就开始编辑 <code class="language-plaintext highlighter-rouge">@remaining_path</code> 这是 RodaRequest 的一个实例变量，用来记录剩余路由的部分。</p>
+
+<p>最后把，所有的 <code class="language-plaintext highlighter-rouge">_match_*</code> 都在做编辑  <code class="language-plaintext highlighter-rouge">@remaining_path</code> 的工作，并且返回是否匹配的布尔值。</p>
+
+<hr />
+<blockquote>
+  <p>2022.03.13 补充: 再细化一下 r.on、r.is</p>
+</blockquote>
+
+<h3 id="ron-vs-ris">r.on vs r.is</h3>
+
+<p>这里想再单独拿 <code class="language-plaintext highlighter-rouge">r.on</code> 和 <code class="language-plaintext highlighter-rouge">r.is</code> 讨论一下。</p>
+
+<p>上面的描述可能太过细节。整体看下来还是比较抽象的。然后这里简单的描述下过程。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">route</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"a"</span> <span class="k">do</span>
+      <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"b"</span> <span class="k">do</span>
+        <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"c"</span> <span class="k">do</span>
+          <span class="c1"># /a/b/c</span>
+          <span class="nb">puts</span> <span class="s2">"hello world"</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<p>以此为例说明下，r.on 的工作就是 匹配 arg 这里就是 “a”,”b” 这种路径参数。</p>
+
+<p>如果是 arg 的情况分为几种：</p>
+
+<ul>
+  <li>无参数，也就是 空值（<code class="language-plaintext highlighter-rouge">nil</code>)，这里就被认为是 r.on的终点了，一旦进行到了这步，就会开始对 block求值，并且返回了。</li>
+  <li>
+    <p>一个参数，也就是上面 ‘a’ 这种情况，会进行匹配，匹配中了，会进行 对 block 求值。</p>
+
+    <p>这里情况特殊在于，r.on 里面也是一个 block 怎么办？类似于链式调用，再调用子的 block 并等待它的值返回。一直到请求到最内部为止，Roda会以 throw :halt 的方式, 跳出很深的嵌套，直接弹出结果。类似goto。</p>
+  </li>
+  <li>多个参数 ，类似于 <code class="language-plaintext highlighter-rouge">r.on "a",Integer,"b" </code> 这种，r.on 会使用循环的方式对 args 数组进行挨个匹配，如果匹配成功就会消耗掉 <code class="language-plaintext highlighter-rouge">@remaining_path</code> ，进行下一个匹配。全部正确就 求 block 的值。如果失败了会还原 <code class="language-plaintext highlighter-rouge">@remaining_path</code> 。返回 false</li>
+</ul>
+
+<p>这里不论是哪种情况，匹配失败，都是返回 false</p>
+
+<p>false 不意味着程序被中断，意味着这段代码块被执行完毕。而 false 值也没什么意义，假设这个值在最外层的话，会被人为是 false 返回给 @_response  那么 Roda 会把 false、nil 都解释为 404 NOT found。如果不是最外面一层，仅仅意味着一段 block 的代码被执行完毕。然后就会继续在代码层面，向平级的函数往下继续执行 —— 也就是执行嵌套路由的平行部分。</p>
+
+<p>这个过程有几个显然的结论：</p>
+
+<p>1.想要路由被充分的处理，需要在充分的使用 r.on 进行树状分叉的定义路由。这样才会体现每个节点都调用了 块。</p>
+
+<p>Roda 还可以在公共结点处，共享逻辑。</p>
+
+<p>2.除非 r.on 后面无值，直接进行计算，否则都是 匹配了开始执行块返回结果。所以 r.on 有  <code class="language-plaintext highlighter-rouge">/path/to/*</code> 的匹配效果。其实是因为不管有没有匹配完成，匹配到后面，直接运行了块返回的结果。</p>
+
+<p>3.额外 r.is 和 r.on 的区别 —— 终点精确匹配的原理</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">def</span> <span class="nf">on</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">.</span><span class="nf">empty?</span>
+      <span class="n">always</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">else</span>
+      <span class="n">if_match</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">is</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">.</span><span class="nf">empty?</span>
+      <span class="k">if</span> <span class="n">empty_path?</span>
+        <span class="n">always</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+      <span class="k">end</span>
+    <span class="k">else</span>
+      <span class="n">args</span> <span class="o">&lt;&lt;</span> <span class="no">TERM</span>
+      <span class="n">if_match</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">r.is</code> 插入了 <code class="language-plaintext highlighter-rouge">TERM</code></p>
+
+<p>而在  match 方法中, 字符串、正则、数组等，都要匹配并且编辑 <code class="language-plaintext highlighter-rouge">@remaining_path</code> ,但是存在几个匹配的终点。</p>
+
+<p>比如  <code class="language-plaintext highlighter-rouge">TERM,false,nil,true</code> 最终程序遇到他们就必须返回。这个作为一切匹配的终结。</p>
+
+<p><code class="language-plaintext highlighter-rouge">r.is</code> 其实就是通过 尾部加入 TERM，比如  <code class="language-plaintext highlighter-rouge">r.is "test"</code> 等价于  <code class="language-plaintext highlighter-rouge">r.on "test",TERM</code> 进行了一个精确地匹配罢了,因为对于 <code class="language-plaintext highlighter-rouge">r.on</code> 来说这个 args 必须完全匹配才会继续下去。</p>
+
+<p>4.方法匹配 r.get, r.post 的原理</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="n">_verb</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span> <span class="k">if</span> <span class="n">post?</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="n">_verb</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_get?</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">is_get?</span>
+  <span class="vi">@env</span><span class="p">[</span><span class="s2">"REQUEST_METHOD"</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'GET'</span>
+<span class="k">end</span>
+
+
+<span class="k">def</span> <span class="nf">_verb</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">args</span><span class="p">.</span><span class="nf">empty?</span>
+    <span class="n">always</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="k">else</span>
+    <span class="n">args</span> <span class="o">&lt;&lt;</span> <span class="no">TERM</span>
+    <span class="n">if_match</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">r.get</code> ，<code class="language-plaintext highlighter-rouge">r.post</code> 就是多一步骤判断方法 动词，如果方法不匹配就提前返回了。其他的依然是运行了 r.is 的逻辑，插入了 TERM 作为终点匹配。</p>
+
+<p>5.并列句</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"sample"</span> <span class="k">do</span>
+  <span class="c1"># 公共部分</span>
+  <span class="n">post_list</span><span class="p">.</span><span class="nf">values</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="s2">" | "</span><span class="p">)</span>
+
+  <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="k">do</span>
+    <span class="c1"># A 部分</span>
+  <span class="k">end</span>
+
+  <span class="n">r</span><span class="p">.</span><span class="nf">is</span> <span class="no">Integer</span> <span class="k">do</span> <span class="o">|</span><span class="n">index</span><span class="o">|</span>
+    <span class="n">post_list</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+    <span class="c1"># B部分</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 也可以返回</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>别忘了route里面的块 就是一段代码而已。如果可以匹配就会不断的更深入的求内部嵌套的块。</p>
+
+<p>而如果 A部分匹配失败了，就像正常代码一样，运行到 B部分匹配。对于路由就是平行关系。</p>
+
+<p>而 A、B 部分运营完了，依然有机会运行到 下部分。</p>
+
+<p>所以这里没有魔法，执行的过程是纯粹的。</p>
+
+<p>这里最差情况寻找到路由是  O(n), 而最好的情况可以得到 O(ln(n))。</p>
+
+<p>还有这里如果没有明显的 return 语句，返回的是最后一个表达式。如果不注意这个，可能会对结果有点意外。</p>
+
+<h3 id="最终写入返回结果">最终写入返回结果</h3>
+
+<p>整个过程可以看成这段代码</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">def</span> <span class="nf">_roda_handle_main_route</span>
+    <span class="kp">catch</span><span class="p">(</span><span class="ss">:halt</span><span class="p">)</span> <span class="k">do</span>
+      <span class="n">r</span> <span class="o">=</span> <span class="vi">@_request</span>
+      <span class="n">r</span><span class="p">.</span><span class="nf">block_result</span><span class="p">(</span><span class="n">_roda_run_main_route</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+      <span class="vi">@_response</span><span class="p">.</span><span class="nf">finish</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">_roda_run_main_route</code> 中 r 就是我们的route，整个返回值就是我们 route 中块的返回值。</p>
+
+<p>这里有一个疑问，最终结果通过 <code class="language-plaintext highlighter-rouge">r.block_result</code> 把结果挂在了 <code class="language-plaintext highlighter-rouge">@_request</code> 中，到底最后结果如何传递？</p>
+
+<p>其实是 <code class="language-plaintext highlighter-rouge">r.block_result</code> 中调用了 <code class="language-plaintext highlighter-rouge">response</code> 这是一个方法，用来返回 <code class="language-plaintext highlighter-rouge">@_response</code>, <code class="language-plaintext highlighter-rouge">write</code> 方法就是写入 body</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">def</span> <span class="nf">block_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">response</span>
+    <span class="k">if</span> <span class="n">res</span><span class="p">.</span><span class="nf">empty?</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">body</span> <span class="o">=</span> <span class="n">block_result_body</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+      <span class="n">res</span><span class="p">.</span><span class="nf">write</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>然后再回到开头 <code class="language-plaintext highlighter-rouge">catch(:halt)</code> 部分，最后 <code class="language-plaintext highlighter-rouge">@_response.finish</code> 返回结果。</p>
+
+<p>一切如此平淡，没有什么魔法。</p>
+
+<h1 id="总结">总结</h1>
+
+<p>看到这里不容易。至此，我觉得 Roda 的思想已经足够清晰。</p>
+
+<p>树状路由，更像是——我们人为的编写了运行路径一般。路由一旦被响应，就会把路由 “/a/b/c” 传入 RodaRequest 也就是 <code class="language-plaintext highlighter-rouge">r</code> 对象，然后开始运行真实的 Ruby 代码，也就是我们书写的 route 部分的 DSL。</p>
+
+<p>一棵树的根节点，一旦不匹配，他的块会直接返回 false 的结果，等于这块不会再继续深入。从而像正常 Ruby 代码一样的运行下面的另一棵树。直到一层一层找到正确的路径，一层一层的执行他内部的块。</p>
+
+<p>一直到匹配完毕，结束了，直接通过 throw 跳出嵌套结构，返回结果。</p>
+
+<h1 id="后记">后记</h1>
+
+<p>一直在用摸鱼时间研究学习Ruby。目前很喜欢的语言，有我觉得一些问题，但是瑕不掩瑜。</p>
+
+<p>感谢 Jeremy Evans 的作品。他的坚持和 0 issues 的精神很让我感动。</p>
+
+<p>摸鱼了快一周，记录了结果。不能让我的老板知道。:P</p>
+
+<p>意识流笔记，忽略我的烂字:</p>
+
+<p><img src="/assets/blog/roda_note/roda_note_01.jpeg" alt="roda_note_01" />
+<img src="/assets/blog/roda_note/roda_note_02.jpeg" alt="roda_note_02" /></p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/roda/2022/02/09/Roda源码分析(二)请求响应';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

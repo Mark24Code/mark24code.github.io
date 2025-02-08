@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>浏览器之JavaScript如何影响DOM树构建过程</title>
+  <meta name="description" content="什么是DOM网络传输的HTML字节流无法被渲染引擎理解，需要转化为内部可以理解的数据结构就是DOM。DOM提供了对HTML文档结构化的表述。渲染引擎中，DOM有三个层面的作用：  页面角度，DOM是页面的基础数据结构  JS脚本来看，DOM是提供JS脚本操作的接口，通过这道接口JS可以对DOM结构进行访问，从而改...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E5%89%8D%E7%AB%AF/%E6%B5%8F%E8%A7%88%E5%99%A8/2020/05/21/%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B9%8BJavaScript%E5%A6%82%E4%BD%95%E5%BD%B1%E5%93%8DDOM%E6%A0%91%E6%9E%84%E5%BB%BA%E8%BF%87%E7%A8%8B.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">浏览器之JavaScript如何影响DOM树构建过程</h1>
+    <p class="artilce_meta"><time datetime="2020-05-21T18:35:24+08:00" itemprop="datePublished">May 21, 2020</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="什么是dom">什么是DOM</h1>
+
+<p>网络传输的HTML字节流无法被渲染引擎理解，需要转化为内部可以理解的数据结构就是DOM。DOM提供了对HTML文档结构化的表述。</p>
+
+<p>渲染引擎中，DOM有三个层面的作用：</p>
+
+<ul>
+  <li>页面角度，DOM是页面的基础数据结构</li>
+  <li>JS脚本来看，DOM是提供JS脚本操作的接口，通过这道接口JS可以对DOM结构进行访问，从而改变文档的结构、样式和内容</li>
+  <li>从安全视角来看，DOM是一道安全防线，一些不安全内容再DOM解析阶段就被拒之门外</li>
+</ul>
+
+<p>简单说，DOM是表述HTML的内部结构，它会将Web页面和JS脚本连接起来，并过滤一些不安全的内容。</p>
+
+<h1 id="dom树如何生成">DOM树如何生成</h1>
+
+<p>在渲染引擎内部有一个叫做HTML解析器（HTML Parser）的模块，它的职责就是把HTML字节流转换为DOM结构。</p>
+
+<p>开始介绍HTML解析器之前，先交代一个一个疑问：</p>
+
+<p>“HTML解析器是等整个HTML文档加载完成之后开始解析的，还是随着HTML文档边加载边解析的？”</p>
+
+<p>答案是：网络进程加载了多少数据，HTML解析器便解析多少数据。</p>
+
+<p>不是等加载完全部再解析。</p>
+
+<h3 id="详细的过程是怎么样的呢">详细的过程是怎么样的呢？</h3>
+
+<p>网络进程收到响应头之后，会根据 Content-Type字段来判断文件类型，如果其值是 “text/html”那么浏览器会判断这是一个HTML类型的文件，然后为该请求选择或者创建一个渲染进程。渲染进程准备好之后，网络进程和渲染进程之间会建立起一个共享的数据通道，网络进程接收到的数据就直接往这个管道里放，而渲染进程则在管道的另一端不断地读取数据，并且喂给HTML解析器。</p>
+
+<p>解析器动态的接收字节流，并将其解析为DOM。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>HTML -&gt; 字节流（Bytes）-&gt; 分词器（Tokens）-&gt; 生成节点（Node）-&gt; DOM
+</code></pre></div></div>
+
+<p>字节流转换为DOM的需要三个阶段</p>
+
+<h2 id="第一个阶段通过分词器将字节流转换为token">第一个阶段，通过分词器将字节流转换为Token</h2>
+
+<p>HTML的字节流需要通过分词器转换为一个个Token， 分为Tag Token和文本Token。</p>
+
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+    <span class="nt">&lt;body&gt;</span>
+        <span class="nt">&lt;div&gt;</span>1<span class="nt">&lt;/div&gt;</span>
+        <span class="nt">&lt;div&gt;</span>test<span class="nt">&lt;/div&gt;</span>
+    <span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre></div></div>
+
+<p>上述的HTML代码通过词法分析生成的token如下</p>
+
+<p><img src="/assets/blog/browser_dom_tree/html_parser_token.png" alt="html_parser_token" /></p>
+
+<p>由图可以看出，Tag Token又分为 StartTag和EndTag。</p>
+
+<p>至于后续第二个和第三个阶段是同步的，需要将Token解析为DOM节点，并将DOM节点添加到DOM树中。</p>
+
+<p>HTML解析器维护了一个Token栈结构，这个栈主要是用来计算点之间的父子关系，再第一个阶段生成的Token会被按照顺序压到这个栈中，具体规则如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>如果压入到栈中是 StartTag Token， HTML解析器会为该Token创建一个DOM节点，然后将该节点加入到DOM树中，它的父节点就是栈中相邻的那个元素生成的节点。
+
+如果分词器解析出来的是文本Token，那么会生成一个文本节点，然后将该节点加入到DOM树中，文本Token是不需要压入栈中。它的父节点就是当前栈顶Token对应的DOM节点。
+
+如果分词器解析出来是EngTag 解析器会查看Token栈顶是否是 StartTag 如果是则将其从栈中弹出，表示该元素解析完成。
+
+</code></pre></div></div>
+
+<p>通过分词器产生的新Token就是这样不停的压栈和出栈，整个过程就这样一直下去知道分词器将所有字节流分词完成。</p>
+
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+    <span class="nt">&lt;body&gt;</span>
+        <span class="nt">&lt;div&gt;</span>1<span class="nt">&lt;/div&gt;</span>
+        <span class="nt">&lt;div&gt;</span>test<span class="nt">&lt;/div&gt;</span>
+    <span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre></div></div>
+
+<p>举个例子，这段代码以字节流形式传给HTML解析器，经过分词器处理，解析出来的第一个Token是 StartTag html，节气出来的Token会被压入栈中，并同时创建一个html的DOM节点，将其加入DOM树中。</p>
+
+<p>这里需要补充下，HTML解析器开始工作时，会默认创建一个根微document的空DOM结构，同时会将一个StartTag document的Token压入占地。然后经过分词解析出来的第一个StartTag html Token会被压入栈中，并创建一个html的DOM节点。添加到document上，如下图所示：</p>
+
+<p><img src="/assets/blog/browser_dom_tree/html_parser_01.png" alt="html_parser_01" /></p>
+
+<p>然后按照同样流程解析出来 StartTag body和 StartTag div 其中Token和DOM状态如下</p>
+
+<p><img src="/assets/blog/browser_dom_tree/html_parser_02.png" alt="html_parser_02" /></p>
+
+<p>接下来解析出来是第一个div的文本Token渲染引擎会为该TOken床架你个文本节点，并将该Token添加到DOM中，它的父节点就是当前Token栈顶元素对应的节点，如下图：</p>
+
+<p><img src="/assets/blog/browser_dom_tree/html_parser_03.png" alt="html_parser_03" /></p>
+
+<p>接下来分词解析出第一个EndTag div 这时候解析器HTML回去判断当前栈顶元素是否是是StartTag div如果是，则从栈顶弹出，如图所示：</p>
+
+<p><img src="/assets/blog/browser_dom_tree/html_parser_04.png" alt="html_parser_04" /></p>
+
+<p>按照同样规则，一路解析下去最终如图。</p>
+
+<p><img src="/assets/blog/browser_dom_tree/html_parser_05.png" alt="html_parser_05" /></p>
+
+<p>通过上面介绍，相信你已经知道DOM是如何生成的了，不过在实际生产环境中，HTML源文件中既包含CSS和JavaScript又包含图片、音频、视频等文件，所以产生过程远比上面这个示范复杂多了。不过理解简单的DEMO，就可以分析更复杂的场景。</p>
+
+<h1 id="javascript是如何影响dom生成的">JavaScript是如何影响DOM生成的</h1>
+
+<p>更复杂的例子</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;html&gt;
+&lt;body&gt;
+ &lt;div&gt;1&lt;/div&gt;
+ &lt;script&gt;
+ let div1 = document.getElementsByTagName('div')[0]
+ div1.innerText = 'time.geekbang'
+ &lt;/script&gt;
+ &lt;div&gt;test&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div></div>
+
+<p>两端div中间插入了一段JS脚本。这段解析过程就有点不一样了。<script>标签之前，所有解析流程还是和之前介绍的一样，但是解析到 <script>标签时，渲染引擎判断这是一段脚本，此时HTML解析器就会暂停DOM的解析，因为接下来的JS可能要修改当前已经生成的DOM结构。</script></script></p>
+
+<p>HTML解析器展厅工作，JS引擎接入，并且执行script标签中这段脚本，因为这段JS修改DOM第一个div的内容，所以执行这段脚本之后，div的脚本内容已经被修改了。
+脚本执行完成之后，html解析器恢复执行过程，继续解析后续内容，直至生成最终的DOM。</p>
+
+<p>以上过程还是比较好理解的，不过除了页面中直接嵌入JS脚本之外，还需要通常在页面引入JS文件，这个解析过程就稍微复杂了些</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>//foo.js
+let div1 = document.getElementsByTagName('div')[0]
+div1.innerText = 'time.geekbang'
+
+
+// html
+&lt;html&gt;
+&lt;body&gt;
+ &lt;div&gt;1&lt;/div&gt;
+ &lt;script type="text/javascript" src='foo.js'&gt;&lt;/script&gt;
+ &lt;div&gt;test&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div></div>
+
+<p>这段代码还是和之前一样但是把内嵌的JS脚本改成了通过JS文件加载。</p>
+
+<p>整个流程还是一样，但是执行到JS标签的时候，暂停DOM解析，执行JS代码，这里执行JS代码的时候，需要先下载这段JS代码。这里需要重点关注下下载环境，因为JS文件下载过程会阻塞DOM解析，而通常下载又是非常耗时的，会受到网络环境，JS文件大小等因素印象。</p>
+
+<p>不过Chrome做了很多优化，其中一个重要的优化是——预解析操作。当渲染引擎收到字节流之后，会开启一个预解析线程，用来分析HTML文件中包含的JS、CSS等相关文件，解析到相关文件之后，预解析线程会提前下载这些文件。</p>
+
+<p>再回到DOM解析上，我们知道引入JS线程会阻塞DOM，不过也有一些相关的策略来规避，比如使用CDN来加速JS文件的加速，压缩JS文件体积，另外如果JS文件中没有操作DOM相关代码，就可以把JS设置为异步加载，通过async 或 defer来标记代码，使用方式如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;script async type="text/javascript" src='foo.js'&gt;&lt;/script&gt;
+&lt;script defer type="text/javascript" src='foo.js'&gt;&lt;/script&gt;
+</code></pre></div></div>
+
+<p>async 和 defer 虽然都是异步的，不过还有一些差异，</p>
+
+<ul>
+  <li>async标志的脚本一旦加载完成会立刻执行</li>
+  <li>defer标记的脚本需要在DOMContentLoaded事件之前执行</li>
+</ul>
+
+<p>现在我们知道了JS是如何阻塞DOM解析了。</p>
+
+<p>接下来我们来看另外一种情况：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>//theme.css
+div {color:blue}
+&lt;html&gt;
+ &lt;head&gt;
+ &lt;style src='theme.css'&gt;&lt;/style&gt;
+ &lt;/head&gt;
+&lt;body&gt;
+ &lt;div&gt;1&lt;/div&gt;
+ &lt;script&gt;
+ let div1 = document.getElementsByTagName('div')[0]
+ div1.innerText = 'time.geekbang' //需要DOM
+ div1.style.color = 'red' //需要CSSOM
+ &lt;/script&gt;
+ &lt;div&gt;test&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div></div>
+
+<p>JS代码中出现了<code class="language-plaintext highlighter-rouge">div1.style.color = 'red'</code>的语句，它是用来操作CSOM的，所以在执行JS前，需要解析JS语句之上素有的CSS样式。</p>
+
+<p>所以如果代码引用了外部CSS文件，那么在执行JS之前，还需要等待外部CSS文件下载完成，并解析成CSSOM对象之后，才能执行JS脚本。</p>
+
+<p>而JS引擎在解析JS之前，是不知道JS是否操纵了CSSOM的所以渲染引擎遇到JS脚本时，不管该脚本是否操纵了CSSOM，都会执行CSS文件下载，解析操作，再执行JS脚本。</p>
+
+<p>所以说JS脚本是依赖样式表的，这又多了一个阻塞过程。</p>
+
+<h1 id="总结">总结</h1>
+
+<p>JS会阻塞DOM生成，样式文件又会阻塞JS的执行。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CSS -阻塞-&gt; JavaScript -阻塞-&gt; DOM
+</code></pre></div></div>
+
+<p>所以实际公车个需要关注JS文件和CSS文件。使用不当会影响性能。</p>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E5%89%8D%E7%AB%AF/%E6%B5%8F%E8%A7%88%E5%99%A8/2020/05/21/浏览器之JavaScript如何影响DOM树构建过程';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

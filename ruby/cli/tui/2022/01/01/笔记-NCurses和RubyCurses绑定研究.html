@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>笔记:NCurses和RubyCurses绑定研究</title>
+  <meta name="description" content="前置补充2022.02.26 curses-examples 补充一些代码例子研究路线NCurses 的资料太少了，导致研究他反而是个困难时期。Ruby的书里只有 《Ruby Cookbook》里面提到了一些 Curses 如何使用，但是不足以说完全教会你。有几个研究路线  Ruby Curses库角度方向   ...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/cli/tui/2022/01/01/%E7%AC%94%E8%AE%B0-NCurses%E5%92%8CRubyCurses%E7%BB%91%E5%AE%9A%E7%A0%94%E7%A9%B6.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">笔记:NCurses和RubyCurses绑定研究</h1>
+    <p class="artilce_meta"><time datetime="2022-01-01T20:10:28+08:00" itemprop="datePublished">Jan 1, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="前置补充">前置补充</h1>
+
+<p>2022.02.26 <a href="https://github.com/Mark24Code/curses-examples">curses-examples</a> 补充一些代码例子</p>
+
+<hr />
+
+<h1 id="研究路线">研究路线</h1>
+
+<p>NCurses 的资料太少了，导致研究他反而是个困难时期。</p>
+
+<p>Ruby的书里只有 《Ruby Cookbook》里面提到了一些 Curses 如何使用，但是不足以说完全教会你。</p>
+
+<p>有几个研究路线</p>
+
+<ol>
+  <li>Ruby Curses库角度方向
+    <ul>
+      <li>通过 <a href="https://github.com/ruby/curses">Ruby/curses</a> 学习他的 samples 逆向他的思想。</li>
+      <li>通过查询 <a href="https://www.rubydoc.info/gems/curses/Curses">Ruby Curses</a> 来弥补知识的不足。</li>
+    </ul>
+  </li>
+  <li>NCurses方向
+    <ul>
+      <li>通过 NCurses 的课程文档(下文参考)学习基本思想。</li>
+      <li>然后通过 <a href="https://gems.ruby-china.com/gems/ffi-ncurses">ffi-ncurses</a> 以近乎一致的api书写</li>
+    </ul>
+  </li>
+  <li>学会路线2灵活使用路线1
+    <ul>
+      <li>因为1的优势就是1作了一个兼容层可以照顾到三种Curses变体。而FFI只能照顾一种。</li>
+    </ul>
+  </li>
+  <li>升级版的路线3
+    <ul>
+      <li>通过学习 NCurse的思想（视频教程1小时左右），然后把 NCurse的API 在 Ruby的Curses中搜索，找到映射关联起来。</li>
+      <li>主要是搜索 API,找到对应的 function 名，然后再搜索 Curses 中 API 和 function的映射</li>
+    </ul>
+  </li>
+</ol>
+
+<p>使用NCurses过于繁琐，经过一层面向对象的封装不论是Python的Curses还是Ruby的Curses都有点不一样。</p>
+
+<p>Ruby的Curses封装的很简单，主要他还提供一些别的Curses变体的兼容层。这个角度是 FFI 库不可替代的。</p>
+
+<p>最后我选择的是路线 4 ,通过快速的入门学习NCurses 基本思想，然后用Ruby的Curses构建程序，在此之前，需要自己做点体力活，把NCurses的API 自己以源码学习的方式和Ruby Curses建立起关联。</p>
+
+<hr />
+
+<h1 id="研究资料">研究资料</h1>
+
+<p>History</p>
+
+<ul>
+  <li><a href="https://www.cnblogs.com/liqiuhao/p/9031803.html">解密TTY</a>
+    <ul>
+      <li><a href="http://www.linusakesson.net/programming/tty/">The TTY demystified</a></li>
+      <li><a href="https://arthurchiao.art/blog/tty-demystified-zh/">相似译文</a></li>
+    </ul>
+  </li>
+  <li><a href="https://www.linuxjournal.com/article/1124">ncurses: Portable Screen-Handling for Linux(by Eric S. Raymond on September 1, 1995)</a></li>
+  <li><a href="https://www.kawabangga.com/posts/4515">TTY 到底是什么？</a></li>
+</ul>
+
+<p>Curses</p>
+
+<ul>
+  <li><a href="https://docs.python.org/zh-cn/3/library/curses.html">Python/library/curses</a></li>
+</ul>
+
+<p>HowTo</p>
+
+<ul>
+  <li>
+    <p><a href="https://tldp.org/HOWTO/NCURSES-Programming-HOWTO/intro.html">NCURSES-Programming-HOWTO</a></p>
+  </li>
+  <li>
+    <p><a href="http://www.ibiblio.org/pub/Linux/docs/HOWTO/other-formats/pdf/NCURSES-Programming-HOWTO.pdf">NCURSES-Programming-HOWTO.pdf</a></p>
+  </li>
+  <li>
+    <p>script demo <a href="www.tldp.org/HOWTO/NCURSES-Programming-HOWTO/ncurses_programs.tar.gz">ncurses_programs.tar.gz</a></p>
+  </li>
+  <li>
+    <p>安利 <a href="https://stac47.github.io/ruby/curses/tutorial/2014/01/21/ruby-and-curses-tutorial.html">ruby-and-curses-tutorial</a></p>
+  </li>
+</ul>
+
+<p>Cheatsheet</p>
+
+<ul>
+  <li><a href="https://blog.codingblocks.com/2017/build-interactive-applications-in-terminal-a-handy-ncurses-cheatsheet/">build-interactive-applications-in-terminal-a-handy-ncurses-cheatsheet</a></li>
+  <li><a href="https://github.com/thenamankumar/ncurses-cheatsheet">thenamankumar/ncurses-cheatsheet</a></li>
+</ul>
+
+<p>Ruby Binding</p>
+
+<ul>
+  <li><a href="https://www.rubydoc.info/gems/curses/Curses">Ruby Curses</a></li>
+</ul>
+
+<p>NCurses Video</p>
+
+<ul>
+  <li>国内 <a href="https://www.bilibili.com/video/BV1XZ4y1x7Nk?from=search&amp;seid=13811094732218252185&amp;spm_id_from=333.337.0.0">ncurses tutorials</a></li>
+  <li>Youtube <a href="https://www.youtube.com/playlist?list=PL2U2TQ__OrQ8jTf0_noNKtHMuYlyxQl4v">ncurses tutorials</a></li>
+</ul>
+
+<p>Terminal Mode</p>
+
+<ul>
+  <li><a href="https://en.wikipedia.org/wiki/Terminal_mode">Terminal_mode</a>
+    <ul>
+      <li>Cooked Mode 简单说就是字符串会被处理过输出，比如 输入 ABC<Backspace>D 我们会得到 ABD</Backspace></li>
+      <li>Raw Mode 就是输入字符完全被输出不被处理 比如 输入 ABC<Backspace>D 我们会得到 ABC<Backspace>D</Backspace></Backspace></li>
+      <li>CBreak Mode( Rare Mode ) 它是介于 RawMode 和 CookedMode 之间的模式。与熟模式不同，它一次处理单个字符，而不是强制等待一整行然后一次性全部输入。 与原始模式不同，像 abort（通常是 Control-C）这样的击键仍然由终端处理，并且会中断进程。</li>
+    </ul>
+  </li>
+  <li><a href="https://unix.stackexchange.com/questions/21752/what-s-the-difference-between-a-raw-and-a-cooked-device-driver">what-s-the-difference-between-a-raw-and-a-cooked-device-driver</a>
+    <ul>
+      <li>这个概括比较简单。terminal驱动是一个基于字符行的系统，默认的是cooked模式也叫标准模式。他的工作特点是用户输入会放在缓冲区直到遇到 Enter、Return 才会发送到程序内部。在这个阶段可以使用退格、Ctrl+U 等一些编辑命令。简单的说就是 terminal driver会事先 cooked 输入字符串，再发送至内部。</li>
+      <li>raw模式就是不经过terminal driver程序的处理直接发送。具体对特殊字符比如删除这个交给内部程序处理。比如 vi、emacs 都是这种模式在工作。</li>
+    </ul>
+  </li>
+  <li>
+    <p><a href="https://blog.csdn.net/Rong_Toa/article/details/80753169">raw()函数和cbreak()函数</a>： 通常情况下，终端驱动程序会缓冲用户输入的字符，直到遇到换行符或回车符后，这些字符才可以被使用。但是大多数程序要求字符在输入时就可以被使用。raw()和cbreak()两个函数都可以禁止行缓冲（line buffering）。区别是：在raw()函数模式下，处理挂起（CTRLZ）、中断或退出（CTRLC）等控制字符时，将直接传送给程序去处理而不产生终端信号；而在cbreak()模式下，控制字符将被终端驱动程序解释成其它字符。就我个人而言，比较喜欢使用raw()函数，因为用它可以做一些一般用户无法进行的控制操作。</p>
+  </li>
+  <li>
+    <p><a href="https://blog.csdn.net/Rong_Toa/article/details/80753169">echo()函数和noecho()函数</a>：这两个函数用来控制是否将从键盘输入的字符显示在终端上。调用noecho()函数禁止输入的字符出现在屏幕上。也许程序员希望用户在进行控制操作时，需要屏蔽掉控制字符（如组合键操作），或调用getch()函数读取键盘字符时，不想显示输入的字符（如在控制台输入登陆密码）。大多数的交互式应用程序在初始化时会调用noecho()函数，用于在进行控制操作时不显示输入的控制字符。这两个函数给予程序员很大的灵活性，使程序员可以在窗口中的任意地方，实现输入字符的显示和屏蔽，而不需要刷新屏幕。</p>
+  </li>
+  <li><a href="https://blog.csdn.net/Rong_Toa/article/details/80753169">《ncurses初始化函数：raw(),cbreak(),echo(),noecho(),keypad(),halfdelay()》</a></li>
+</ul>
+
+<p>常见问题</p>
+
+<ul>
+  <li><a href="https://stackoverflow.com/questions/18837836/how-can-i-hide-the-cursor-in-ncurses">how-can-i-hide-the-cursor-in-ncurses</a></li>
+</ul>
+
+<p>Ruby Curses中</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/*
+ * Document-method: Curses.curs_set
+ * call-seq: curs_set(visibility)
+ *
+ * Sets Cursor Visibility.
+ * 0: invisible
+ * 1: visible
+ * 2: very visible
+ */</span>
+</code></pre></div></div>
+
+<hr />
+
+<h1 id="关键实验">关键实验</h1>
+
+<h2 id="1-raw-和-noraw也就是所谓的cooked-区别">1. raw 和 noraw(也就是所谓的cooked) 区别</h2>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s1">'curses'</span>
+<span class="kp">include</span> <span class="no">Curses</span>
+
+<span class="k">begin</span>
+  <span class="n">init_screen</span>
+
+  <span class="c1">## 观察下面的代码，两个互斥模式，分别注释观察运行结果</span>
+  <span class="c1">## 输入Ctrl+C 观察反映</span>
+  <span class="c1">## raw模式中，Ctrl+C 将会作为字符串显示</span>
+  <span class="c1">## noraw 模式下 会接受命令直接退出</span>
+
+  <span class="c1"># noraw</span>
+  <span class="n">raw</span>
+  <span class="n">echo</span>
+
+  <span class="n">setpos</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+  <span class="c1">## 这里的关键是不让程序早早退出</span>
+  <span class="c1">## 这三句是为了响应一次，不让程序快速结束（一句接收一个字符就程序结束，无法观察结果）</span>
+  <span class="n">getch</span>
+  <span class="n">getch</span>
+  <span class="n">getch</span>
+
+<span class="k">rescue</span> <span class="no">Error</span>
+  <span class="n">close_screen</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<h2 id="2-设置属性">2. 设置属性</h2>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nb">require</span> <span class="s1">'curses'</span>
+<span class="kp">include</span> <span class="no">Curses</span>
+
+<span class="k">begin</span>
+  <span class="n">init_screen</span>
+  <span class="n">raw</span>
+  <span class="n">echo</span>
+
+  <span class="n">setpos</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+
+  <span class="c1"># 这里表现的很像Canvas，我们在一个上下文，运行时候可能就是一个对象，修改他的属性</span>
+  <span class="c1"># 然后工作结束关闭他的属性，然后渲染工作的改变只在我们的上下文中</span>
+  <span class="n">attron</span><span class="p">(</span><span class="no">A_REVERSE</span><span class="p">)</span>
+  <span class="n">addstr</span><span class="p">(</span><span class="s2">"hello world"</span><span class="p">)</span>
+  <span class="n">attroff</span><span class="p">(</span><span class="no">A_REVERSE</span><span class="p">)</span>
+  
+  <span class="n">addstr</span><span class="p">(</span><span class="s1">'Off Reverse Hello world'</span><span class="p">)</span>
+
+  <span class="n">getch</span>
+  <span class="n">getch</span>
+  <span class="n">getch</span>
+
+<span class="k">rescue</span> <span class="no">Error</span>
+  <span class="n">close_screen</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<h2 id="3-颜色设置">3. 颜色设置</h2>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s1">'curses'</span>
+<span class="kp">include</span> <span class="no">Curses</span>
+
+<span class="k">begin</span>
+  <span class="n">init_screen</span>
+  <span class="n">raw</span>
+  <span class="n">echo</span>
+
+  <span class="n">setpos</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+
+  <span class="c1"># 首先要初始化颜色（其实还有一部检查是否支持颜色）</span>
+  <span class="n">start_color</span>
+  <span class="c1"># 这里是注册一个 颜色的pair，第一个参数是自己设置的ID。后面是文字颜色，背景颜色</span>
+  <span class="n">init_pair</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="no">COLOR_GREEN</span><span class="p">,</span> <span class="no">COLOR_RED</span><span class="p">)</span>
+  <span class="c1"># 通过设置属性，以 color_pair 形式指定 颜色pair ID 来让颜色生效 </span>
+  <span class="n">attrset</span><span class="p">(</span><span class="n">color_pair</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+  <span class="n">addstr</span><span class="p">(</span><span class="s2">"hello world"</span><span class="p">)</span>
+  <span class="n">attroff</span><span class="p">(</span><span class="n">color_pair</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+  
+  <span class="n">addstr</span><span class="p">(</span><span class="s1">'Off Reverse Hello world'</span><span class="p">)</span>
+
+  <span class="n">getch</span>
+  <span class="n">getch</span>
+  <span class="n">getch</span>
+
+<span class="k">rescue</span> <span class="no">Error</span>
+  <span class="n">close_screen</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<h2 id="4-用户输入">4. 用户输入</h2>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s1">'curses'</span>
+<span class="kp">include</span> <span class="no">Curses</span>
+
+
+<span class="k">begin</span>
+  <span class="c1"># 初始化</span>
+  <span class="n">init_screen</span>
+  <span class="n">noecho</span>
+  <span class="n">crmode</span>
+
+  <span class="c1"># 获得尺寸</span>
+  <span class="n">width</span> <span class="o">=</span> <span class="n">cols</span>
+  <span class="n">hieght</span> <span class="o">=</span> <span class="n">lines</span>
+
+  <span class="c1"># 根据尺寸初始化屏幕</span>
+  <span class="c1"># 绘制box</span>
+  <span class="n">inputwin</span> <span class="o">=</span> <span class="no">Window</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">width</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+  <span class="n">inputwin</span><span class="p">.</span><span class="nf">box</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+  <span class="c1"># 启用功能键</span>
+  <span class="n">inputwin</span><span class="p">.</span><span class="nf">keypad</span> <span class="o">=</span> <span class="kp">true</span>
+  <span class="c1"># 展示box</span>
+  <span class="n">inputwin</span><span class="p">.</span><span class="nf">refresh</span>
+
+  <span class="c1"># 接收用户输入</span>
+  <span class="n">c</span> <span class="o">=</span> <span class="n">inputwin</span><span class="p">.</span><span class="nf">getch</span>
+
+  <span class="c1"># 功能键以  KEY_开头 以源码为准，文档表意不明</span>
+  <span class="c1"># https://www.rubydoc.info/gems/curses/Curses/Key</span>
+  <span class="c1"># Curses::KEY_F1</span>
+  <span class="c1"># Curses::KEY_DOWN</span>
+  <span class="c1"># Curses::KEY_UP</span>
+  <span class="c1"># Curses::KEY_RIGHT</span>
+  <span class="c1"># Curses::KEY_LEFT</span>
+  <span class="c1"># Curses::KEY_BACKSPACE</span>
+
+  <span class="c1"># 如果按下的是功能键，则</span>
+  <span class="c1"># 1.定位光标</span>
+  <span class="c1"># 2.设置展示文字</span>
+  <span class="c1"># 3.refresh刷新展示</span>
+  <span class="k">if</span><span class="p">(</span><span class="n">c</span> <span class="o">==</span> <span class="no">KEY_UP</span><span class="p">)</span> 
+    <span class="n">inputwin</span><span class="p">.</span><span class="nf">setpos</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">inputwin</span><span class="p">.</span><span class="nf">addstr</span><span class="p">(</span><span class="s2">"You press UP KEY"</span><span class="p">)</span>
+    <span class="n">inputwin</span><span class="p">.</span><span class="nf">refresh</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 设置等待一个用户字符，实际上作用是维持界面</span>
+  <span class="n">inputwin</span><span class="p">.</span><span class="nf">getch</span>
+  <span class="n">inputwin</span><span class="p">.</span><span class="nf">close</span>
+
+
+<span class="k">rescue</span> <span class="no">Error</span>
+  <span class="n">close_screen</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<h2 id="插入讨论函数式过程-vs-面向对象">插入讨论：函数式(过程) VS 面向对象</h2>
+
+<p>C语言，面向过程式的代码其实和面向对象有啥区别呢？</p>
+
+<p>从NCurses的代码上来看，唯独就是</p>
+
+<p>NCurses 是通过过程式的函数调用来完成工作的，而这个函数调用，总要传递一个 比如 win 的对象。
+然后函数是根据传入指针，其实约定了参数，然后修改win的内部属性。</p>
+
+<p>那么面向对象，就是不再用一直传递这个win对象，而变成了win对象一直调用自己的方法。</p>
+
+<p>其实呢，方法自己内部有一个self可以追踪到win。</p>
+
+<p>所以其实是殊涂同归。</p>
+
+<p>什么函数式、抑或是面向对象，他们即使书写方式不同，本质上依然是顺着指针寻找变量、方法罢了。</p>
+
+<p>只能说他们记录的地方不一样，函数式是记录在代码里，字面量函数写了什么，传递什么就是什么。面向对象，就是使用了一个数据结构记录下来了。内部作了一些继承搜索查找，帮助人减少每次重复声明指针。</p>
+
+<p>其实都一样。现实中也可以混用。归根结底依然是底层的这些数据结构和函数操作罢了。面向对象多了一种自己构建的数据结构。</p>
+
+<p>衍生讨论：如果没有面向对象，想要简化代码的人依然可以自己构建数据结构来实现面向对象这种类似的功能 —— 看过一本 《Ruby设计模式》前言里面作者其实提到了，他们用过数组里面存储对象指针，然后用数组偏移来模拟面向对象。</p>
+
+<p>我的结论：</p>
+
+<p>函数式是最基础的存在，因为地层就是执行栈和函数。</p>
+
+<p>面向对象多了一层数据结构，用来存储和关联对象自己、属性变量、具体方法。罢了。除了查找，归根结底，就是执行的函数。只不过这个函数内部，注入了诸如 self 、以及环境变量等东西。而这些额外的东西，是靠语言实现的特性来保证的。</p>
+
+<p>如果是C语言这种，想要实现，就要自己构建数据结构，或者自己手动写代码传递。</p>
+
+<p>多了一种数据结构在中间，提供了一种新的API和视觉上等效的调用方式。但是在客观上打包了变量和方法，这就是所谓提供了一种抽象。</p>
+
+<p>总之，新的数据结构，代表了一种建立在这个基础上的抽象。</p>
+
+<h2 id="5-菜单">5. 菜单</h2>
+
+<p>5.1 手动实现菜单</p>
+
+<p>循环一直给我造成的困扰是——我的思维里一直是快循环（或者说是内循环）。</p>
+
+<p>内循环用来一次性渲染结果、渲染菜单、计算结果等等。这个已经习以为常。</p>
+
+<p>思维中被忽视的还有一种是慢循环，或者说是外循环。外循环才是让一切循环往复的“智能”所在。</p>
+
+<p>菜单里面整体的循环其实是：</p>
+
+<ol>
+  <li>一个小的内循环渲染第一次菜单列表</li>
+  <li>然后我们会记录输入，根据输入修改关键的变量，把索引循环化</li>
+  <li>下一个外循环，利用新的索引（或者改变，或者没改变，不重要）-&gt; 1. 利用新的索引 渲染列表</li>
+</ol>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s1">'curses'</span>
+<span class="kp">include</span> <span class="no">Curses</span>
+
+
+<span class="k">begin</span>
+  <span class="c1"># 初始化</span>
+  <span class="n">init_screen</span>
+  <span class="n">noecho</span>
+  <span class="n">crmode</span>
+  <span class="c1"># 隐藏光标</span>
+  <span class="n">curs_set</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+  <span class="c1"># 获得尺寸</span>
+  <span class="n">width</span> <span class="o">=</span> <span class="n">cols</span>
+  <span class="n">hieght</span> <span class="o">=</span> <span class="n">lines</span>
+
+  <span class="c1"># 根据尺寸初始化屏幕</span>
+  <span class="c1"># 绘制box</span>
+  <span class="n">menuwin</span> <span class="o">=</span> <span class="no">Window</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">width</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+  <span class="c1"># 启用功能键</span>
+  <span class="n">menuwin</span><span class="p">.</span><span class="nf">keypad</span> <span class="o">=</span> <span class="kp">true</span>
+  <span class="n">menuwin</span><span class="p">.</span><span class="nf">box</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+  <span class="c1"># 展示box</span>
+  <span class="n">menuwin</span><span class="p">.</span><span class="nf">refresh</span>
+
+
+
+  <span class="c1"># 结果win</span>
+  <span class="n">resultwin</span> <span class="o">=</span> <span class="no">Window</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">width</span><span class="o">-</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+  <span class="c1"># 启用功能键</span>
+  <span class="n">resultwin</span><span class="p">.</span><span class="nf">keypad</span> <span class="o">=</span> <span class="kp">true</span>
+  <span class="n">resultwin</span><span class="p">.</span><span class="nf">box</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+  <span class="n">resultwin</span><span class="p">.</span><span class="nf">setpos</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+  <span class="n">resultwin</span><span class="p">.</span><span class="nf">addstr</span><span class="p">(</span><span class="s2">"Result Windows"</span><span class="p">)</span>
+  <span class="c1"># 展示box</span>
+  <span class="n">resultwin</span><span class="p">.</span><span class="nf">refresh</span>
+
+  <span class="n">choices</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"Ruby"</span><span class="p">,</span>
+    <span class="s2">"Python"</span><span class="p">,</span>
+    <span class="s2">"JavaScript"</span>
+  <span class="p">]</span>
+
+  <span class="n">select_index</span> <span class="o">=</span> <span class="mi">0</span>
+  <span class="n">highlight_index</span> <span class="o">=</span> <span class="mi">0</span>
+
+
+  <span class="k">while</span> <span class="kp">true</span> 
+
+
+    <span class="c1"># 根据初始属性，渲染列表</span>
+    <span class="c1"># 或者根据修改后的属性，继续渲染N次列表</span>
+    <span class="n">choices</span><span class="p">.</span><span class="nf">each_with_index</span> <span class="k">do</span> <span class="o">|</span><span class="n">choice</span><span class="p">,</span> <span class="n">index</span><span class="o">|</span>
+      <span class="n">menuwin</span><span class="p">.</span><span class="nf">setpos</span><span class="p">(</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="k">if</span><span class="p">(</span><span class="n">highlight_index</span> <span class="o">==</span> <span class="n">index</span><span class="p">)</span>
+        <span class="n">menuwin</span><span class="p">.</span><span class="nf">attron</span><span class="p">(</span><span class="no">A_REVERSE</span><span class="p">)</span>
+        <span class="n">menuwin</span><span class="p">.</span><span class="nf">addstr</span><span class="p">(</span><span class="n">choice</span><span class="p">)</span>
+        <span class="n">menuwin</span><span class="p">.</span><span class="nf">attroff</span><span class="p">(</span><span class="no">A_REVERSE</span><span class="p">)</span>
+      <span class="k">else</span>
+        <span class="n">menuwin</span><span class="p">.</span><span class="nf">addstr</span><span class="p">(</span><span class="n">choice</span><span class="p">)</span>  
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="n">menuwin</span><span class="p">.</span><span class="nf">refresh</span>
+
+    <span class="c1"># 接收用户输入</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">menuwin</span><span class="p">.</span><span class="nf">getch</span>
+
+    <span class="c1"># 功能键以  KEY_开头 以源码为准，文档表意不明</span>
+    <span class="c1"># https://www.rubydoc.info/gems/curses/Curses/Key</span>
+
+    <span class="c1"># 如果按下的是功能键，则</span>
+    <span class="c1"># 1.定位光标</span>
+    <span class="c1"># 2.设置展示文字</span>
+    <span class="c1"># 3.refresh刷新展示</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">c</span> <span class="o">==</span> <span class="no">KEY_UP</span><span class="p">)</span> 
+      <span class="n">highlight_index</span> <span class="o">-=</span> <span class="mi">1</span>
+      <span class="k">if</span> <span class="n">highlight_index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">highlight_index</span> <span class="o">=</span> <span class="n">choices</span><span class="p">.</span><span class="nf">length</span> <span class="o">-</span><span class="mi">1</span>
+      <span class="k">end</span>
+    <span class="k">elsif</span> <span class="n">c</span> <span class="o">==</span> <span class="no">KEY_DOWN</span>
+      <span class="n">highlight_index</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="k">if</span> <span class="n">highlight_index</span> <span class="o">==</span> <span class="n">choices</span><span class="p">.</span><span class="nf">length</span>
+        <span class="n">highlight_index</span> <span class="o">=</span> <span class="mi">0</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="no">KEY_LEFT</span>
+      <span class="n">select_index</span> <span class="o">=</span> <span class="n">highlight_index</span>
+    
+      <span class="c1"># ??? 这里有个疑问</span>
+      <span class="c1"># 我暂时没有找到方便的办法清除选中内容上一个过长内容</span>
+      <span class="c1"># 有一些方法</span>
+      <span class="c1"># # 删除到光标后面，避免长内容显示后，短内容只更新局部</span>
+      <span class="c1"># # 所有的细节都是 基于 行字符的系统考虑罢了。</span>
+      <span class="c1"># resultwin.clrtoeol # 这个优缺点会删除到边框</span>
+      <span class="c1"># </span>
+      <span class="c1"># 会删除到边框</span>
+      <span class="c1"># 这里使用了 以window为单位，进行数据重新绘制（感觉有点废性能）</span>
+      <span class="n">resultwin</span><span class="p">.</span><span class="nf">erase</span>
+      <span class="n">resultwin</span><span class="p">.</span><span class="nf">box</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+
+      <span class="c1"># 更新内容</span>
+      <span class="n">resultwin</span><span class="p">.</span><span class="nf">setpos</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+      <span class="n">resultwin</span><span class="p">.</span><span class="nf">addstr</span><span class="p">(</span><span class="s2">"You Select:"</span> <span class="o">+</span> <span class="n">choices</span><span class="p">[</span><span class="n">select_index</span><span class="p">])</span>
+      <span class="n">resultwin</span><span class="p">.</span><span class="nf">refresh</span>
+    <span class="k">end</span>
+
+
+    <span class="c1"># 思考和自我讨论： 命令行 VS GUI/DOM</span>
+    <span class="c1">#    </span>
+    <span class="c1">#</span>
+    <span class="c1"># getch 是等待输入，也是维持界面</span>
+    <span class="c1"># 其实这也是有道理的</span>
+    <span class="c1"># 因为命令行是给人看的、也是给人操作的，除了数据展示</span>
+    <span class="c1"># 剩下的就是交互，而交互在命令行里面只有等待输入罢了</span>
+    <span class="c1"># </span>
+    <span class="c1"># 虽然是命令行，但是也是一种前端展示</span>
+    <span class="c1"># 前端展示本质上是一种 数据驱动的展示, 以下展示一个代表性的循环：</span>
+    <span class="c1"># </span>
+    <span class="c1"># 设置展示属性初始值</span>
+    <span class="c1"># 展示属性值 -&gt; 根据初始值渲染元素 -&gt; 交互等待 -&gt; (交互改变) 属性值</span>
+    <span class="c1">#  |                                                      |</span>
+    <span class="c1">#   &lt;-------------------- (这是一个外部循环）---------------|</span>
+    <span class="c1"># </span>
+    <span class="c1"># 这就是 MVVM 的背后模型，适用于前端逻辑。命令行程序是这样，浏览器WEB也是如此。</span>
+    <span class="c1">#</span>
+    <span class="c1"># </span>
+    <span class="c1"># Buffer、内存、虚拟DOM 思想一致</span>
+    <span class="c1"># 我们的代码本质上是内存里的修改，不论是 NCurses里面的缓冲区，还是Vim里面的Buffer、还是现代React的虚拟DOM</span>
+    <span class="c1"># 都是在内存中设置要渲染的对象，程序编码的工作是把内存中模型，修改成下一帧（下一轮循环）想要的样子。</span>
+    <span class="c1"># 然后在合适的一个周期结束的时候，推给显示器</span>
+    <span class="c1"># 命令行里是调用 refresh，交给 terminal-driver去作</span>
+    <span class="c1"># MVVM的框架比如React是由setState触发，最后React内部根据收集任务去调用</span>
+    <span class="c1">#</span>
+    <span class="c1"># 不论形式如何，最终思想是一致的。</span>
+    <span class="c1"># 显示内容一旦交给了 显示器的外部设备，他就是稳定的存储信号了，一直维持着</span>
+    <span class="c1"># 可以想象成最终合成的是二进制的编码，存储在显存里，然后直接传输给显示器，显示器读取内存，然后点亮像素，图像展示。</span>
+    <span class="c1"># </span>
+    <span class="c1"># 这一点想说的是外部设备是稳定的</span>
+    <span class="c1"># 我们的程序并不是在修改屏幕里面的内容，其实我们只是在修改内存里的程序罢了。可以理解为虚拟DOM</span>
+  <span class="k">end</span>
+
+
+
+<span class="k">rescue</span> <span class="no">Error</span>
+  <span class="n">menuwin</span><span class="p">.</span><span class="nf">close</span>
+  <span class="n">resultwin</span><span class="p">.</span><span class="nf">close</span>
+  <span class="n">close_screen</span>
+<span class="k">end</span>
+
+
+
+<span class="c1"># 执拗的迷思</span>
+<span class="c1"># </span>
+<span class="c1"># 1. 循环很快，怎么维持界面变化</span>
+<span class="c1"># </span>
+<span class="c1"># 循环很快是错误</span>
+<span class="c1"># 所谓感觉上快的循环，就是很快执行完的循环，这种循环就是内循环</span>
+<span class="c1"># 内循环作N个组建的渲染，列表元素的渲染，计算等等，是一气呵成的。</span>
+<span class="c1">#</span>
+<span class="c1"># 还有外循环</span>
+<span class="c1"># 外循环实际上在感觉上很慢。因为他内部包含多个阶段，甚至是子循环。 </span>
+<span class="c1"># 因为有外循环存在，才有点 “智能” 的感觉，多个任务序列才能一遍又一遍。</span>
+<span class="c1"># </span>
+<span class="c1"># 在命令行里外循环可不快</span>
+<span class="c1"># 还有 getch 的存在</span>
+<span class="c1"># 循环可以卡在一个地方，等待输入再继续</span>
+<span class="c1"># </span>
+<span class="c1"># 只能说外循环，不应该理解为快慢，而是整个流程可以不断重来。</span>
+<span class="c1"># </span>
+<span class="c1"># 2. 循环阻塞显示怎么办？</span>
+<span class="c1"># </span>
+<span class="c1"># 这个疑问也不对其实。</span>
+<span class="c1"># 无限循环当然会阻塞流程，但是我们不会这样用</span>
+<span class="c1"># 本质上命令行和WEB 也没啥区别</span>
+<span class="c1"># 按照 数据驱动 绘制 UI 的思路</span>
+<span class="c1"># 一个界面，要预先设置初始数据，然后根据数据绘制界面，然后交互影响数据，数据变化再绘制</span>
+<span class="c1"># 这里的绘制，可以是本身就在一个大循环里</span>
+<span class="c1"># 也可以是一种调用单独修改界面</span>
+<span class="c1">#</span>
+<span class="c1"># 这个问题是一个错误的思路导致的。</span>
+<span class="c1"># </span>
+<span class="c1"># 我们会把整个界面初始化以及未来的N次更新，放入到一个循环中。来维持展示。直至无法展示 break 这个循环</span>
+<span class="c1"># 进入下一个维持界面展示的循环。</span>
+<span class="c1">#</span>
+<span class="c1"># 而且有些界面的绘制是一次性的，通过不同调用去修改单一元素。就像前面几个例子。</span>
+<span class="c1"># 有些界面，比如循环菜单，他需要循环在选项中选择、高亮。他就可以是循环的。</span>
+<span class="c1">#</span>
+<span class="c1"># 是否是循环组件，可以根据交互流程推倒得出其实。</span>
+<span class="c1"># 这样一切就可以落在合理的基础上推演。</span>
+
+</code></pre></div></div>
+
+<h2 id="6-运动">6. 运动</h2>
+
+<p>一个画板的demo</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s1">'curses'</span>
+<span class="kp">include</span> <span class="no">Curses</span>
+
+
+<span class="k">begin</span>
+  <span class="c1"># 初始化</span>
+  <span class="n">init_screen</span>
+  <span class="n">noecho</span>
+  <span class="n">crmode</span>
+  <span class="c1"># 隐藏光标</span>
+  <span class="n">curs_set</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+  <span class="n">maxwidth</span> <span class="o">=</span> <span class="mi">60</span>
+  <span class="n">maxheight</span> <span class="o">=</span> <span class="mi">20</span>
+
+  <span class="n">locx</span> <span class="o">=</span> <span class="nb">rand</span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="n">maxwidth</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+  <span class="n">locy</span> <span class="o">=</span> <span class="nb">rand</span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="n">maxheight</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+  <span class="c1"># 结果win</span>
+  <span class="n">playerwin</span> <span class="o">=</span> <span class="no">Window</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">maxheight</span><span class="p">,</span> <span class="n">maxwidth</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+  <span class="n">playerwin</span><span class="p">.</span><span class="nf">box</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+  <span class="c1"># 启用功能键</span>
+  <span class="n">playerwin</span><span class="p">.</span><span class="nf">keypad</span> <span class="o">=</span> <span class="kp">true</span>
+  <span class="c1"># 展示box</span>
+  <span class="n">playerwin</span><span class="p">.</span><span class="nf">refresh</span>
+
+  <span class="k">while</span> <span class="kp">true</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">playerwin</span><span class="p">.</span><span class="nf">getch</span>
+    <span class="n">last_locy</span> <span class="o">=</span> <span class="n">locy</span>
+    <span class="n">last_locx</span> <span class="o">=</span> <span class="n">locx</span>
+    <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="no">KEY_UP</span>
+      <span class="n">locy</span> <span class="o">-=</span> <span class="mi">1</span>
+      <span class="k">if</span> <span class="n">locy</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="n">locy</span> <span class="o">=</span> <span class="mi">1</span>
+      <span class="k">end</span>
+    <span class="k">elsif</span> <span class="n">c</span> <span class="o">==</span> <span class="no">KEY_DOWN</span>
+      <span class="n">locy</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="k">if</span> <span class="n">locy</span> <span class="o">&gt;=</span> <span class="n">maxheight</span>
+        <span class="n">locy</span> <span class="o">=</span> <span class="n">maxheight</span><span class="o">-</span><span class="mi">1</span>
+      <span class="k">end</span>
+    <span class="k">elsif</span> <span class="n">c</span> <span class="o">==</span> <span class="no">KEY_LEFT</span>
+      <span class="n">locx</span> <span class="o">-=</span> <span class="mi">1</span>
+      <span class="k">if</span> <span class="n">locx</span> <span class="o">&lt;=</span><span class="mi">0</span>
+        <span class="n">locx</span> <span class="o">=</span> <span class="mi">1</span>
+      <span class="k">end</span>
+    <span class="k">elsif</span> <span class="n">c</span> <span class="o">==</span> <span class="no">KEY_RIGHT</span>
+      <span class="n">locx</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="k">if</span> <span class="n">locx</span> <span class="o">&gt;=</span> <span class="n">maxwidth</span>
+        <span class="n">locx</span> <span class="o">=</span> <span class="n">maxwidth</span> <span class="o">-</span><span class="mi">1</span> 
+      <span class="k">end</span>
+    <span class="k">end</span>
+    <span class="n">playerwin</span><span class="p">.</span><span class="nf">setpos</span><span class="p">(</span><span class="n">locy</span><span class="p">,</span><span class="n">locx</span><span class="p">)</span>
+    <span class="n">playerwin</span><span class="p">.</span><span class="nf">addstr</span><span class="p">(</span><span class="s1">'*'</span><span class="p">)</span>
+    <span class="n">playerwin</span><span class="p">.</span><span class="nf">setpos</span><span class="p">(</span><span class="n">last_locy</span><span class="p">,</span><span class="n">last_locx</span><span class="p">)</span>
+    <span class="n">playerwin</span><span class="p">.</span><span class="nf">addstr</span><span class="p">(</span><span class="s1">'.'</span><span class="p">)</span>
+    <span class="n">playerwin</span><span class="p">.</span><span class="nf">refresh</span>
+  <span class="k">end</span>
+
+
+<span class="k">rescue</span> <span class="no">Error</span>
+  <span class="n">playerwin</span><span class="p">.</span><span class="nf">close</span>
+  <span class="n">close_screen</span>
+<span class="k">end</span>
+
+
+</code></pre></div></div>
+
+<h2 id="讨论-程序-以及-它的抽象">讨论： 程序 以及 它的抽象</h2>
+
+<p>任何程序最终本质上执行的是顺序执行。</p>
+
+<p>封装可以让程序改名字。我们的调用接口可以语义化。</p>
+
+<p>面向对象把变量、方法封装在一起，其实还加入了一个环境指针。还存在继承关系。</p>
+
+<p>对象是一个构建的独特的数据结构。</p>
+
+<p>独特的数据结构，也改变了书写。</p>
+
+<p>围绕数据结构的，还有一个例子是 XML，我们书写的是XML，而XML会被parser解析——背后是一个循环。
+循环帮助顺序执行。</p>
+
+<p>而我们书写的程序变成了去写XML。也改变了程序的书写。</p>
+
+<p>那些框架、上层自圆其说的逻辑，就是隐藏了封装、隐藏了数据结构、使用了类似XML的新的解析语法。
+最终把这个数据结构交给parser。</p>
+
+<p>循环这件事本应该我们自己作。循环其实是另一种顺序。只不过被代劳了。</p>
+
+<p>最终不论如何——我们展示的程序的工作特点就是：</p>
+
+<p>1.（buffer中）命令代码修改内存</p>
+<ol>
+  <li>把修改完后的内存，交出去。</li>
+</ol>
+
+<p>而这其中再多抽象和复杂，最终都是落在顺序命令</p>
+
+<p>据个例子</p>
+
+<p>1.朴素重复代码：下面的教程中演示了，如何手动编写很土味的代码。包含大量的重复。但是非常朴素。</p>
+
+<p>虽然重复但是很朴素表达了实际发生的情况。</p>
+
+<p><a href="https://www.youtube.com/watch?v=g7Woz3YVgvQ&amp;list=PL2U2TQ__OrQ8jTf0_noNKtHMuYlyxQl4v&amp;index=15">Ncurses Tutorial 14.2 - Creating a MenuBar (part 1)</a></p>
+
+<p>2.提供抽象 —— 简化代码：</p>
+
+<p>把重复的东西，用数据结构、接口方法、对象等形式封装起来 —— 简化了书写内容。</p>
+
+<p>而在内存、时序上，作的事情是和 朴素重复代码 的内容是一致的其实。</p>
+
+<p>所以其实一切没变。变得只是简化的代码。</p>
+
+<p><a href="https://www.youtube.com/watch?v=tzlgVBO-UQQ&amp;list=PL2U2TQ__OrQ8jTf0_noNKtHMuYlyxQl4v&amp;index=16">Ncurses Tutorial 14.2 - Creating a MenuBar (part 2)</a></p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/cli/tui/2022/01/01/笔记:NCurses和RubyCurses绑定研究';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

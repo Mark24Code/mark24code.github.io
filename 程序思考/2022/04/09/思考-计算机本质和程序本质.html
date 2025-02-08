@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>思考-计算机本质和程序本质</title>
+  <meta name="description" content="一、计算机的本质  数学理解  lambda算子（?)  哲学理解  图灵机      具体实现角度理解——CPU工作原理：    以现在CPU的工作原理理解（站在图灵机的实现角度理解）    CPU的硬件电路主要实现了四类基本操作不论CPU内部有多少寄存器、还有几百条指令集，总之可以归纳为以下四类：      ...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E7%A8%8B%E5%BA%8F%E6%80%9D%E8%80%83/2022/04/09/%E6%80%9D%E8%80%83-%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%9C%AC%E8%B4%A8%E5%92%8C%E7%A8%8B%E5%BA%8F%E6%9C%AC%E8%B4%A8.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">思考-计算机本质和程序本质</h1>
+    <p class="artilce_meta"><time datetime="2022-04-09T00:09:53+08:00" itemprop="datePublished">Apr 9, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="一计算机的本质">一、计算机的本质</h1>
+
+<ul>
+  <li>数学理解  lambda算子（?)</li>
+  <li>哲学理解  图灵机</li>
+  <li>
+    <p>具体实现角度理解——CPU工作原理：</p>
+
+    <p>以现在CPU的工作原理理解（站在图灵机的实现角度理解）</p>
+
+    <p>CPU的硬件电路主要实现了四类基本操作
+不论CPU内部有多少寄存器、还有几百条指令集，总之可以归纳为以下四类：</p>
+
+    <ol>
+      <li>数据传输 —— 内存数据、外部IO</li>
+      <li>运算 —— 实现布尔运算、数值运算（主要是加法，减法是另一种加法）</li>
+      <li>跳转 —— 实现循环、goto、控制流</li>
+      <li>call/return  —— 实现子函数、中断</li>
+    </ol>
+  </li>
+</ul>
+
+<p>延伸：</p>
+
+<ol>
+  <li>编程语言的衍生： 四类命令基础之上发展出汇编语言、C语言、高级语言等等</li>
+  <li>程序的衍生： 程序就是内存、计算、再把数据返回内存。数据和程序都是内存中的01010101 数据，到底是程序还是数据，取决于我们如何看待他们 —— 这个意思是我们在程序中如何解释这个数据。</li>
+</ol>
+
+<h1 id="二程序的本质">二、程序的本质</h1>
+
+<h3 id="1站在cpu执行的微观角度理解陈顼">1.站在CPU执行的微观角度理解陈顼</h3>
+
+<p>程序的意义，首先要理解计算机的本质，计算机的本质是图灵机的实现，所作的事情本质上是一切围绕：</p>
+
+<ol>
+  <li>CPU寻址从内存读取数据</li>
+  <li>CPU对数据处理</li>
+  <li>CPU把处理外的数据送回内存</li>
+</ol>
+
+<ul>
+  <li>数据的来源可以是 内存、IO、一切外设……</li>
+  <li>数据的出口可以是 内存、IO、一切外设……</li>
+</ul>
+
+<p>数据可以是数据、可以是字符串、可以是程序代码……他就是内存里面的数据，如何解释取决于数据。这台抽象了，举个例子 ：</p>
+
+<p>例如 00100111 这样的二进制数，既可以
+视 为 纯 粹 的 数 值 作 加 法 运 算， 也 可 以 视 为“‘”（单 引 号，single
+quotation）文字而显示在显示器上，或者视为■■□■■□□□这一图
+形模式印刷出来。具体进行何种处理，取决于程序的编写方式。</p>
+
+<p>程序就是CPU在执行的指令，目的就是加工数据</p>
+
+<h3 id="2站在编程语言角度的理解">2.站在编程语言角度的理解</h3>
+
+<p>前面是微观角度理解程序太抽象。</p>
+
+<p>实际上我们的高级语言，本质上就会翻译成汇编语言。而汇编语言的所有操作都是CPU的四类基本控制指令所作的事情。</p>
+
+<p>我们的高级语言，内置了一些程序，比如 Ruby 内置了数据结构、对应数据结构的方法、还有GC、对语言自己的AST自省等？</p>
+
+<p>但是我们的高级语言归根结底，最有效的就是间接、包含的表达控制CPU的操作。
+只不过一些操作被抽象了，背后意味着更多程序的执行。</p>
+
+<p>举个例子，生成字符串 “abc”</p>
+
+<p>用汇编，就是使用ASCII码写入内存,数字和字符的映射由硬件驱动程序决定了</p>
+
+<p>用C语言就是使用一段连续内存单元储存 a、b、c</p>
+
+<p>用Ruby（C语言构建的）就会再内存中划分出一个结构体，他有一个初始的长度比如50,储存 “abc”。如果下次储存更多字符，会自动扩容。</p>
+
+<p>但是不论你如何构建，汇编、C语言、Ruby 他们对内存的使用各有不同，依次变复杂变多。但是Ruby的角度不光储存了“abc”，他存储的是一种约定的数据结构，为未来的复用，控制操作保留了空间。</p>
+
+<h3 id="3一切都是程序">3.一切都是程序</h3>
+
+<p>补码引发的思考。就是内存里的 101010,展示成数据，我们可以猜测是有一段汇编程序作了这个事情。</p>
+
+<p>CPU的机器就是一种就有特定功能的机器。程序（控制指令）决定了对数据的解释。</p>
+
+<p>编码方案，就是一种如何诠释内存里数据的转换方式。</p>
+
+<p>C语言里就有例子 printf(“%d”, i) 这背后就有一段汇编程序，尝试把 i 变量内存中的数据，根据 %d 即 自然数的方式进行解释和转化。这背后也是一段程序。他遵循对二进制的解读方式——比如他一定遵循了补码的运算方式。</p>
+
+<p>所以一切的背后都是程序，都是一种约定。</p>
+
+<p>而程序的目的就是数据、以及解读数据。</p>
+
+<h3 id="4站在目的主要构成角度理解程序的本质程序数据结构算法">4.站在目的、主要构成角度理解程序的本质——程序=数据结构+算法</h3>
+
+<p>我们从哲学角度理解图灵机、机器角度理解CPU工作细节、语言角度理解编写的程序就是控制指令。</p>
+
+<p>甚至展示字符的背后就是一段程序对内存中二进制的解释。</p>
+
+<p>那么这一切是为了什么呢？</p>
+
+<p>所以站在目的的角度理解程序</p>
+
+<p>现在我们的程序是以图灵机为理论基础、冯诺伊曼机为原型（意味着要遵循存储、读取、运行的基本设计规则——他就是这样的机器，他就是这样工作的）CPU 的内部电路实现的控制指令为基础的，构造出一系列指令操作，为了收集数据、计算数据和输出数据为目的的这么一个东西。</p>
+
+<p>而我们程序写来写去归根结底发挥作用的就是 —— 数据结构+算法</p>
+
+<p>数据结构，就是内存中的数据，我们如何组织它们，理解他们。
+算法，就是围绕着解释或者操作这段程序的。</p>
+
+<p>这两部分一拍即合，就像 一个是文字，一个是解释文字的东西，这两个组合起来就创造了意义。</p>
+
+<h2 id="推论">推论：</h2>
+
+<p>程序世界再复杂高深的东西都是数据结构的一种体现。</p>
+
+<p>有些领域自成一派，可以理解为出现了特别的独特的数据结构，围绕数据结构的算法。</p>
+
+<p>本质上他们就是一段程序。举个例子：</p>
+
+<h4 id="1web程序">1.Web程序</h4>
+
+<p>web程序就是对 HTTP协议的一种传输处理</p>
+
+<h4 id="2编译原理">2.编译原理</h4>
+
+<p>编译原理涉及到很多数据以及算法，围绕着对文本语言的程序处理。
+其中涉及到 有限状态及、正则实现、词法分析、语法分析、AST语法树</p>
+
+<p>本质上他是一种领域程序。</p>
+
+<p>像 yacc、lex 就是典型的一种 DSL</p>
+
+<h4 id="3网络">3.网络</h4>
+
+<p>网络的七层协议里面，各自按照每层的任务对编码进行理解</p>
+
+<h4 id="4其他程序">4.其他程序</h4>
+
+<ul>
+  <li>
+    <p>图形程序：可以看成是像素点的绘制</p>
+  </li>
+  <li>
+    <p>编辑器：我研究过Vim实现，他是对光标数据结构的一种实现</p>
+  </li>
+  <li>
+    <p>游戏：我也简单看过，现在游戏就是在一个游戏的主循环里，控制用户交互和每帧渲染</p>
+  </li>
+  <li>
+    <p>操作系统： 主要是围绕着控制内存、资源和程序进程的调度等等</p>
+  </li>
+</ul>
+
+<h1 id="三总结">三、总结</h1>
+
+<p>我最近研究了什么呢？</p>
+
+<ul>
+  <li>
+    <p>《计算的本质》Ruby描写的 计算机构造原理与解释</p>
+  </li>
+  <li>
+    <p>《汇编语言》王爽</p>
+  </li>
+  <li>
+    <p>《C语言程序设计：现代方法第二版》</p>
+  </li>
+  <li>
+    <p>《程序如何运行起来的》</p>
+  </li>
+  <li>
+    <p>《计算机如何运行起来》</p>
+  </li>
+  <li>
+    <p>《编译原理》</p>
+  </li>
+  <li>
+    <p>各种对于 词法、语法解析器的 演讲</p>
+  </li>
+  <li>
+    <p>Python解释器原理 的演讲课程</p>
+  </li>
+</ul>
+
+<p>……</p>
+
+<p>虽然这部分工作，阅读资料没有完成。</p>
+
+<p>其实我觉得我已经得出或者跳跃式的顿悟出了自己的结论。</p>
+
+<p>一切会回到起点</p>
+
+<p><code class="language-plaintext highlighter-rouge">程序 = 数据结构 + 算法</code></p>
+
+<p>所有的程序没有什么高级、低级之分。他们只是一种程序，为了解决问题。
+编程语言看似是一个底层，其实他也是一个领域问题。</p>
+
+<p>你在研究编译原理、还是虚拟机构造、还是写web程序……
+不论你在用汇编、还是C语言、还是Lua、还是JavaScript、还是 Ruby……</p>
+
+<p>你在思考的事情，你看待问题的角度都是一样的。</p>
+
+<p>你要做的、思考的、学习别人的代码的…… 永远都要围绕：</p>
+
+<p>一个合适的目标数据，可以描述问题的</p>
+
+<p>这个数据的处理方法、算法、周边围绕的</p>
+
+<p><code class="language-plaintext highlighter-rouge">程序 = 数据+方法</code></p>
+
+<p>最后，这个程序的目的，就是希望，数据可以对问题进行描述，计算进行表达。
+最终解决你的问题。</p>
+
+<p>至此我得出我自己的答案，自己的思考。
+我也不需要别人的答案了。</p>
+
+<h1 id="四额外的思考">四、额外的思考</h1>
+
+<p>现在要学习编译原理？还是写web</p>
+
+<p>归根结底，其实写什么不重要。重要的是，哪些程序可以帮助你解决问题——你的现实问题也算。</p>
+
+<p>有时间懂得多，解决问题思路宽广。</p>
+
+<p>能够补充的是：</p>
+
+<p>动态语言性能和内存适合脚本、web等要求不高的。</p>
+
+<p>基础设施还得靠C，因为研究C之后，他不存在真正的兼容问题，也没有大分裂。</p>
+
+<p>这归根结底是生态的问题。还是一切围绕解决问题。</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E7%A8%8B%E5%BA%8F%E6%80%9D%E8%80%83/2022/04/09/思考-计算机本质和程序本质';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

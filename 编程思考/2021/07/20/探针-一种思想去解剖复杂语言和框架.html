@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>解剖复杂语言和框架的方法</title>
+  <meta name="description" content="一、我的思想1.1 三要素我总是忘记，我记录一下吧。在我心中一直有一个困扰就是如何剖析比较复杂框架、应用的过程。举个例子，比如Ruby中把 Monkey Patching 当做特性, 比如高度的动态性，可以任意对象增加方法，可以使用复杂的继承比如Rails,也可以在全局注入 DSL 方法比如 Sinatra ……...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2021/07/20/%E6%8E%A2%E9%92%88-%E4%B8%80%E7%A7%8D%E6%80%9D%E6%83%B3%E5%8E%BB%E8%A7%A3%E5%89%96%E5%A4%8D%E6%9D%82%E8%AF%AD%E8%A8%80%E5%92%8C%E6%A1%86%E6%9E%B6.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">解剖复杂语言和框架的方法</h1>
+    <p class="artilce_meta"><time datetime="2021-07-20T15:06:31+08:00" itemprop="datePublished">Jul 20, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="一我的思想">一、我的思想</h1>
+
+<h2 id="11-三要素">1.1 三要素</h2>
+
+<p>我总是忘记，我记录一下吧。</p>
+
+<p>在我心中一直有一个困扰就是如何剖析比较复杂框架、应用的过程。举个例子，比如Ruby中把 <code class="language-plaintext highlighter-rouge">Monkey Patching</code> 当做特性, 比如高度的动态性，可以任意对象增加方法，可以使用复杂的继承比如<code class="language-plaintext highlighter-rouge">Rails</code>,也可以在全局注入 DSL 方法比如 <code class="language-plaintext highlighter-rouge">Sinatra</code> ……</p>
+
+<p>魔法有很多，我们如何观察魔法呢？我们有什么方式可以梳理这种动态性。和复杂性。</p>
+
+<p>我仔细想了一些这种问题。我给出一些我的思考。</p>
+
+<p>不论是看源码，看执行，自己写代码，debugger…… 本质上这些行为是有几个必备的要素的：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. 入口
+2. 观测方法/方式
+3. 步进信息
+</code></pre></div></div>
+
+<p>这是很抽象的维度，但是可以寻找这几个要素。举个例子吧，比如我最近遇到的，如何debugger线上问题，线上是一个Hybrid页面，嵌套在App里。</p>
+
+<p>如何解决debugger线上的问题呢？</p>
+
+<p>1) 首先就是寻找入口，如何可以让app没有入口的条件下，进入。
+这有好多方式了</p>
+<ol>
+  <li>给你一个灰度</li>
+  <li>使用约定的scheme跳转进入</li>
+  <li>使用约定的菜单、配置banner进入
+……
+总之你要解决入口问题。</li>
+</ol>
+
+<p>2) 其次就是观测方法，程序一般的方法是通过日志。也可以是debugger，也可以是一些数据仪表。总之只要是描述我们关心的信息。能表征变化的即可。</p>
+
+<p>3) 再者就是一种步进信息，这里我说的很抽象。实际上程序是一个时间的函数。任何程序都是如此。所以，前面的方法只是铺垫，观察出一个点，那么随着交互、输入数据、时间变化……程序是不是会发生变化，输出会有什么不同。这种 diff 就是步进信息。</p>
+
+<p>观测的方式总要找到这三个要素。或者可以有目标解决这三点。</p>
+
+<h2 id="12-以ruby为例">1.2 以Ruby为例</h2>
+
+<p>我想解决的就是面对复杂的Ruby应用，别人写的，我自己写的，或者Ruby自己我怎么剖析他。</p>
+
+<p>你可能看到过很多的文档、注释甚至原理性的书籍，但是往往不够。因为他们可能出现滞后，永远描述的不是你正在经历的东西。</p>
+
+<p>我怎么去剖析 sinatra呢（抱歉的是Rails没看过）？</p>
+
+<h3 id="1入口">1.入口</h3>
+
+<p>启动的Sinatra应用是一个入口。</p>
+
+<ul>
+  <li>web是一个切入口</li>
+  <li>程序本身也是一个切入口。</li>
+  <li>pry在Ruby的范畴里也是一个入口
+……</li>
+</ul>
+
+<p>我选择了不同的入口，从而进入不同的切面去观察这件事情。</p>
+
+<h3 id="2观察的方式步进信息">2.观察的方式&amp;步进信息</h3>
+
+<p>讨论一下方式，方式其实有很多种。这些方式都伴随着过程</p>
+
+<ul>
+  <li>
+    <p>最常见的是 log：</p>
+
+    <p>log就是一种时间信息。最朴素又管用</p>
+  </li>
+  <li>
+    <p>debugger：</p>
+
+    <p>我们自己写的东西log可能比较合适。但是涉及到应用、框架、语言底层超出我们控制的范围，log可能就不奏效了。</p>
+
+    <p>当然你也可以吧源码拿过来编译，注入log也可以，但是这个方法对编译的语言会失效。</p>
+
+    <p>这里可以使用debugger工具，debugger是一种黏贴进程的方式，输出每步内存信息。</p>
+
+    <p>这里也是我推荐追踪源码、追踪复杂框架的一种方式。</p>
+
+    <p>我的思考：</p>
+
+    <p>我是习惯于log的，以致于我总是忽略debuger这种思想的存在。所以我在研究外部的东西是有弱点的。就是我的观察方式和抓瞎差不多。</p>
+
+    <p>debugger是一个好的方式。代码本质上是最好的文档。代码也是时间的函数。debugger好的在于可以让内存中变量的状态得到展现。比如在动态语言中，模块、方法、局部变量如何变化。这其实就是我们关心的。log是一种两头的测量方式，来获得这种变化信息。debugger更加细颗粒度。debugger的方式更加朴素——向解释器/编译器伸手要答案。</p>
+  </li>
+  <li>
+    <p>内部自省/反射的方法</p>
+
+    <p>这个更多是配合log和debugger把内部的变量内容暴露出来。</p>
+
+    <p>是一种由内而外的观察。</p>
+  </li>
+  <li>
+    <p>IDE</p>
+
+    <p>工程化的IDE可能会提供一些信息。有的信息来自于上面。有的信息来自于IDE对工程性的理解。这里就是额外的扫描依赖库、代码本身建立了索引联系。从来揭示一些关系。</p>
+  </li>
+</ul>
+
+<blockquote>
+  <p>题外话：如何列出 Ruby中所有的get方法来自的模块和文件？
+我之前一致想要找到这样的方法。似乎是没有的。IDE是可以做到的，因为IDE会扫描工程本身和依赖库，他是可以额外建立索引的。
+如果想找到一个Ruby自身的方式可能没有。Ruby提供一个 <code class="language-plaintext highlighter-rouge">method</code> 的方法，他可以返回最先找到的一个方法的 owner、source_location。
+其实我后面想想这是合理的 —— Ruby内部是维护了一个Map解构，这个解构再运行中一直在改变，一些书 比如《Ruby原理剖析》讲了一些内部的细节。内部是一个结构体，通过偏移和索引来工作。Ruby不关心全览，Ruby就是执行到什么就输出什么。所以<code class="language-plaintext highlighter-rouge">method</code>输出最近遇到的一个是合理的。如果Ruby内部存在一个全览的方法，那意味着Ruby一定扫描全部代码了，很显然没有。
+所以Ruby作为一个动态语言，其实他是一个执行的过程。很多东西需要执行中检验或者看到。当然所有程序都是这样，但是Ruby更加强调着一点。
+所以保证它的稳定性，需要用单侧，使用运行的东西时刻的保证运行时符合预期。
+其实观察原理，其实就是要观察动态的过程。也就是上面提到的步进信息。</p>
+</blockquote>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2021/07/20/探针--一种思想去解剖复杂语言和框架';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>
