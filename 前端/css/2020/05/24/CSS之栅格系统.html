@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CSS之栅格系统</title>
+  <meta name="description" content="响应式布局响应式 Web 设计（Responsive Web design）的理念是，页面的设计与开发应当根据用户行为以及设备环境（系统平台、屏幕尺寸、屏幕定向等）进行相应的响应和调整。响应式设计有几个比较重要的点，包括：  viewport：让页面宽度等于设备宽度  流式布局：百分比和浮动  @media：断点...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E5%89%8D%E7%AB%AF/css/2020/05/24/CSS%E4%B9%8B%E6%A0%85%E6%A0%BC%E7%B3%BB%E7%BB%9F.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">CSS之栅格系统</h1>
+    <p class="artilce_meta"><time datetime="2020-05-24T17:12:06+08:00" itemprop="datePublished">May 24, 2020</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="响应式布局">响应式布局</h1>
+
+<p>响应式 Web 设计（Responsive Web design）的理念是，页面的设计与开发应当根据用户行为以及设备环境（系统平台、屏幕尺寸、屏幕定向等）进行相应的响应和调整。</p>
+
+<p>响应式设计有几个比较重要的点，包括：</p>
+
+<ul>
+  <li>viewport：让页面宽度等于设备宽度</li>
+  <li>流式布局：百分比和浮动</li>
+  <li>@media：断点</li>
+</ul>
+
+<h1 id="栅格系统">栅格系统</h1>
+
+<ul>
+  <li>提高生产力，通过在网格的划分，元素更容易堆放而且在跨浏览器上面具有一致性，使我们可以专心的注意布局而不是兼容上。</li>
+  <li>具有灵活性，无论是什么样的布局，都可以拆分到粒度为一个网格的大小。</li>
+  <li>支持响应式设计，栅格系统本身能很好的和响应式设计结合在一起，或者说，我们的栅格系统是基于响应式设计的。</li>
+</ul>
+
+<h1 id="栅格系统的实现">栅格系统的实现</h1>
+
+<p><img src="/assets/blog/grid_system/grid_system01.png" alt="grid_system01" /></p>
+
+<p>可以看到栅格系统的基本构成</p>
+
+<ul>
+  <li>container</li>
+  <li>rows</li>
+  <li>columns</li>
+  <li>gutters 列之间的间隔</li>
+</ul>
+
+<h1 id="container">Container</h1>
+
+<p><img src="/assets/blog/grid_system/grid_system_container.png" alt="grid_system_container" /></p>
+
+<p>container的目的是给整个栅格设置宽度。container的宽度是100%，但是你可以为特殊巨型设备设置最大宽度。</p>
+
+<div class="language-css highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">.grid-container</span> <span class="p">{</span>
+    <span class="nl">width</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span>
+    <span class="nl">max-width</span><span class="p">:</span> <span class="m">1200px</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h1 id="row">Row</h1>
+
+<p><img src="/assets/blog/grid_system/grid_system_row.png" alt="grid_system_row" /></p>
+
+<p>row 元素的作用是保持所有的列在里面，防止溢出到其他行。需要使用清除浮动来实现这个。</p>
+
+<div class="language-css highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">/*-- our cleafix hack -- */</span>
+<span class="nc">.row</span><span class="nd">:before</span><span class="o">,</span>
+<span class="nc">.row</span><span class="nd">:after</span> <span class="p">{</span>
+    <span class="nl">content</span><span class="p">:</span> <span class="s1">""</span><span class="p">;</span>
+    <span class="nl">display</span><span class="p">:</span> <span class="n">table</span><span class="p">;</span>
+    <span class="nl">clear</span><span class="p">:</span> <span class="nb">both</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h1 id="column">Column</h1>
+
+<p><img src="/assets/blog/grid_system/grid_system_column.png" alt="grid_system_column" /></p>
+
+<p>column是栅格系统里最复杂的部分。在css中有几种方式定位column，然后考虑各种宽度以及诸如响应式设计之类的因素。</p>
+
+<h1 id="column定位">column定位</h1>
+
+<p>Floats, inline-blocks, display-table, display-flex. 这些都是在CSS中定位列的不同方法。 从我的个人经验来看，这些方法中最不易出错且使用最广泛的是“浮动”方法。 但是，如果我们的列为空，则我们的浮动列将相互堆叠。 为防止这种情况，我们将列的最小高度设置为1px并对其进行浮动。</p>
+
+<div class="language-css highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span><span class="nt">class</span><span class="o">*=</span><span class="s2">'col-'</span><span class="o">]</span> <span class="p">{</span>
+    <span class="nl">float</span><span class="p">:</span> <span class="nb">left</span><span class="p">;</span>
+    <span class="nl">min-height</span><span class="p">:</span> <span class="m">1px</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h1 id="column-宽度">column 宽度</h1>
+
+<p>要找到一列的宽度，我们要做的就是将列的总数除以容器的宽度。 在我们的示例中，容器的宽度为100％，我们需要6列，因此100/6 = 16.66，因此我们的基本列宽度为16.66％。</p>
+
+<div class="language-css highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span><span class="nt">class</span><span class="o">*=</span><span class="s2">'col-'</span><span class="o">]</span> <span class="p">{</span>
+    <span class="nl">float</span><span class="p">:</span> <span class="nb">left</span><span class="p">;</span>
+    <span class="nl">min-height</span><span class="p">:</span> <span class="m">1px</span><span class="p">;</span>
+    <span class="nl">width</span><span class="p">:</span> <span class="m">16.66%</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>这里我们把每一行分成 6 列，通过将其设置为浮动且百分比，能够很好的制作响应式页面。</p>
+
+<div class="language-css highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span><span class="nt">class</span> <span class="o">*=</span> <span class="s2">'col-'</span><span class="o">]</span> <span class="p">{</span>
+    <span class="nl">float</span><span class="p">:</span> <span class="nb">left</span><span class="p">;</span>
+    <span class="nl">min-height</span><span class="p">:</span> <span class="m">1px</span><span class="p">;</span>
+    <span class="nl">padding</span><span class="p">:</span> <span class="m">12px</span><span class="p">;</span> <span class="c">/* 设置间距 */</span>
+<span class="p">}</span>
+<span class="nc">.col-1</span> <span class="p">{</span> <span class="nl">width</span><span class="p">:</span> <span class="m">16.66%</span><span class="p">;</span> <span class="p">}</span> 
+<span class="nc">.col-2</span> <span class="p">{</span> <span class="nl">width</span><span class="p">:</span> <span class="m">33.33%</span><span class="p">;</span> <span class="p">}</span> 
+<span class="nc">.col-3</span> <span class="p">{</span> <span class="nl">width</span><span class="p">:</span> <span class="m">50%</span><span class="p">;</span> <span class="p">}</span> 
+<span class="nc">.col-4</span> <span class="p">{</span> <span class="nl">width</span><span class="p">:</span> <span class="m">66.664%</span><span class="p">;</span> <span class="p">}</span> 
+<span class="nc">.col-5</span> <span class="p">{</span> <span class="nl">width</span><span class="p">:</span> <span class="m">83.33%</span><span class="p">;</span> <span class="p">}</span> 
+<span class="nc">.col-6</span> <span class="p">{</span> <span class="nl">width</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span> <span class="p">}</span>
+
+</code></pre></div></div>
+<p>使用这些列组合时，我们唯一要考虑的是一行中的列总数加起来为6（或任何总列数）。</p>
+
+<h1 id="column-gutters">Column Gutters</h1>
+
+<p><img src="/assets/blog/grid_system/grid_system_column_gutter.png" alt="grid_system_column_gutter" /></p>
+
+<p>在使用“border-box”盒模型之前，为百分比宽度元素提供gutter是一个真正的难题。 幸运的是，使用“border-box”，我们可以轻松创建gutter。</p>
+
+<div class="language-css highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">/*-- setting border box on all elements inside the grid --*/</span>
+<span class="nc">.grid-container</span> <span class="o">*</span> <span class="p">{</span>
+    <span class="nl">box-sizing</span><span class="p">:</span> <span class="n">border-box</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="o">[</span><span class="nt">class</span><span class="o">*=</span><span class="s2">'col-'</span><span class="o">]</span> <span class="p">{</span>
+    <span class="nl">float</span><span class="p">:</span> <span class="nb">left</span><span class="p">;</span>
+    <span class="nl">min-height</span><span class="p">:</span> <span class="m">1px</span><span class="p">;</span>
+    <span class="nl">width</span><span class="p">:</span> <span class="m">16.66%</span><span class="p">;</span>
+    <span class="c">/*-- our gutter --*/</span>
+    <span class="nl">padding</span><span class="p">:</span> <span class="m">12px</span><span class="p">;</span>
+    <span class="nl">box-sizing</span><span class="p">:</span> <span class="n">border-box</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>最后总结一下</p>
+
+<div class="language-css highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">.grid-container</span> <span class="p">{</span>
+    <span class="nl">width</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span>
+    <span class="nl">max-width</span><span class="p">:</span> <span class="m">1200px</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c">/*-- our cleafix hack -- */</span>
+<span class="nc">.row</span><span class="nd">:before</span><span class="o">,</span>
+<span class="nc">.row</span><span class="nd">:after</span> <span class="p">{</span>
+    <span class="nl">content</span><span class="p">:</span> <span class="s1">""</span><span class="p">;</span>
+    <span class="nl">display</span><span class="p">:</span> <span class="n">table</span><span class="p">;</span>
+    <span class="nl">clear</span><span class="p">:</span> <span class="nb">both</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="o">[</span><span class="nt">class</span><span class="o">*=</span><span class="s2">'col-'</span><span class="o">]</span> <span class="p">{</span>
+    <span class="nl">float</span><span class="p">:</span> <span class="nb">left</span><span class="p">;</span>
+    <span class="nl">min-height</span><span class="p">:</span> <span class="m">1px</span><span class="p">;</span>
+    <span class="nl">width</span><span class="p">:</span> <span class="m">16.66%</span><span class="p">;</span>
+    <span class="c">/*-- our gutter -- */</span>
+    <span class="nl">padding</span><span class="p">:</span> <span class="m">12px</span><span class="p">;</span>
+    <span class="nl">box-sizing</span><span class="p">:</span> <span class="n">border-box</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.col-1</span> <span class="p">{</span>
+    <span class="nl">width</span><span class="p">:</span> <span class="m">16.66%</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.col-2</span> <span class="p">{</span>
+    <span class="nl">width</span><span class="p">:</span> <span class="m">33.33%</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.col-3</span> <span class="p">{</span>
+    <span class="nl">width</span><span class="p">:</span> <span class="m">50%</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.col-4</span> <span class="p">{</span>
+    <span class="nl">width</span><span class="p">:</span> <span class="m">66.66%</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.col-5</span> <span class="p">{</span>
+    <span class="nl">width</span><span class="p">:</span> <span class="m">83.33%</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.col-6</span> <span class="p">{</span>
+    <span class="nl">width</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+<p><a href="https://mark24code.github.io/grid-system">demo 参考</a></p>
+
+<h1 id="响应式">响应式</h1>
+
+<p>调整网格以适应移动布局非常简单。 我们要做的就是调整列的宽度。</p>
+
+<p>为简单起见，对于800像素以下的屏幕，我将使列宽加倍。</p>
+
+<p>唯一需要注意的是一些例外，其中行的最后一列挂在末尾。 例如.col-2列和.col-5列旁边的.col-1。
+为了解决这个问题，我们将行中的最后一个.col-2和.col-1设置为100％宽。</p>
+
+<div class="language-css highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">@media</span> <span class="n">all</span> <span class="n">and</span> <span class="p">(</span><span class="n">max-width</span><span class="p">:</span><span class="m">800px</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nc">.col-1</span> <span class="p">{</span>
+        <span class="nl">width</span><span class="p">:</span> <span class="m">33.33%</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nc">.col-2</span> <span class="p">{</span>
+        <span class="nl">width</span><span class="p">:</span> <span class="m">50%</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nc">.col-3</span> <span class="p">{</span>
+        <span class="nl">width</span><span class="p">:</span> <span class="m">83.33%</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nc">.col-4</span> <span class="p">{</span>
+        <span class="nl">width</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nc">.col-5</span> <span class="p">{</span>
+        <span class="nl">width</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nc">.col-6</span> <span class="p">{</span>
+        <span class="nl">width</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nc">.row</span> <span class="nc">.col-2</span><span class="nd">:last-of-type</span> <span class="p">{</span>
+        <span class="nl">width</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nc">.row</span> <span class="nc">.col-5</span><span class="o">~</span><span class="nc">.col-1</span> <span class="p">{</span>
+        <span class="nl">width</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>对于甚至小于800像素的屏幕，我们将除最小的100％以外的所有列都设为空白。</p>
+
+<div class="language-css highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">@media</span> <span class="n">all</span> <span class="n">and</span> <span class="p">(</span><span class="n">max-width</span><span class="p">:</span><span class="m">650px</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nc">.col-1</span> <span class="p">{</span>
+        <span class="nl">width</span><span class="p">:</span> <span class="m">50%</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nc">.col-2</span> <span class="p">{</span>
+        <span class="nl">width</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nc">.col-3</span> <span class="p">{</span>
+        <span class="nl">width</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nc">.col-4</span> <span class="p">{</span>
+        <span class="nl">width</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nc">.col-5</span> <span class="p">{</span>
+        <span class="nl">width</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nc">.col-6</span> <span class="p">{</span>
+        <span class="nl">width</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这就是全部。 现在，我们无需使用框架即可创建自己的自适应网格系统。</p>
+
+<p>请注意，本指南只是创建您自己的系统的起点。 它不是框架，也不是完整的解决方案，但是我希望它确实使创建CSS网格的过程变得神秘。</p>
+
+<h1 id="参考">参考</h1>
+
+<ul>
+  <li><a href="https://jandrewniak.com/blog/creating-your-own-css-grid-system/">creating-your-own-css-grid-system</a></li>
+</ul>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E5%89%8D%E7%AB%AF/css/2020/05/24/CSS之栅格系统';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>笔记:Ruby方法查找实验</title>
+  <meta name="description" content="导航关联Ruby特性和实验分析汇总超类链 继承查找一句话就是超类链继承查找。这里是最朴素的情况，依次注释 run 方法打印结果，符合预期。一定是链条上的最近的响应的run方法。class A # 默认是Object  def run    pp "A"  endendclass B &lt; A  def run...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/%E7%AC%94%E8%AE%B0/2021/12/16/%E7%AC%94%E8%AE%B0-Ruby%E6%96%B9%E6%B3%95%E6%9F%A5%E6%89%BE%E5%AE%9E%E9%AA%8C.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">笔记:Ruby方法查找实验</h1>
+    <p class="artilce_meta"><time datetime="2021-12-16T18:53:49+08:00" itemprop="datePublished">Dec 16, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="导航关联">导航关联</h1>
+
+<p><a href="/ruby/%E7%AC%94%E8%AE%B0/2021/12/16/Ruby%E7%89%B9%E6%80%A7%E5%92%8C%E5%AE%9E%E9%AA%8C%E5%88%86%E6%9E%90%E6%B1%87%E6%80%BB.html">Ruby特性和实验分析汇总</a></p>
+<h1 id="超类链-继承查找">超类链 继承查找</h1>
+
+<p>一句话就是超类链继承查找。</p>
+
+<p>这里是最朴素的情况，依次注释 run 方法打印结果，符合预期。一定是链条上的最近的响应的run方法。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">A</span> <span class="c1"># 默认是Object</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">pp</span> <span class="s2">"A"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="k">class</span> <span class="nc">B</span> <span class="o">&lt;</span> <span class="no">A</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">pp</span> <span class="s2">"B"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">C</span> <span class="o">&lt;</span> <span class="no">B</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">pp</span> <span class="s2">"C"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="k">class</span> <span class="nc">D</span> <span class="o">&lt;</span> <span class="no">C</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">pp</span> <span class="s1">'D'</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="no">D</span><span class="p">.</span><span class="nf">new</span><span class="p">.</span><span class="nf">run</span>
+</code></pre></div></div>
+
+<h1 id="mixin情况-moduleinclude">Mixin情况 Module#include</h1>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">A</span> <span class="c1"># 默认是Object</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">pp</span> <span class="s2">"A"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="k">class</span> <span class="nc">B</span> <span class="o">&lt;</span> <span class="no">A</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">pp</span> <span class="s2">"B"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">C</span> <span class="o">&lt;</span> <span class="no">B</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">pp</span> <span class="s2">"C"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="k">module</span> <span class="nn">E</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">pp</span> <span class="s2">"E"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="k">module</span> <span class="nn">F</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">pp</span> <span class="s2">"F"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">D</span> <span class="o">&lt;</span> <span class="no">C</span>
+  <span class="kp">include</span> <span class="no">E</span>
+  <span class="kp">include</span> <span class="no">F</span>
+<span class="k">end</span>
+
+
+<span class="no">D</span><span class="p">.</span><span class="nf">new</span><span class="p">.</span><span class="nf">run</span>
+
+</code></pre></div></div>
+
+<p>D.ancestors 的结果就是 <code class="language-plaintext highlighter-rouge">[D, F, E, C, B, A, Object, PP::ObjectMixin, Kernel, BasicObject]</code></p>
+
+<p>可以注释 <code class="language-plaintext highlighter-rouge">include F</code> <code class="language-plaintext highlighter-rouge">include E</code> 查看情况，也符合预期</p>
+
+<h1 id="moduleinclude-嵌套-和-搜索常量">Module#include 嵌套 和 搜索常量</h1>
+
+<p>这里为了简化，把 A~D 去掉了，他们是不影响结果的。这里只关注最先命中。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">module</span> <span class="nn">E</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">pp</span> <span class="s2">"E"</span>
+  <span class="k">end</span>
+
+  <span class="k">module</span> <span class="nn">F</span>
+    <span class="k">def</span> <span class="nf">run</span>
+      <span class="n">pp</span> <span class="s2">"F"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+
+
+<span class="k">class</span> <span class="nc">D</span>
+  <span class="kp">include</span> <span class="no">E</span>
+  <span class="kp">include</span> <span class="no">F</span>
+<span class="k">end</span>
+
+<span class="no">D</span><span class="p">.</span><span class="nf">new</span><span class="p">.</span><span class="nf">run</span>
+
+<span class="nb">print</span> <span class="no">D</span><span class="p">.</span><span class="nf">ancestors</span>
+
+<span class="c1"># output &gt;&gt;&gt; </span>
+<span class="c1"># "F"</span>
+<span class="c1"># [D, E::F, E, Object, PP::ObjectMixin, Kernel, BasicObject]</span>
+</code></pre></div></div>
+
+<p>include F 在当下的 D中找不到，则会进入上面的词法作用域开始查找。最终找到了 E::F 。</p>
+
+<p>因为  class、module 会创建独立的作用域，并且在Ruby内部是 独立的 RClass 所以即使是  F 嵌套在 E内部，也是无所谓的，这两个宛如不相关的两部分。所以 就跟直接写F一样。最后F优先响应。</p>
+
+<h1 id="moduleprepend">Module#prepend</h1>
+
+<p>prepend 会把类放在 目标类的下面。顺如可以通过祖先类看出来。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">A</span> <span class="c1"># 默认是Object</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">pp</span> <span class="s2">"A"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">module</span> <span class="nn">E</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">pp</span> <span class="s2">"E"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">module</span> <span class="nn">F</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">pp</span> <span class="s2">"F"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">B</span> <span class="o">&lt;</span> <span class="no">A</span>
+ 
+ <span class="n">prepend</span> <span class="no">E</span>
+ <span class="kp">include</span> <span class="no">F</span>
+<span class="k">end</span>
+
+<span class="no">B</span><span class="p">.</span><span class="nf">new</span><span class="p">.</span><span class="nf">run</span>
+
+<span class="n">pp</span> <span class="no">B</span><span class="p">.</span><span class="nf">ancestors</span>
+
+<span class="c1"># 情况1：仅仅 include F</span>
+<span class="c1"># "F"</span>
+<span class="c1"># [B, F, A, Object, PP::ObjectMixin, Kernel, BasicObject]</span>
+
+<span class="c1"># 情况2： 仅仅 prepend E</span>
+<span class="c1"># "E"</span>
+<span class="c1"># [E, B, A, Object, PP::ObjectMixin, Kernel, BasicObject]</span>
+
+<span class="c1"># 情况3： </span>
+<span class="c1"># include E</span>
+<span class="c1"># prepend F</span>
+
+<span class="c1"># "E"</span>
+<span class="c1"># [E, B, F, A, Object, PP::ObjectMixin, Kernel, BasicObject]</span>
+
+<span class="c1"># 情况4：</span>
+ <span class="c1"># prepend E</span>
+ <span class="c1"># include F</span>
+
+<span class="c1">#  "E"</span>
+<span class="c1"># [E, B, F, A, Object, PP::ObjectMixin, Kernel, BasicObject]</span>
+
+</code></pre></div></div>
+
+<p>情况2 简单的说下</p>
+
+<p><code class="language-plaintext highlighter-rouge">E -&gt; B(目标类) -&gt; A </code> 形成这种关系的底层实现是复制了一份目标类，重新和E关联起来。</p>
+
+<p>这部分感兴趣可以详细参考 《Ruby原理剖析》6.2 Page163</p>
+
+<h1 id="类方法-查找顺序">类方法 查找顺序</h1>
+
+<p>这里一段，我们不关心 对象和类了。他们这一部分结束。</p>
+
+<p>我们现在关系 元类 的问题，也就是类方法。(PS: 类方法，和 类的单例方法，其实是保存在一处 也就是 A类的 类方法 和 A类的实例方法，最终结果都绑定在 #A上。)</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">A</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">run</span>
+    <span class="nb">puts</span> <span class="s1">'A'</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">B</span> <span class="o">&lt;</span> <span class="no">A</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">run</span>
+    <span class="nb">puts</span> <span class="s2">"B"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">C</span> <span class="o">&lt;</span> <span class="no">B</span>
+  <span class="c1"># def self.run</span>
+  <span class="c1">#   puts "C"</span>
+  <span class="c1"># end</span>
+<span class="k">end</span>
+
+<span class="no">C</span><span class="p">.</span><span class="nf">run</span>
+
+<span class="n">pp</span> <span class="no">C</span><span class="p">.</span><span class="nf">singleton_class</span><span class="p">.</span><span class="nf">ancestors</span>
+
+<span class="no">B</span>
+<span class="c1"># output &gt;&gt;&gt;&gt;&gt;</span>
+<span class="c1"># [#&lt;Class:C&gt;,</span>
+<span class="c1">#  #&lt;Class:B&gt;,</span>
+<span class="c1">#  #&lt;Class:A&gt;,</span>
+<span class="c1">#  #&lt;Class:Object&gt;,</span>
+<span class="c1">#  #&lt;Class:BasicObject&gt;,</span>
+<span class="c1">#  Class,</span>
+<span class="c1">#  Module,</span>
+<span class="c1">#  Object,</span>
+<span class="c1">#  Kernel,</span>
+<span class="c1">#  BasicObject]</span>
+</code></pre></div></div>
+
+<p>这段代码适合不断地注释查看结果。响应结果是和 C.singleton_class.ancestors 链条上保持结果一致。符合预期。</p>
+
+<p>他会顺着 单例类的 超类链条 查找，结束后进入 自己的 类（Class）查找然后 进入父类的超类链查找。</p>
+
+<p>其他的情况，module下定义方法不能被直接使用。再复杂的我还没见过，如果是我会主动规避掉。实在不行就先自省检查之后，再执行。
+等遇到的复杂的再分析。</p>
+
+<p>跳出来看，我觉得 看完了一圈 Ruby各种教程，脑子太多容易糊涂。实际上，就单纯从结果上来看，实际上很清晰，Ruby设计的也很简单。背后就是指针嘛。</p>
+
+<p>while 循环 顺着 super往上找，一直到找到未知。</p>
+
+<p>简单验证下  superclass 链条 （超类链），结果是保持一致的。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">pp</span> <span class="no">C</span><span class="p">.</span><span class="nf">singleton_class</span><span class="p">.</span><span class="nf">ancestors</span>
+<span class="nb">puts</span> <span class="s1">'-----'</span>
+<span class="n">pp</span> <span class="no">C</span><span class="p">.</span><span class="nf">singleton_class</span>
+<span class="n">pp</span> <span class="no">C</span><span class="p">.</span><span class="nf">singleton_class</span><span class="p">.</span><span class="nf">superclass</span>
+<span class="n">pp</span> <span class="no">C</span><span class="p">.</span><span class="nf">singleton_class</span><span class="p">.</span><span class="nf">superclass</span><span class="p">.</span><span class="nf">superclass</span>
+
+<span class="c1"># output &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;</span>
+<span class="c1"># [#&lt;Class:C&gt;,</span>
+<span class="c1">#  #&lt;Class:B&gt;,</span>
+<span class="c1">#  #&lt;Class:A&gt;,</span>
+<span class="c1">#  #&lt;Class:Object&gt;,</span>
+<span class="c1">#  #&lt;Class:BasicObject&gt;,</span>
+<span class="c1">#  Class,</span>
+<span class="c1">#  Module,</span>
+<span class="c1">#  Object,</span>
+<span class="c1">#  Kernel,</span>
+<span class="c1">#  BasicObject]</span>
+<span class="c1"># -----</span>
+<span class="c1"># #&lt;Class:C&gt;</span>
+<span class="c1"># #&lt;Class:B&gt;</span>
+<span class="c1"># #&lt;Class:A&gt;</span>
+</code></pre></div></div>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/%E7%AC%94%E8%AE%B0/2021/12/16/笔记:Ruby方法查找实验';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

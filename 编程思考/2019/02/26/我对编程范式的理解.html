@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>我对编程范式的理解</title>
+  <meta name="description" content="编程范式主要的编程范式有：  命令式编程（Imperative Programming）  声明式编程（Declarative Programming）  函数式编程（Funational Programming）  面向对象编程（Object-oriented Programming）  …命令式编程命令式编程...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2019/02/26/%E6%88%91%E5%AF%B9%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F%E7%9A%84%E7%90%86%E8%A7%A3.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">我对编程范式的理解</h1>
+    <p class="artilce_meta"><time datetime="2019-02-26T21:56:43+08:00" itemprop="datePublished">Feb 26, 2019</time></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="编程范式">编程范式</h1>
+
+<h2 id="主要的编程范式有">主要的编程范式有：</h2>
+
+<ul>
+  <li>命令式编程（Imperative Programming）</li>
+  <li>声明式编程（Declarative Programming）</li>
+  <li>函数式编程（Funational Programming）</li>
+  <li>面向对象编程（Object-oriented Programming）</li>
+  <li>…</li>
+</ul>
+
+<h2 id="命令式编程">命令式编程</h2>
+
+<p>命令式编程描述代码如何工作，告诉计算机一步步地执行、先做什么后做什么。</p>
+
+<p>比如，把大象装到冰箱，程序员需要做三步：</p>
+
+<ol>
+  <li>取来大象</li>
+  <li>初始化冰箱</li>
+  <li>把冰箱门打开</li>
+  <li>把大象塞进去</li>
+  <li>把冰箱门关上</li>
+</ol>
+
+<p>举个程序的例子:</p>
+
+<p>过滤一个数组，小于18的元素：</p>
+
+<p>命令式会这样思考</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">arr</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">21</span><span class="p">,</span><span class="mi">230</span><span class="p">,</span><span class="mi">44</span><span class="p">,</span><span class="mi">16</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">99</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">]</span>
+
+<span class="n">ans</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">arr</span><span class="p">:</span>
+  <span class="k">if</span> <span class="n">item</span> <span class="o">&lt;</span> <span class="mi">18</span><span class="p">:</span>
+    <span class="n">ans</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>主要的思考过程：</p>
+
+<ol>
+  <li>创建一个空数组，用于保存结果</li>
+  <li>然后遍历输入数组元素</li>
+  <li>对每个元素做判断，判断结果塞入空数组</li>
+  <li>迭代结束，返回数组</li>
+</ol>
+
+<p>本质上这是一过程的描述。具体的每一步都是明确的指令。</p>
+
+<h4 id="我的看法">我的看法：</h4>
+
+<p>维基百科上指出</p>
+
+<blockquote>
+  <p>命令式编程（英语：Imperative programming），是一种描述计算机所需作出的行为的编程典范。几乎所有计算机的硬件工作都是命令式的；几乎所有计算机的硬件都是设计来运行机器代码，使用命令式的风格来写的。</p>
+</blockquote>
+
+<p>个人感受，更本质上，命令式，其实是底层硬件的反映。</p>
+
+<p>分析上面的步骤：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  1. 创建一个空数组，用于保存结果 -&gt; 开辟内存空间
+  2. 然后遍历输入数组元素 -&gt; CPU指针寻找元素
+  3. 对每个元素做判断，判断结果塞入空数组 -&gt; 逻辑运算单元
+  4. 迭代结束，返回数组 -&gt; 返回地址
+</code></pre></div></div>
+
+<p>命令式的每一步操作，都能找到对应的计算机执行部分。
+更加本质的是，目前技术所有的计算机，都是冯诺依曼机，所以工作原理都十分相似。</p>
+
+<p>如果有一天，出现了量子计算机，从底层工作原理发生了变化。整体的编程的思考方式也会发生变化。</p>
+
+<h2 id="声明式编程">声明式编程</h2>
+
+<p>声明式编程表明想要实现什么目的，应该做什么，但是不指定具体怎么做。</p>
+
+<p>比如，把大象装冰箱问题：</p>
+
+<ol>
+  <li>取来大象</li>
+  <li>装入冰箱</li>
+</ol>
+
+<p>过滤数组问题：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">arr</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">21</span><span class="p">,</span><span class="mi">230</span><span class="p">,</span><span class="mi">44</span><span class="p">,</span><span class="mi">16</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">99</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">compare</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+  <span class="k">return</span> <span class="n">x</span><span class="o">&lt;</span><span class="mi">18</span>
+
+<span class="n">ans</span> <span class="o">=</span> <span class="nf">filter</span><span class="p">(</span><span class="n">compare</span><span class="p">,</span> <span class="n">arr</span><span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="对比">对比</h3>
+
+<p>相比于，<code class="language-plaintext highlighter-rouge">命令式</code> 编程：</p>
+
+<ul>
+  <li>更加简洁</li>
+  <li>更加抽象</li>
+  <li>更像是一种逻辑推导</li>
+</ul>
+
+<p><img src="https://wx3.sinaimg.cn/mw690/44894cbbly1g0l10esffpj20m80ci757.jpg" alt="compare-imperative-declarative-style" /></p>
+
+<h3 id="更多例子">更多例子</h3>
+
+<p>上面还不能够完全表达出，<code class="language-plaintext highlighter-rouge">声明式</code>编程，更加具体的例子：</p>
+
+<p>SQL就是典型的声明式程序，他关心 what 并不关心 how:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">SELECT</span> <span class="o">*</span> <span class="k">from</span> <span class="n">dogs</span>
+<span class="k">INNER</span> <span class="k">JOIN</span> <span class="n">owners</span>
+
+<span class="k">WHERE</span> <span class="n">dogs</span><span class="p">.</span><span class="n">owner_id</span> <span class="o">=</span> <span class="n">owners</span><span class="p">.</span><span class="n">id</span>
+</code></pre></div></div>
+
+<p>HTML也是</p>
+
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;div&gt;</span>
+  <span class="nt">&lt;p&gt;</span>声明式example<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;/div&gt;</span>
+</code></pre></div></div>
+
+<p>React JSX、SVG画图、Canvas、GUI 画界面等等，都是。</p>
+
+<p>函数式编程、面向对象也是声明式，但是一会单独拉出去讲。</p>
+
+<h4 id="我的看法-1">我的看法：</h4>
+
+<p>站在顶层去理解，声明式：</p>
+
+<p>声明式编程，我认为可以简单理解是一种封装的产物。它不是说改变了工作方式，而是由于封装、逻辑预先设置，造成一种，只需要声明 what，而不需要关心how。
+因为how已经被预先设置好了。</p>
+
+<p>可以理解为和函数并没有什么区别。 <code class="language-plaintext highlighter-rouge">SQL</code>可以看做是一个复杂函数，只是看起来像语言，关键字的后面就是参数。
+函数本身封装了统一的逻辑。所以，往往，我们只要 告诉他输入，还有具体的申明，就可以获得期望的返回。</p>
+
+<p>这一点，自己也可以简单模仿，自己去设置一种固定的配置结构，比如JSON、Yaml。 有一个程序，固定的去读取配置。
+这个程序如果是解释器。这个Conf 就像语言一般的的存在。Conf的设置，解释器都应该做出反应。</p>
+
+<p>声明式是一个，更加高层的封装的结果。
+仿佛就是预留参数的，明确功能的函数。</p>
+
+<h4 id="穿插讨论面向对象">穿插讨论：面向对象</h4>
+
+<p>面向对象就是一种，主张 数据、行为 合在一起的封装。所以面向对象，理论上可以封装成丝毫不关心细节的声明式调用。</p>
+
+<p>举个例子，面向对象一般都喜欢抽象出一个实体,然后封装属性、方法。像下面这样试用：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">robotConf</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1"># init config
+</span>
+<span class="n">robot</span> <span class="o">=</span> <span class="nc">Robot</span><span class="p">(</span><span class="n">robotConf</span><span class="p">)</span> <span class="c1"># robot instance
+</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">robot</span><span class="p">.</span><span class="n">version</span><span class="p">)</span>
+
+<span class="n">robot</span><span class="p">.</span><span class="nf">chatWith</span><span class="p">(</span><span class="n">me</span><span class="p">)</span>
+
+<span class="n">robot</span><span class="p">.</span><span class="nf">cook</span><span class="p">(</span><span class="n">meal</span><span class="p">)</span>
+
+<span class="n">robot</span><span class="p">.</span><span class="nf">do</span><span class="p">(</span><span class="n">findTom</span><span class="p">).</span><span class="nf">do</span><span class="p">(</span><span class="nf">sendMsg</span><span class="p">(</span><span class="sh">"</span><span class="s">How Are You Today</span><span class="sh">"</span><span class="p">)).</span><span class="nf">do</span><span class="p">(</span><span class="nf">order</span><span class="p">(</span><span class="n">Meal</span><span class="p">))</span>
+</code></pre></div></div>
+
+<p>正如上面，我只需要关系，对象、他拥有的方法，我就可以调用。</p>
+
+<p>装冰箱，面向对象举例：</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">elephant</span> <span class="o">=</span> <span class="nc">Elephant</span><span class="p">()</span>
+<span class="n">fridge</span> <span class="o">=</span> <span class="nc">Fridge</span><span class="p">()</span>
+
+<span class="n">fridge</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">elephant</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<p>过滤元素的例子：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">arr</span> <span class="o">=</span> <span class="nc">GoodList</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">21</span><span class="p">,</span><span class="mi">230</span><span class="p">,</span><span class="mi">44</span><span class="p">,</span><span class="mi">16</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">99</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">])</span>
+
+<span class="k">def</span> <span class="nf">compare</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+  <span class="k">return</span> <span class="n">x</span><span class="o">&lt;</span><span class="mi">18</span>
+
+<span class="n">ans</span> <span class="o">=</span> <span class="n">arr</span><span class="p">.</span><span class="nf">filter</span><span class="p">(</span><span class="n">compare</span><span class="p">,</span> <span class="n">arr</span><span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>面向对象，就是一种视角，而这种视角，是基于面向对象的三大特性 『封装、继承、多态』，显然这三个特性，都已经被预先设计在解释器里了。
+只要采用对应的字面量语法声明，就会产生效果。</p>
+
+<p>最后面向对象本身，可以在这个基础上，编写出，声明式调用的程序。</p>
+
+<h2 id="函数式编程">函数式编程</h2>
+
+<p>函数式编程，是另一种视角，把执行过程堪称一系列的运算步骤。每个步骤看做是无副作用的纯函数。</p>
+
+<p>命令式编程的视角，一个计算过程是这样：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">a</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">+</span> <span class="mi">2</span><span class="p">;</span>
+
+<span class="n">b</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="mi">1</span><span class="p">;</span>
+
+<span class="n">c</span> <span class="o">=</span> <span class="n">b</span> <span class="o">-</span> <span class="mi">3</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>函数式编程是这样：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">result</span> <span class="o">=</span> <span class="nf">subtract</span><span class="p">(</span><span class="nf">multiply</span><span class="p">(</span><span class="nf">add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span> <span class="mi">4</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>如果用Lisp, 前缀表达式语法是这样:</p>
+<div class="language-lisp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">(</span><span class="nb">-</span> <span class="p">(</span><span class="nb">*</span> <span class="p">(</span><span class="nb">+</span> <span class="mi">5</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">1</span><span class="p">)</span> <span class="mi">3</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>面向对象的函数式风格是这样，看起来很像自然语言描述:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">result</span> <span class="o">=</span> <span class="nf">add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">).</span><span class="nf">multiply</span><span class="p">(</span><span class="mi">3</span><span class="p">).</span><span class="nf">subtract</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h4 id="这是我临时想到的">这是我临时想到的</h4>
+
+<p>语法的表达式为了靠近一种更好的表达方式，OOP是站在自然实体映射角度，接近自然语言。
+Lisp是站在数学结构角度、解释器实现角度，完美的一致。
+任何风格，无非是，通过对逻辑处理的封装，形成一定的语义性。</p>
+
+<p>字面量的语法形式，在程序中是被刻意『制造』出来的。它是一种多变的形式，背后可能是各种目标（可读？底层一致？足够的抽象？等等）。
+归根结底，要了解的是，程序背后的本质。</p>
+
+<p>不变的是冯诺依曼底层的基于存储和执行。
+变化的是，中间层（可能是系统、编程语言、浏览器、解释器、一个函数 等，总是是程序构建后的），以及被设计驱动中间层的代码，想要呈现的形式，
+这里有各种哲学、设计目标、对于一个事物看待的角度不同的各种尝试。</p>
+
+<h3 id="总结">总结</h3>
+
+<p>这是个人的一些看法。</p>
+
+<p>编程范式，不是一种金科玉律，也不是一种固定的语法，绝对的某种形态。编程范式是一种看待事物的角度。</p>
+
+<p>显然编程范式会不断地变化，每种视角可以交叉印象 (只要中间层去实现)。</p>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E7%BC%96%E7%A8%8B%E6%80%9D%E8%80%83/2019/02/26/我对编程范式的理解';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>
