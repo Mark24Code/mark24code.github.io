@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>RodaPlugin之hash_route说明</title>
+  <meta name="description" content="前言这里主要讲解下 hash_route 如何使用，官网介绍的不是很清楚。至少我看的一脸懵逼。这里主要是通过源码进行分析得出的结论。1.为什么要用hash_route 而不是 multi_route不论是文档还是 MasteringRoda 一书中都会提到要用hash_route去替换multi_route，为什...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/roda/2022/03/17/RodaPlugin%E4%B9%8Bhash_route%E8%AF%B4%E6%98%8E.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">RodaPlugin之hash_route说明</h1>
+    <p class="artilce_meta"><time datetime="2022-03-17T15:36:57+08:00" itemprop="datePublished">Mar 17, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="前言">前言</h1>
+
+<p>这里主要讲解下 hash_route 如何使用，官网介绍的不是很清楚。至少我看的一脸懵逼。</p>
+
+<p>这里主要是通过源码进行分析得出的结论。</p>
+
+<h1 id="1为什么要用hash_route-而不是-multi_route">1.为什么要用hash_route 而不是 multi_route</h1>
+
+<p>不论是文档还是 MasteringRoda 一书中都会提到要用hash_route去替换multi_route，为什么？</p>
+
+<p>简单可以看下源码，可以理解为，multi_route存取查询route的时候是通过正则表达式。这就必然很慢。</p>
+
+<p>而hash_route是通过一个约定把路由名字生成固定的命名法的key，和对应的handler对应起来。这样子路由进入解析，直接处理，把path当成key调用方法就可以了。</p>
+
+<p>这个方法最快复杂度只有 O(1)。
+所以推荐 hash_route 来拆解复杂路由。</p>
+
+<h1 id="2只管看下-hash_route-到底做了什么">2.只管看下 hash_route 到底做了什么</h1>
+
+<p>我们让Roda自己告诉我们</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s2">"roda"</span>
+
+<span class="k">class</span> <span class="nc">App</span> <span class="o">&lt;</span> <span class="no">Roda</span>
+  <span class="n">plugin</span> <span class="ss">:hash_routes</span>
+  <span class="n">plugin</span> <span class="ss">:json</span>
+
+  <span class="n">hash_branch</span><span class="p">(</span><span class="s1">'test'</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="c1"># 定义 ....</span>
+  <span class="k">end</span>
+
+  <span class="n">route</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">root</span> <span class="k">do</span>
+      <span class="c1"># 通过源码我们知道 hash_route 在 Roda class上挂载了opts，而这里会保存着路径和方法名的映射。可以访问首页打印出注册路由名称的关系。</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">class</span><span class="p">.</span><span class="nf">opts</span>
+    <span class="k">end</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>用以下代码举例子：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s2">"roda"</span>
+
+<span class="k">class</span> <span class="nc">App</span> <span class="o">&lt;</span> <span class="no">Roda</span>
+  <span class="n">plugin</span> <span class="ss">:hash_routes</span>
+  <span class="n">plugin</span> <span class="ss">:json</span>
+
+  <span class="n">hash_branch</span><span class="p">(</span><span class="s2">"home"</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">is</span> <span class="s2">"welcome"</span> <span class="k">do</span>
+      <span class="s2">"home - welcome"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">hash_path</span><span class="p">(</span><span class="s2">"/login"</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="s2">"login"</span>
+  <span class="k">end</span>
+
+  <span class="n">hash_path</span><span class="p">(</span><span class="s2">"/logout"</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="s2">"logout"</span>
+  <span class="k">end</span>
+
+  <span class="n">route</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">root</span> <span class="k">do</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">class</span><span class="p">.</span><span class="nf">opts</span>
+    <span class="k">end</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+<p>打开浏览器访问 <code class="language-plaintext highlighter-rouge">http://0.0.0.0:9292</code> 我们可以得到</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"hash_branches"</span><span class="p">:</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+        </span><span class="nl">""</span><span class="p">:</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+            </span><span class="nl">"/home"</span><span class="p">:</span><span class="w"> </span><span class="s2">"_roda_hash_branch__/home_1"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="nl">"hash_paths"</span><span class="p">:</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+        </span><span class="nl">""</span><span class="p">:</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+            </span><span class="nl">"/login"</span><span class="p">:</span><span class="w"> </span><span class="s2">"_roda_hash_path__/login_2"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"/logout"</span><span class="p">:</span><span class="w"> </span><span class="s2">"_roda_hash_path__/logout_3"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="nl">"hash_routes_methods"</span><span class="p">:</span><span class="w">
+    </span><span class="p">{},</span><span class="w">
+    </span><span class="nl">"json_result_classes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"Array"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Hash"</span><span class="p">],</span><span class="w">
+    </span><span class="nl">"json_result_serializer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#&lt;Proc:0x00000001010bb718(&amp;:to_json) (lambda)&gt;"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"json_result_content_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"application/json"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+
+</span></code></pre></div></div>
+
+<h1 id="3namespace-和-自定义">3.namespace 和 自定义</h1>
+
+<p>源码中 namespace、path 是两个不同的概念，不要混淆。</p>
+
+<p>比如：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">hash_branch</span><span class="p">(</span><span class="s2">"home"</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">is</span> <span class="s2">"welcome"</span> <span class="k">do</span>
+      <span class="s2">"home - welcome"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<p>当他是一个参数的时候，其实默认有一个未知参数是 namespace 他的值默认是 <code class="language-plaintext highlighter-rouge">""</code>。所以你在观察前面 JSON 的时候可以看到很多方法挂载空字符串下。</p>
+
+<p>这是它默认的工作方式。</p>
+
+<p>我们可以通过覆盖第一个参数，来提供名字空间。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">hash_branch</span><span class="p">(</span><span class="s2">"roda_blog"</span><span class="p">,</span> <span class="s2">"home"</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">is</span> <span class="s2">"welcome"</span> <span class="k">do</span>
+      <span class="s2">"home - welcome"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+<p>这时候输出变成</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"hash_branches"</span><span class="p">:</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"roda_blog"</span><span class="p">:</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+            </span><span class="nl">"/home"</span><span class="p">:</span><span class="w"> </span><span class="s2">"_roda_hash_branch_roda_blog_/home_1"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="nl">"hash_paths"</span><span class="p">:</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+        </span><span class="nl">""</span><span class="p">:</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+            </span><span class="nl">"/login"</span><span class="p">:</span><span class="w"> </span><span class="s2">"_roda_hash_path__/login_2"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"/logout"</span><span class="p">:</span><span class="w"> </span><span class="s2">"_roda_hash_path__/logout_3"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="nl">"hash_routes_methods"</span><span class="p">:</span><span class="w">
+    </span><span class="p">{},</span><span class="w">
+    </span><span class="nl">"json_result_classes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"Array"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Hash"</span><span class="p">],</span><span class="w">
+    </span><span class="nl">"json_result_serializer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#&lt;Proc:0x000000010259f738(&amp;:to_json) (lambda)&gt;"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"json_result_content_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"application/json"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>我们可以看到 <code class="language-plaintext highlighter-rouge">roda_blog</code> 有了自己名字空间。</p>
+
+<h1 id="4使用namespace">4.使用namespace</h1>
+
+<p>如果我们知道了namespace，来看下Roda是如何来构建复杂的应用程序。</p>
+
+<p>namespace 其实就是一个名字，我们使用<strong> <code class="language-plaintext highlighter-rouge">hash_* </code> 类方法</strong>的时候，可以通过第一参数命名这个路由。</p>
+
+<p>而我们也可以在 <strong><code class="language-plaintext highlighter-rouge">r.hash_*</code> RodaRequest实例方法</strong> 里面通过 namespace 显示的指定在这儿处理的路由。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s2">"roda"</span>
+
+<span class="k">class</span> <span class="nc">App</span> <span class="o">&lt;</span> <span class="no">Roda</span>
+  <span class="n">plugin</span> <span class="ss">:hash_routes</span>
+  <span class="n">plugin</span> <span class="ss">:json</span>
+
+  <span class="n">hash_branch</span><span class="p">(</span><span class="s2">"roda_blog"</span><span class="p">,</span> <span class="s2">"roda_home"</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">is</span> <span class="s2">"welcome"</span> <span class="k">do</span>
+      <span class="s2">"home - welcome"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">hash_branch</span><span class="p">(</span><span class="s2">"home"</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">is</span> <span class="s2">"welcome"</span> <span class="k">do</span>
+      <span class="s2">"home - welcome"</span>
+    <span class="k">end</span>
+
+    <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span><span class="p">(</span><span class="s2">"roda_blog"</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="n">route</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">root</span> <span class="k">do</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">class</span><span class="p">.</span><span class="nf">opts</span>
+    <span class="k">end</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>我们访问 <code class="language-plaintext highlighter-rouge">http://0.0.0.0:9292/home/roda_home/welcome</code>可以获得期待的返回。</p>
+
+<p>Roda执行路由十分简单，就是在运行Ruby代码。这里我们来分析一下：</p>
+
+<p>Roda 的 route 源码定义是解析 路由的入口，所以从这里开始。正确解析 r.root 的时候，这是主页。</p>
+
+<p><code class="language-plaintext highlighter-rouge">r.hash_routes</code> 操作其实很简单，它内部会 先执行 <code class="language-plaintext highlighter-rouge">r.hash_paths</code> 然后再 执行 <code class="language-plaintext highlighter-rouge">r.hash_branches</code>, 这两者的区别是 <code class="language-plaintext highlighter-rouge">hash_paths</code> 其实就是 <code class="language-plaintext highlighter-rouge">Roda</code> 的 <code class="language-plaintext highlighter-rouge">r.is</code> 思想走的是精确匹配。不过 <code class="language-plaintext highlighter-rouge">hash_paths</code> 的匹配思想非常简单粗暴，直接把 路由里面的 path，作为  key 在 <code class="language-plaintext highlighter-rouge">hash_paths</code> 注册的字典里查找，找到就返回。这就是精确查找。</p>
+
+<p><code class="language-plaintext highlighter-rouge">r.hash_branches</code> 其实就是 <code class="language-plaintext highlighter-rouge">r.on</code> 的感觉是模糊<code class="language-plaintext highlighter-rouge">/*</code> 式 匹配路由。他就是以 <code class="language-plaintext highlighter-rouge">'/'</code> 分割第一个元素作为 branch 进行匹配，匹配下去的继续执行。</p>
+
+<p>可以简单理解为，执行路由的感觉，他不过是在执行匹配代码。这里 hash_path 如果是直接匹配中就是 O(1) 复杂度。</p>
+
+<p>我们把注意力收回来，继续分析：</p>
+
+<p>route 中的  <code class="language-plaintext highlighter-rouge">r.hash_routes</code> 其实是 <code class="language-plaintext highlighter-rouge">r.hash_routes("")</code> 的简写，所以它挂载的是 <code class="language-plaintext highlighter-rouge">hash_branch("home")</code> 。而<code class="language-plaintext highlighter-rouge">hash_branch("home") </code> 里面写了一句 <code class="language-plaintext highlighter-rouge">r.hash_routes("roda_blog")</code> 其实这里就是在通过 <code class="language-plaintext highlighter-rouge">namespace</code> 的方式去挂载 <code class="language-plaintext highlighter-rouge">"roda_blog"</code>。</p>
+
+<p>这里要额外注意，作为 namespace，symbol和 string 作为 key 完全不同效果。要区分开，他们不一样。</p>
+
+<p>解析路由方面，<code class="language-plaintext highlighter-rouge">namespace</code> 完全不参加过程。解析过程，完全依赖与书写和挂载的顺序。这里 假设我们解析了 <code class="language-plaintext highlighter-rouge">"/home"</code> 就会到 <code class="language-plaintext highlighter-rouge">hash_branch("home") </code> 中，如果我们继续有参数  <code class="language-plaintext highlighter-rouge">"/home/roda_home"</code> 其实这里就会进入 <code class="language-plaintext highlighter-rouge">hash_branch("roda_blog", "roda_home")</code> ,因为第一个参数是 <code class="language-plaintext highlighter-rouge">namespace</code> 不参与计算，只是用来互相关联的作用，第二个参数是 <code class="language-plaintext highlighter-rouge">path</code> 会参与 <code class="language-plaintext highlighter-rouge">@remaining_path</code> 的计算中去。这样匹配中，还可以继续往下匹配，精准匹配到  <code class="language-plaintext highlighter-rouge">welcome</code> 结束。</p>
+
+<p>所以这里定义成什么样子，就可以匹配。而内部如果想要继续分开，就继续使用 hash_route 划分为更小的文件。</p>
+
+<p>如果不想分开，就可以继续使用 r.on、r.is。他们无非是 Ruby 的代码而已。</p>
+
+<h1 id="5-dsl--hash_routes">5. DSL  hash_routes</h1>
+
+<h3 id="51-hash_routes-dsl-介绍">5.1 hash_routes DSL 介绍</h3>
+
+<p><code class="language-plaintext highlighter-rouge">RodaRequest</code> 提供了一个方法 <code class="language-plaintext highlighter-rouge">r.hash_routes</code> 用来自动请求 <code class="language-plaintext highlighter-rouge">hash_paths\hash_branches</code>，在定义路由的时候，也设计了一个 <code class="language-plaintext highlighter-rouge">hash_routes</code> 这是一个 DSL，用来在上下文中快速的声明 <code class="language-plaintext highlighter-rouge">hash_paths\hash_branches</code>。</p>
+
+<h3 id="52-hash_routes-dsl-的-两种写法">5.2 hash_routes DSL 的 两种写法</h3>
+
+<p>DSL部分的 hash_routes 核心也非常简单。</p>
+
+<p>可以用两种使用方法，其实差不多。</p>
+
+<p>如果 block.arity=1 参考 <a href="https://devdocs.io/ruby~3/proc#method-i-arity">proc#method-i-arity</a> 如果你的块需要1个参数，那么会把 dsl实例作为参数返回在块中。如果没有参数，这个块会在 dsl的instance上下文中使用。</p>
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Invoke the DSL for configuring hash routes, see DSL for methods inside the</span>
+<span class="c1"># block.  If the block accepts an argument, yield the DSL instance.  If the</span>
+<span class="c1"># block does not accept an argument, instance_exec the block in the context</span>
+<span class="c1"># of the DSL instance.</span>
+<span class="k">def</span> <span class="nf">hash_routes</span><span class="p">(</span><span class="n">namespace</span><span class="o">=</span><span class="s1">''</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="n">dsl</span> <span class="o">=</span> <span class="no">DSL</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">namespace</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">block</span>
+    <span class="k">if</span> <span class="n">block</span><span class="p">.</span><span class="nf">arity</span> <span class="o">==</span> <span class="mi">1</span>
+      <span class="k">yield</span> <span class="n">dsl</span>
+    <span class="k">else</span>
+      <span class="n">dsl</span><span class="p">.</span><span class="nf">instance_exec</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">dsl</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>所以可以这样, 可以省略 <code class="language-plaintext highlighter-rouge">|r|</code> 或者 不省略</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nb">require</span> <span class="s2">"roda"</span>
+
+<span class="k">class</span> <span class="nc">App</span> <span class="o">&lt;</span> <span class="no">Roda</span>
+  <span class="n">plugin</span> <span class="ss">:hash_routes</span>
+  <span class="n">plugin</span> <span class="ss">:json</span>
+
+  <span class="n">hash_routes</span><span class="p">(</span><span class="s2">"roda_home"</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">is</span> <span class="s2">"welcome"</span> <span class="k">do</span>
+      <span class="s2">"home - welcome"</span>
+    <span class="k">end</span>
+
+    <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"login"</span> <span class="k">do</span>
+      <span class="s2">"home - login"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">hash_routes</span><span class="p">(</span><span class="s2">"plugin_home"</span><span class="p">)</span> <span class="k">do</span>
+    <span class="n">is</span> <span class="s2">"welcome"</span> <span class="k">do</span>
+      <span class="s2">"home - welcome"</span>
+    <span class="k">end</span>
+    
+    <span class="n">on</span> <span class="s2">"bye"</span> <span class="k">do</span>
+      <span class="s2">"home - welcome"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1">#....</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<h3 id="53-hash_routes-dsl-没有-path-了-只有名字空间">5.3 hash_routes DSL 没有 path 了, 只有名字空间。</h3>
+
+<p>简单直接第一个参数是 namespace 所以 hash_routes DSL 永远是以 <strong>声明 被挂载路由而存在的</strong>。</p>
+
+<p>而  hash_routes 中的  is\on 的实际上原理，是 把  hash_routes 的 namespace 和 自己声明的 path 组合在一起</p>
+
+<p>is 就是使用 hash_paths, on 就是使用 hash_branches</p>
+
+<p>只是一个快速声明的语法糖。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">on</span><span class="p">(</span><span class="n">segment</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="vi">@roda</span><span class="p">.</span><span class="nf">hash_branch</span><span class="p">(</span><span class="vi">@namespace</span><span class="p">,</span> <span class="n">segment</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="c1"># Use the segment to setup a path in the current namespace.</span>
+<span class="c1"># If path is given as a string, it is prefixed with a slash.</span>
+<span class="c1"># If path is +true+, the empty string is used as the path.</span>
+<span class="k">def</span> <span class="nf">is</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="o">==</span> <span class="kp">true</span> <span class="p">?</span> <span class="s2">""</span> <span class="p">:</span> <span class="s2">"/</span><span class="si">#{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span>
+  <span class="vi">@roda</span><span class="p">.</span><span class="nf">hash_path</span><span class="p">(</span><span class="vi">@namespace</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>没有 path 了, 只有名字空间。这意味着 在 根 App 上，一定是通过原始的 r.on r.is 来分发到 r.hash_routes, 这里给出一个例子：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s1">'orders'</span> <span class="k">do</span>
+  <span class="n">r</span><span class="p">.</span><span class="nf">is</span> <span class="k">do</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span><span class="p">(</span><span class="s1">'orders/index'</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>另一个文件中</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">App</span>
+  <span class="n">hash_routes</span><span class="p">(</span><span class="s1">'orders/index'</span><span class="p">)</span> <span class="k">do</span>
+    <span class="n">is</span> <span class="kp">true</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+      <span class="c1">#....</span>
+      <span class="n">view</span> <span class="s1">'orders/index'</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>路由之间的层次关系，必须通过嵌套的调用关系，并且是 path 部分的嵌套关系决定的。</p>
+
+<h3 id="54-坑---dsl-instance-和-roda_request-傻傻分不清楚">5.4 坑   dsl instance 和 roda_request 傻傻分不清楚</h3>
+
+<p>当我们想在 hash_routes DSL 里面进行嵌套访问的时候，别忘了</p>
+
+<p><code class="language-plaintext highlighter-rouge">hash_routes do |hr|</code>  这里 hr 具有  on、is 方法，但是不能与  RodaReques 的 @_request 混淆，我们已经自源码里看清楚，这个不是 request对象。</p>
+
+<p>要想在  hash_routes 里继续调用 hash_routes 进行嵌套，需要使用 is\on 方法的 block 参数 —— 这才是 @_request ,RodaRequest 实例才有 r.hash_routes 方法。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nb">require</span> <span class="s2">"roda"</span>
+
+<span class="k">class</span> <span class="nc">App</span> <span class="o">&lt;</span> <span class="no">Roda</span>
+  <span class="n">plugin</span> <span class="ss">:hash_routes</span>
+  <span class="n">plugin</span> <span class="ss">:json</span>
+
+  <span class="n">hash_routes</span> <span class="s2">"list"</span> <span class="k">do</span> <span class="o">|</span><span class="n">hr</span><span class="o">|</span> <span class="c1"># 这里 hr 是 hash_routes DSL 实例 dsl</span>
+    <span class="c1">#/shop/list</span>
+    <span class="n">hr</span><span class="p">.</span><span class="nf">is</span> <span class="kp">true</span> <span class="k">do</span>
+      <span class="s1">'lists'</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">hash_routes</span> <span class="s2">"shop"</span> <span class="k">do</span>
+    <span class="c1"># /shop</span>
+    <span class="n">is</span> <span class="kp">true</span> <span class="k">do</span>
+      <span class="s1">'shops'</span>
+    <span class="k">end</span>
+
+    <span class="n">on</span> <span class="s2">"list"</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>  <span class="c1"># !!! on 方法的 block 参数，才是 RodaRequest 实例 @_request 具有 hash_routes 方法</span>
+      <span class="c1"># 这里的 r 不是 @_request 而是  dsl instance</span>
+      <span class="c1"># 所以这里的方法是空</span>
+      <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span><span class="p">(</span><span class="s2">"list"</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+
+
+  <span class="n">route</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">root</span> <span class="k">do</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">class</span><span class="p">.</span><span class="nf">opts</span>
+    <span class="k">end</span>
+
+    <span class="n">r</span><span class="p">.</span><span class="nf">on</span> <span class="s2">"shop"</span> <span class="k">do</span>
+      <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span><span class="p">(</span><span class="s2">"shop"</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<h3 id="55-dsl-是返回实例意味着你可以这样">5.5 dsl 是返回实例意味着你可以这样</h3>
+
+<p>hash_routes 返回的是一个 dsl 实例 ，意味着你也可以通过命令式去声明。</p>
+
+<p>这一切都在意料之中。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">def</span> <span class="nf">hash_routes</span><span class="p">(</span><span class="n">namespace</span><span class="o">=</span><span class="s1">''</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+  <span class="n">dsl</span> <span class="o">=</span> <span class="no">DSL</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">namespace</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">block</span>
+    <span class="k">if</span> <span class="n">block</span><span class="p">.</span><span class="nf">arity</span> <span class="o">==</span> <span class="mi">1</span>
+      <span class="k">yield</span> <span class="n">dsl</span>
+    <span class="k">else</span>
+      <span class="n">dsl</span><span class="p">.</span><span class="nf">instance_exec</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">dsl</span>
+<span class="k">end</span>
+
+<span class="c1"># =======</span>
+<span class="nb">require</span> <span class="s2">"roda"</span>
+
+<span class="k">class</span> <span class="nc">App</span> <span class="o">&lt;</span> <span class="no">Roda</span>
+  <span class="n">plugin</span> <span class="ss">:hash_routes</span>
+  <span class="n">plugin</span> <span class="ss">:json</span>
+
+  <span class="n">bhr</span> <span class="o">=</span> <span class="n">hash_routes</span><span class="p">(</span><span class="ss">:b</span><span class="p">)</span>
+
+  <span class="n">bhr</span><span class="p">.</span><span class="nf">is</span> <span class="s2">"test"</span> <span class="k">do</span>
+    <span class="s2">"b:test"</span>
+  <span class="k">end</span>
+
+  <span class="n">route</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">root</span> <span class="k">do</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">class</span><span class="p">.</span><span class="nf">opts</span>
+    <span class="k">end</span>
+
+    <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span><span class="p">(</span><span class="ss">:b</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<h3 id="56-自由挂载">5.6 自由挂载</h3>
+
+<p>这里有一个例子，我可以在 route 里面直接挂载三个路由。</p>
+
+<p>也可以在 hash_routes 里面嵌套 namespace 挂载。比较自由。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s2">"roda"</span>
+
+<span class="k">class</span> <span class="nc">App</span> <span class="o">&lt;</span> <span class="no">Roda</span>
+  <span class="n">plugin</span> <span class="ss">:hash_routes</span>
+
+  <span class="n">hash_routes</span> <span class="s2">"a"</span> <span class="k">do</span>
+    <span class="n">on</span> <span class="s2">"a-path"</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+      <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span><span class="p">(</span><span class="s2">"b"</span><span class="p">)</span>
+      <span class="s2">"a---path"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">hash_routes</span> <span class="s2">"b"</span> <span class="k">do</span>
+    <span class="n">on</span> <span class="s2">"b-path"</span> <span class="k">do</span>
+      <span class="s2">"b---path"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">hash_routes</span> <span class="s2">"c"</span> <span class="k">do</span>
+    <span class="n">on</span> <span class="s2">"c-path"</span> <span class="k">do</span>
+      <span class="s2">"c----path"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">route</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span><span class="p">(</span><span class="s2">"a"</span><span class="p">)</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span><span class="p">(</span><span class="s2">"b"</span><span class="p">)</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span><span class="p">(</span><span class="s2">"c"</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<h1 id="6dispatch_from">6.dispatch_from</h1>
+
+<p>dispatch_from 的作用是会在 hash_routes 的DSL中发挥作用，它主要会把当前的hash_routes用 hash_branch 包一层，再这层的下面调用 r.hash_routes 以他自己的namespace作为参数。</p>
+
+<p>其实等于给改变了 hash_routes 的 namespance和branch。</p>
+
+<p>比如：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s2">"roda"</span>
+
+<span class="k">class</span> <span class="nc">App</span> <span class="o">&lt;</span> <span class="no">Roda</span>
+  <span class="n">plugin</span> <span class="ss">:hash_routes</span>
+
+  <span class="n">hash_routes</span> <span class="s2">"a"</span> <span class="k">do</span>
+    <span class="n">dispatch_from</span><span class="p">(</span><span class="s2">"abc"</span><span class="p">)</span>
+
+    <span class="n">on</span> <span class="s2">"a-path"</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+      <span class="s2">"a---path"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">route</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>这里 <code class="language-plaintext highlighter-rouge">route</code> 中 <code class="language-plaintext highlighter-rouge">r.hash_routes</code> 实际上是 <code class="language-plaintext highlighter-rouge">r.hash_routes("")</code></p>
+
+<p>不过 route 这边是运行解析时候关注的。</p>
+
+<p>还得切换下视角，<code class="language-plaintext highlighter-rouge">hash_routes</code> 声明语句其实是注册路由。到底注册了什么路由呢？</p>
+
+<p><code class="language-plaintext highlighter-rouge">hash_routes "a"</code> 是在 <code class="language-plaintext highlighter-rouge">"a"</code> 的 <code class="language-plaintext highlighter-rouge">namespace</code> 里注册路由。</p>
+
+<p>普通情况下需要调用 <code class="language-plaintext highlighter-rouge">r.hash_routes("a")</code> 挂载生效。</p>
+
+<p>这里比较特别 <code class="language-plaintext highlighter-rouge">dispatch_from("abc")</code> 实际上是 <code class="language-plaintext highlighter-rouge">dispatch_from(namespace="", "abc")</code> 等于要
+<code class="language-plaintext highlighter-rouge">r.hash_branch("abc")</code> 包裹，并且依然是注册在<code class="language-plaintext highlighter-rouge">""</code></p>
+
+<p>所以这里</p>
+
+<p><code class="language-plaintext highlighter-rouge">http://127.0.0.1:9292/abc/a-path</code> 可以访问到</p>
+
+<hr />
+
+<p>如果我们把名字空间加在  <code class="language-plaintext highlighter-rouge">dispatch_from</code> 里，比如  <code class="language-plaintext highlighter-rouge">dispatch_from("ns", "abc-prefix")</code></p>
+
+<p>看看下面的会如何反映</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s2">"roda"</span>
+
+<span class="k">class</span> <span class="nc">App</span> <span class="o">&lt;</span> <span class="no">Roda</span>
+  <span class="n">plugin</span> <span class="ss">:hash_routes</span>
+
+  <span class="c1"># 以下代码等价于如下情况</span>
+  <span class="c1">#</span>
+  <span class="c1"># hash_routes "a" do</span>
+  <span class="c1">#   on "a-path" do |r|</span>
+  <span class="c1">#     "a---path"</span>
+  <span class="c1">#   end</span>
+  <span class="c1"># end</span>
+
+  <span class="c1"># hash_branch("ns", "abc-prefix") do</span>
+  <span class="c1">#   r.hash_routes("a")</span>
+  <span class="c1"># end</span>
+
+  <span class="n">hash_routes</span> <span class="s2">"a"</span> <span class="k">do</span>
+    <span class="n">dispatch_from</span><span class="p">(</span><span class="s2">"ns"</span><span class="p">,</span> <span class="s2">"abc-prefix"</span><span class="p">)</span>
+
+    <span class="n">on</span> <span class="s2">"a-path"</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+      <span class="s2">"a---path"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">route</span> <span class="k">do</span> <span class="o">|</span><span class="n">r</span><span class="o">|</span>
+    <span class="n">r</span><span class="p">.</span><span class="nf">hash_routes</span><span class="p">(</span><span class="s2">"ns"</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>在运行的时候，我们挂载 <code class="language-plaintext highlighter-rouge">"ns"</code> ，这里实际上 <code class="language-plaintext highlighter-rouge">dispatch_from("ns", "abc-prefix")</code> 就相当于定义了 <code class="language-plaintext highlighter-rouge">"ns"</code> 了。</p>
+
+<p>总之 <code class="language-plaintext highlighter-rouge">dispatch_from</code> 这就是一个包装重写 <code class="language-plaintext highlighter-rouge">namespace</code> 和 <code class="language-plaintext highlighter-rouge">branch</code> 的一个方法。</p>
+
+<h1 id="7-获取参数">7. ??获取参数</h1>
+
+<p>TODO</p>
+
+<h1 id="总结">总结：</h1>
+
+<p>1.Roda原生的 r.is r.on 只能把路由定义在一个文件中</p>
+
+<p>因为本质上他们只是一段嵌套的block代码，重要的价值在于他们嵌套产生的闭包，可以帮助声明程序。
+而执行的时候，递进调用，也会非常方便。这里无法很好地拆成多个文件。</p>
+
+<p>2.hash_routes解决拆分的方法</p>
+
+<p>实际上这里也没有什么魔法可言，hash_routes 所谓的拆分，就是做了一些事情，他把我们其他文件声明 hash_* 的方法在 App &lt; Roda 中执行一遍。这其实是在执行类方法，而这个函数执行的意义实际上在不断地给 Roda.class.opts 里面的一个 hashmap 里面不断地注册方法名，同时也把这些方法定义在 App 上。</p>
+
+<p>这就像是把 App 作为一个全局变量，然后把所有方法都挂在上面了，保持方法名没有冲突即可。</p>
+
+<p>3.hash_routes 的解析</p>
+
+<p>等到路由进入 Roda 的route开始执行，它就像执行Ruby代码一样一段一段的执行，r.is、r.on 他们会递进块式的执行。如果遇到 r.hash_routes 他们会通过传入的名字空间，去App上找到 存储方法的 hashmap，然后从中取出 相应 namespace 作为key的 route hash_map， 然后再通过 @remaining_path 根据是 path还是branch匹配key来获得方法名，然后调用这个方法名。</p>
+
+<p>@remaining_path 作为每一段执行路由里面，都会访问的一个全局变量。不过这个变量是在顺序执行的代码中被访问的。匹配就编辑它，去除匹配部分继续递进顺着 tree-route 的树杈进行匹配。 如果不匹配就把修改的还原回去，跳过自己，传递给下一段代码。直至无法匹配返回 false，Roda遇到 false、nil 处理为 404。</p>
+
+<p>3.小结</p>
+
+<p>hash_routes 是注册方法</p>
+
+<p>r.hash_routes 是挂载方法，默认挂载 ‘’</p>
+
+<p>挂载在同一级别，就是同一级别的路由。</p>
+
+<p>嵌套的 r.hash_routes 才是下一级</p>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/roda/2022/03/17/RodaPlugin之hash_route说明';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

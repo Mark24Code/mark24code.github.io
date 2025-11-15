@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>浏览器之CSRF攻击</title>
+  <meta name="description" content="什么时CSRF攻击CSRF 全称 Cross Site Request Forgery 又称为 “跨站请求伪造”，指黑客引用用户打开黑客的网站，再黑客的网站，利用用户的登录状态发起跨站请求，简单的讲，CSRF就是黑客利用了用户登陆状态，并通过第三方的站点来做一些坏事。一些例子1.自动发起GET请求&lt;!DOC...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E5%89%8D%E7%AB%AF/%E6%B5%8F%E8%A7%88%E5%99%A8/2020/05/21/%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B9%8BCSRF%E6%94%BB%E5%87%BB.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">浏览器之CSRF攻击</h1>
+    <p class="artilce_meta"><time datetime="2020-05-21T21:47:26+08:00" itemprop="datePublished">May 21, 2020</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="什么时csrf攻击">什么时CSRF攻击</h1>
+
+<p>CSRF 全称 Cross Site Request Forgery 又称为 “跨站请求伪造”，指黑客引用用户打开黑客的网站，再黑客的网站，利用用户的登录状态发起跨站请求，简单的讲，CSRF就是黑客利用了用户登陆状态，并通过第三方的站点来做一些坏事。</p>
+
+<h1 id="一些例子">一些例子</h1>
+
+<h2 id="1自动发起get请求">1.自动发起GET请求</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;body&gt;
+ &lt;h1&gt;⿊客的站点：CSRF攻击演示&lt;/h1&gt;
+ &lt;img src="https://time.geekbang.org/sendcoin?user=hacker&amp;number=100"&gt;
+ &lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div></div>
+
+<p>转账接口隐藏在图片里，页面被加载的时候就会对img请求，结果就发起转账了。</p>
+
+<h2 id="2自动发起post请求">2.自动发起POST请求</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;body&gt;
+ &lt;h1&gt;⿊客的站点：CSRF攻击演示&lt;/h1&gt;
+ &lt;form id='hacker-form' action="https://time.geekbang.org/sendcoin" method=POST&gt;
+ &lt;input type="hidden" name="user" value="hacker" /&gt;
+ &lt;input type="hidden" name="number" value="100" /&gt;
+ &lt;/form&gt;
+ &lt;script&gt; document.getElementById('hacker-form').submit(); &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div></div>
+
+<p>黑客构建了一个隐藏表单，用户打开站点后，表单被自动提交。</p>
+
+<h2 id="3引诱用户点击链接">3.引诱用户点击链接</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> &lt;img width=150 src=http://images.xuejuzi.cn/1612/1_161230185104_1.jpg&gt; &lt;/img&gt; &lt;/div&gt; &lt;div&gt;
+ &lt;a href="https://time.geekbang.org/sendcoin?user=hacker&amp;number=100" taget="_blank"&gt;
+ 点击下载美⼥照⽚
+ &lt;/a&gt;
+&lt;/div&gt;
+</code></pre></div></div>
+
+<p>用户一旦点击，发起转账。</p>
+
+<p>和XSS不同的是，CSRF攻击不需要将恶意代 码注⼊⽤户的⻚⾯，仅仅是利⽤服务器的漏洞和⽤户的登录状态来实施攻击。</p>
+
+<h1 id="如何防止csrf攻击">如何防止CSRF攻击</h1>
+
+<p>起CSRF攻击的三个必要条件：</p>
+
+<ul>
+  <li>第⼀个，⽬标站点⼀定要有CSRF漏洞；</li>
+  <li>第⼆个，⽤户要登录过⽬标站点，并且在浏览器上保持有该站点的登录状态；</li>
+  <li>第三个，需要⽤户打开⼀个第三⽅站点，可以是⿊客的站点，也可以是⼀些论坛</li>
+</ul>
+
+<p>免受CSRF攻击有一下几个途径</p>
+
+<h2 id="1充分利用好cookie的samesite属性">1.充分利用好Cookie的SameSite属性</h2>
+
+<p>这个属性可以实现从第三方站点发起请求的时候禁止Cookie的发送。</p>
+
+<h3 id="samesite通常有-strictlaxnone三个值">SameSite通常有 Strict，Lax，None三个值。</h3>
+
+<p>Strict最严格：
+浏览器完全禁止第三方Cookie，简单说如果如果你从A的页面访问了B的资源，而B的Cookie设置了SameSite=Strict 那么这些Cookie时不会被送到B的服务器上的。只有你在B的站点请求B的资源，才会带上这些Cookie</p>
+
+<p>Lax相对宽松一点，跨站点的情况下，从第三方站点的链接打开和从第三方的站点提交Get方式和表单，这两种方式会携带Cookie。
+但是如果在第三方站点中使用POST方法或者通过 Img，Iframe等标签加载url，这些场景不会携带Cookie</p>
+
+<p>如果是None，任何情况下都会发送Cookie。</p>
+
+<h2 id="2验证请求来源站点">2.验证请求来源站点</h2>
+
+<p>在服务端验证请求来源的站点。</p>
+
+<p>需要使用HTTP头中 Referer和Origin属性。
+虽然可以通过Referer来告诉服务器但是有一些场景不适用，所以也可以不上传Referere值，具体参考 Referer Policy.</p>
+
+<p>服务端请求中 Referer并不是很可靠，因此标准委员会有制定了 Origin属性，一些场合，比如XMLHTTPRequest、Fetch发起跨站请求或者通过POST方法发送请求时，都会带上Origin。</p>
+
+<p>由于安全考虑Origin只携带域名不携带路径。</p>
+
+<p>服务器的策略优先判断Origin 如果没有 再根据情况判断是否用Referer</p>
+
+<h2 id="3-csrf-token">3. CSRF Token</h2>
+
+<p>大致分为两步：</p>
+
+<p>第一步： 浏览器向服务器发起请求，服务器生成一个 CSRF TOKEN, 其实就是一个字符串，然后将字符串植入返回页面中，例如如下例子：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;body&gt;
+ &lt;form action="https://time.geekbang.org/sendcoin" method="POST"&gt;
+ &lt;input type="hidden" name="csrf-token" value="nc98P987bcpncYhoadjoiydc9ajDlcn"&gt;
+ &lt;input type="text" name="user"&gt;
+ &lt;input type="text" name="number"&gt;
+ &lt;input type="submit"&gt;
+ &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div></div>
+
+<p>第二部：浏览器发起转账请求，那么就会携带上CSRF Token然后服务器会验证是否合法。</p>
+
+<p>第三方网站因为无法获得TOken的值，即使发出了请求也会因为Token错误而被拒绝。</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E5%89%8D%E7%AB%AF/%E6%B5%8F%E8%A7%88%E5%99%A8/2020/05/21/浏览器之CSRF攻击';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

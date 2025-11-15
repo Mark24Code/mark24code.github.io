@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Postgresql笔记02进阶</title>
+  <meta name="description" content="主要目标这部分主要深入PG的一些独特的特性介绍。一些操作在上一个笔记语焉不详的地方进行深入。应对日常业务中比较难的部分。  配置管理  角色与权限管理  数据库创建  拓展包机制  备份与恢复  禁止行为  psql工具  pgAdmin  数据类型、表、约束、索引  PG特性  函数编写  查询性能调优  复制...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/postgresql/%E6%95%B0%E6%8D%AE%E5%BA%93/2021/06/30/Postgresql%E7%AC%94%E8%AE%B02.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">Postgresql笔记02进阶</h1>
+    <p class="artilce_meta"><time datetime="2021-06-30T23:39:45+08:00" itemprop="datePublished">Jun 30, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="主要目标">主要目标</h1>
+
+<p>这部分主要深入PG的一些独特的特性介绍。一些操作在上一个笔记语焉不详的地方进行深入。
+应对日常业务中比较难的部分。</p>
+
+<ul>
+  <li>配置管理</li>
+  <li>角色与权限管理</li>
+  <li>数据库创建</li>
+  <li>拓展包机制</li>
+  <li>备份与恢复</li>
+  <li>禁止行为</li>
+  <li>psql工具</li>
+  <li>pgAdmin</li>
+  <li>数据类型、表、约束、索引</li>
+  <li>PG特性</li>
+  <li>函数编写</li>
+  <li>查询性能调优</li>
+  <li>复制与外部数据库
+    <h1 id="学习材料">学习材料</h1>
+  </li>
+</ul>
+
+<p><a href="https://book.douban.com/subject/30382741/">《PostgreSQL即学即用（第3版）》</a></p>
+
+<h1 id="一角色管理与权限">一、角色管理与权限</h1>
+
+<h1 id="1-角色role">1. 角色（Role）</h1>
+
+<p>PostgreSQL 中使用角色(role)机制来处理用户身份认证。拥有登录数据库权限的角色
+称为可登录角色(login role)。一个角色可以继承其他角色的权限从而成为其成员角色 (member role);拥有成员角色的角色称为组角色 2(group role)。
+可以无限嵌套但是没必要。</p>
+
+<blockquote>
+  <p>PostgreSQL 从最近的几个版本开始不再使用“用户”和“组”这两个术语。 但你还会看到有人使用这两个术语，请记住“用户”和“组”分别代表“可 登录角色”和“组角色”就好了。为保持前向兼容，CREATE USER和CREATE GROUP 这两个命令在当前版本中也是支持的，但最好不要使用它们，请使用 CREATE ROLE。</p>
+</blockquote>
+
+<h2 id="21-创建可登录角色">2.1 创建可登录角色</h2>
+
+<p>在 PostgreSQL 安装过程中的数据初始化阶段，系统会默认创建一个名为 postgres 的可登 录角色(同时会创建一个名为 postgres 的同名 database)。你可以通过前面介绍过的 ident 或者 peer 身份验证机制来将操作系统的 root 用户映射到数据库的 postgres 角色，这样可 以实现 root 用户免密登录，或者通过设置为 trust 模式的效果也是一样。数据库安装完成 后，第一件要做的事就是用 psql 或者 pgAdmin 工具以 postgres 角色身份登录，然后创建 其他已规划好的角色。pgAdmin 工具中有专门的图形界面用于创建角色。</p>
+
+<h4 id="手动创建一个用户">手动创建一个用户</h4>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">CREATE</span> <span class="k">ROLE</span> <span class="n">leo</span> <span class="n">LOGIN</span> <span class="n">PASSWORD</span> <span class="s1">'king'</span> <span class="k">VALID</span> <span class="k">UNTIL</span> <span class="s1">'infinity'</span> <span class="k">CREATEDB</span><span class="p">;</span>
+
+</code></pre></div></div>
+
+<p>valid 字句可选，用来定义有效期。如果不写就拥有就笑。</p>
+
+<p>createdb 表示角色赋予创建数据库权限</p>
+
+<h4 id="手动创建一个超级用户">手动创建一个超级用户</h4>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">ROLE</span> <span class="n">regina</span> <span class="n">LOGIN</span> <span class="n">PASSWORD</span> <span class="s1">'queen'</span> <span class="k">VALID</span> <span class="k">UNTIL</span> <span class="s1">'2020-1-1 00:00'</span> <span class="n">SUPERUSER</span><span class="p">;</span>
+
+<span class="c1">-- 查看创建结果</span>
+<span class="err">\</span><span class="n">du</span>
+</code></pre></div></div>
+
+<p>前面两个例子中我们创建的都是可登录角色，如果需要创建不可登录的角色，省略掉 LOGIN PASSWORD 子句即可。</p>
+
+<h2 id="12-创建组角色">1.2 创建组角色</h2>
+
+<p>权限部分建议查看 《Postgresql即学即用（3rd)》 第二章 角色</p>
+
+<p>我觉得这部分太密集了。无法提取出重点 —— 全部是重点。</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">-- 创建一个角色， INHERIT 的用法。它表示组角色 royalty 的任何一个成员角色都将自动继承 其除“超级用户权限”外的所有权限。</span>
+<span class="k">CREATE</span> <span class="k">ROLE</span> <span class="n">royalty</span> <span class="n">INHERIT</span><span class="p">;</span>
+
+<span class="c1">-- 给角色添加权限组，获得除了超级管理员的其他权限</span>
+<span class="k">GRANT</span> <span class="n">royalty</span> <span class="k">TO</span> <span class="n">leo</span><span class="p">;</span>
+<span class="k">GRANT</span> <span class="n">royalty</span> <span class="k">TO</span> <span class="n">regina</span><span class="p">;</span>
+
+<span class="c1">-- 可以查看</span>
+<span class="err">\</span><span class="n">du</span>
+
+<span class="c1">-- 授予超级管理员权限，但是此时，依然不是超级管理员。只是可以</span>
+<span class="k">ALTER</span> <span class="k">ROLE</span> <span class="n">royalty</span> <span class="n">SUPERUSER</span><span class="p">;</span>
+
+<span class="c1">-- 只有执行这句才会启用超级管理员权限。仅对本次session有用</span>
+<span class="k">SET</span> <span class="k">ROLE</span> <span class="n">royalty</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>相关的还有</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">SELECT</span> <span class="k">session_user</span><span class="p">,</span> <span class="k">current_user</span><span class="p">;</span>
+<span class="k">SET</span> <span class="k">SESSION</span> <span class="k">AUTHORIZATION</span>
+</code></pre></div></div>
+
+<p>TODO  等我体会更深了再来简化补全这边。目前看来很复杂但是帮助不大。跳过。</p>
+
+<p>比如删除用户并没有提到。</p>
+
+<p>部分功能可以通过pgAdmin图形化完成。</p>
+
+<h1 id="二权限管理">二、权限管理</h1>
+
+<p>PostgreSQL 的权限管理机制非常灵活而自由，因此要想管理得当是需要一些技巧的。 PostgreSQL 的权限控制甚至可以精确到字段和记录级别。是的，你没看错，如有必要甚至 可以为同一张表中每行记录的每个字段单独设置其访问权限。</p>
+
+<blockquote>
+  <p>TODO
+这部分我觉得也可以跳过。
+可以通过 pgAdmin来感受下。</p>
+</blockquote>
+
+<p>详细可以参考 《Postgresql即学即用》2.5章</p>
+
+<h1 id="三配置管理">三、配置管理</h1>
+<h2 id="1配置文件">1.配置文件</h2>
+
+<p>用超级管理员链接任何一个DB上，可以执行如下操作找到配置文件：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">select</span> <span class="n">name</span><span class="p">,</span> <span class="n">setting</span> <span class="k">from</span> <span class="n">pg_settings</span> <span class="k">where</span> <span class="n">category</span> <span class="o">=</span> <span class="s1">'File Locations'</span><span class="p">;</span>
+
+<span class="c1">--        name        |                    setting</span>
+<span class="c1">-- -------------------+-----------------------------------------------</span>
+<span class="c1">--  config_file       | /usr/local/var/postgresql@9.6/postgresql.conf</span>
+<span class="c1">--  data_directory    | /usr/local/var/postgresql@9.6</span>
+<span class="c1">--  external_pid_file |</span>
+<span class="c1">--  hba_file          | /usr/local/var/postgresql@9.6/pg_hba.conf</span>
+<span class="c1">--  ident_file        | /usr/local/var/postgresql@9.6/pg_ident.conf</span>
+<span class="c1">-- (5 rows)</span>
+</code></pre></div></div>
+
+<p>postgresql.conf<br />
+一些通用设置，比如内存分配，db的默认存储位置，ip，日志等等</p>
+
+<p>pg_hba.conf
+用于控制访问权限，允许那个用户、ip连接到数据库。和鉴权模式</p>
+
+<p>pg_ident.conf
+如果文件存在，系统会基于文件内容，将当前登录的操作系统用户映射为一个PG内部的用户身份来登录。
+比如 root映射为 PG中的 postgres超级用户。</p>
+
+<h3 id="11-修改配置并生效">1.1 修改配置并生效</h3>
+
+<p>你可以直接修改文件，或者借助 PG的管理工具pgAdmin修改。</p>
+
+<p>让配置生效，有好几种办法</p>
+
+<ol>
+  <li>重新加载配置文件</li>
+</ol>
+
+<p><code class="language-plaintext highlighter-rouge">pg_ctl reload -D 你的数据目录</code></p>
+
+<p>如果是Linux中以服务形式安装</p>
+
+<p><code class="language-plaintext highlighter-rouge">service postgresql-9.6 reload</code></p>
+
+<p>还可以以超级管理员权限登录到任意一个DB，执行SQL</p>
+
+<p><code class="language-plaintext highlighter-rouge">select pg_reload_conf();</code></p>
+
+<p>一些底层配置，需要重启服务实例才能生效。</p>
+
+<p>如果是 服务形式</p>
+
+<p><code class="language-plaintext highlighter-rouge">service postgresql-9.6 restart</code></p>
+
+<p>如果不是服务形式</p>
+
+<p><code class="language-plaintext highlighter-rouge">pg_ctl restart -D 你的数据目录</code></p>
+
+<h3 id="12-postgresqlconf">1.2 postgresql.conf</h3>
+
+<p>查看配置，可以通过  pg_settings 视图来查看所有配置。</p>
+
+<p>比如</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">SELECT</span> <span class="n">name</span><span class="p">,</span>
+<span class="n">context</span> <span class="p">,</span>
+<span class="n">unit</span><span class="p">,</span>
+<span class="n">setting</span><span class="p">,</span> <span class="n">boot_val</span><span class="p">,</span> <span class="n">reset_val</span>
+     <span class="k">FROM</span> <span class="n">pg_settings</span>
+     <span class="k">WHERE</span> <span class="n">name</span> <span class="k">IN</span> <span class="p">(</span> <span class="s1">'listen_addresses'</span><span class="p">,</span><span class="s1">'deadlock_timeout'</span><span class="p">,</span><span class="s1">'shared_buffers'</span><span class="p">,</span>
+         <span class="s1">'effective_cache_size'</span><span class="p">,</span><span class="s1">'work_mem'</span><span class="p">,</span><span class="s1">'maintenance_work_mem'</span><span class="p">)</span>
+     <span class="k">ORDER</span> <span class="k">BY</span> <span class="n">context</span><span class="p">,</span> <span class="n">name</span><span class="p">;</span>
+<span class="c1">--          name         |  context   | unit |  setting  | boot_val  | reset_val</span>
+<span class="c1">-- ----------------------+------------+------+-----------+-----------+-----------</span>
+<span class="c1">--  listen_addresses     | postmaster |      | localhost | localhost | localhost</span>
+<span class="c1">--  shared_buffers       | postmaster | 8kB  | 16384     | 1024      | 16384</span>
+<span class="c1">--  deadlock_timeout     | superuser  | ms   | 1000      | 1000      | 1000</span>
+<span class="c1">--  effective_cache_size | user       | 8kB  | 524288    | 524288    | 524288</span>
+<span class="c1">--  maintenance_work_mem | user       | kB   | 65536     | 65536     | 65536</span>
+<span class="c1">--  work_mem             | user       | kB   | 4096      | 4096      | 4096</span>
+<span class="c1">-- (6 rows)</span>
+
+
+</code></pre></div></div>
+
+<p>可以通过 pg_file_settings 视图来查看文件配置是否生效</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">SELECT</span> <span class="n">name</span><span class="p">,</span> <span class="n">sourcefile</span><span class="p">,</span> <span class="n">sourceline</span><span class="p">,</span> <span class="n">setting</span><span class="p">,</span> <span class="n">applied</span>
+     <span class="k">FROM</span> <span class="n">pg_file_settings</span>
+     <span class="k">WHERE</span> <span class="n">name</span> <span class="k">IN</span> <span class="p">(</span><span class="s1">'listen_addresses'</span><span class="p">,</span><span class="s1">'deadlock_timeout'</span><span class="p">,</span><span class="s1">'shared_buffers'</span><span class="p">,</span>
+         <span class="s1">'effective_cache_size'</span><span class="p">,</span><span class="s1">'work_mem'</span><span class="p">,</span><span class="s1">'maintenance_work_mem'</span><span class="p">)</span>
+     <span class="k">ORDER</span> <span class="k">BY</span> <span class="n">name</span><span class="p">;</span>
+<span class="c1">--       name      |                  sourcefile                   | sourceline | setting | applied</span>
+<span class="c1">-- ----------------+-----------------------------------------------+------------+---------+---------</span>
+<span class="c1">--  shared_buffers | /usr/local/var/postgresql@9.6/postgresql.conf |        113 | 128MB   | t</span>
+<span class="c1">-- (1 row)</span>
+</code></pre></div></div>
+
+<p>t 就是 true 生效</p>
+
+<p>f 就是 false 需要重启或者重新加载</p>
+
+<hr />
+
+<h3 id="postgresqlconf-一些配置介绍">postgresql.conf 一些配置介绍</h3>
+
+<h4 id="1-基本配置">1. 基本配置</h4>
+
+<ul>
+  <li>
+    <p>listen_addresses:</p>
+
+    <p>表示PG使用的IP，localhost表示本机IPV4后者IPV6的地址也有人设置为* 表示任意本机IP均可以链接到PG服务。</p>
+  </li>
+  <li>
+    <p>port</p>
+
+    <p>端口，默认是5432</p>
+  </li>
+  <li>
+    <p>max_connections</p>
+
+    <p>系统允许的最大并发连接数。</p>
+  </li>
+  <li>
+    <p>log_destination</p>
+
+    <p>这个配置项的名字可能有点误导，它实际指的是日志文件的输出格式而非输出的物理 位置。默认值是 stderr。如果你希望保存日志内容以做进一步分析，建议把它修改为 csvlog，这样就更容易将日志导入第三方日志分析工具中使用。注意，如果希望记日志 的话，请一定要将 logging_collection 配置项设为 on。</p>
+  </li>
+</ul>
+
+<h4 id="2-关系性能的配置">2. 关系性能的配置</h4>
+
+<p>下面介绍的几个配置项会影响整体系统性能，其默认值一般都不是最优的。建议用户对它 们有所了解后尽快根据实际情况做优化调整。</p>
+
+<ul>
+  <li>
+    <p>shared_buffers</p>
+
+    <p>此设置定义了用于缓存最近访问过的数据页的内存区大小，所有用户会话均可共享此缓 存区。此设置对查询速度有着重大影响，一般来说设置得越大越好，至少应该达到系统 总内存的 25%，但不宜超过 8GB，因为超过后会出现“边际收益递减”效应，即消耗的 内存很多，但得到的速度提升却很少，得不偿失。修改此设置需要重启 PostgreSQL 服务。</p>
+  </li>
+  <li>
+    <p>effective_cache_size</p>
+
+    <p>该配置项是一个估算值，表示操作系统分配多少内存给 PostgreSQL 专用。系统并不会 根据这个值来真实地分配这么多内存，但是规划器会根据这个值来判断系统能否提供查 询执行过程中所需的内存。如果将此设置设得过小，远远小于系统的真实可用内存量， 那么可能会给规划器造成误导，让规划器认为系统可用内存有限，从而选择不使用索引 而是执行全表扫描(因为使用索引虽然速度快，但需要占用更多的中间内存)。在一台 专用于运行 PostgreSQL 数据库服务的服务器上，建议将 effective_cache_size 的值设 为系统总内存的一半或者更多。此设置的更改可动态生效，执行重新加载即可。</p>
+  </li>
+  <li>
+    <p>work_mem</p>
+
+    <p>此设置指定了用于执行排序、散列关联、表扫描等操作的最大内存大小。要得到此设置 的最优值需要考虑以下因素:数据库的使用方式，需要预留多少内存给除数据库系统外 的程序，以及服务器是否专用于运行 PostgreSQL 服务等问题。如果使用场景仅仅是有 很多用户并发执行简单查询，那么这个值可以设得小一点，这样每个用户都得以较为公 平地使用内存，否则第一个用户就可能把内存占光。这个值该设多大同样取决于你的机器上总共有多少内存可用。关于 work_mem 设置有一篇很好的文章“Understanding work_ mem”。此设置的更改可动态生效，执行重新加载即可。</p>
+  </li>
+  <li>
+    <p>maintenance_work_mem</p>
+
+    <p>此设置指定了可用于 vaccum(即清空已标记为“被删除”状态的记录)这类系统内部 维护操作的内存总量。其值不应大于 1GB。此设置的更改可动态生效，执行重新加载 即可。</p>
+  </li>
+  <li>
+    <p>max_parallel_workers_per_gather</p>
+
+    <p>这是 9.6 版中新引入的一个配置项，用于控制语句执行的并行度。该配置项决定了执行 计划的每个 gather 节点中最多允许启动多少个 worker 进程并行工作。默认值为 0，表 示不启用并行功能。如果你的 PostgreSQL 服务器是多核的，那么建议评估后尝试开启 此参数。并行处理是 9.6 版开始支持的新特性，因此你需要做一些测试来验证到底将并 行度设为多大时效果最好。另外，注意该配置项的值应该小于 max_worker_processes 的 值(默认为 8)，因为用于并行处理的后台 worker 进程是系统总体后台 worker 进程的一 部分。
+版本 10 中引入了一个新的参数叫作 max_parallel_workers，用于控制所有后台 worker 进程中有多少可用于并行。</p>
+  </li>
+</ul>
+
+<h4 id="3-配置日志">3. 配置日志</h4>
+
+<p>如果因为修改某些配置，数据库无法启动了怎么办。可以查看pg_log 子文件下。看修改的报错。
+日志文件位于数据文件夹的根目录或者其中的 pg_log 子文件夹下。</p>
+
+<p>配置的路径</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">show</span> <span class="n">log_directory</span><span class="p">;</span>
+<span class="c1">--  log_directory</span>
+<span class="c1">-- ---------------</span>
+<span class="c1">--  pg_log</span>
+<span class="c1">-- (1 row)</span>
+
+<span class="k">show</span> <span class="n">data_directory</span> <span class="p">;</span>
+<span class="c1">--         data_directory</span>
+<span class="c1">-- -------------------------------</span>
+<span class="c1">--  /usr/local/var/postgresql@9.6</span>
+<span class="c1">-- (1 row)</span>
+</code></pre></div></div>
+
+<p>参考 <a href="https://www.endpoint.com/blog/2014/11/12/dear-postgresql-where-are-my-logs">dear-postgresql-where-are-my-logs</a></p>
+
+<h3 id="23-pg_hbaconf">2.3. pg_hba.conf</h3>
+
+<p>pg_hba.conf 文件指定了哪些 IP 地址和哪些用户可以连接到 PostgreSQL 数据库，同时还规 定了用户必须使用何种身份验证方式登录。针对该文件的修改可动态生效，执行一次配置 重加载即可。</p>
+
+<p>PG 10 提供了一个视图 pg_hba_file_rules 查看配置</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">pg_hba_file_rules</span><span class="p">;</span>
+<span class="c1">--  line_number | type  |   database    | user_name |  address  |                 netmask                 | auth_method | options | error</span>
+<span class="c1">-- -------------+-------+---------------+-----------+-----------+-----------------------------------------+-------------+---------+-------</span>
+<span class="c1">--           84 | local | {all}         | {all}     |           |                                         | trust       |         |</span>
+<span class="c1">--           86 | host  | {all}         | {all}     | 127.0.0.1 | 255.255.255.255                         | trust       |         |</span>
+<span class="c1">--           88 | host  | {all}         | {all}     | ::1       | ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff | trust       |         |</span>
+<span class="c1">--           91 | local | {replication} | {all}     |           |                                         | trust       |         |</span>
+<span class="c1">--           92 | host  | {replication} | {all}     | 127.0.0.1 | 255.255.255.255                         | trust       |         |</span>
+<span class="c1">--           93 | host  | {replication} | {all}     | ::1       | ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff | trust       |         |</span>
+<span class="c1">-- (6 rows)</span>
+
+<span class="c1">-- marktest=#</span>
+</code></pre></div></div>
+
+<h1 id="2-连接管理">2. 连接管理</h1>
+
+<p>想要终止掉正在执行的语句并杀掉链接</p>
+
+<ol>
+  <li>查出活动链接列表以及其进程ID</li>
+</ol>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">-- \x  可以启用 让阅读更哟好</span>
+<span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">pg_stat_activity</span><span class="p">;</span>
+
+</code></pre></div></div>
+
+<ol>
+  <li>取消链接 （假设进程号是1234）上的活动查询。但是不会终止链接本身</li>
+</ol>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">select</span> <span class="n">pg_cancel_backend</span><span class="p">(</span><span class="mi">1234</span><span class="p">);</span>
+</code></pre></div></div>
+
+<ol>
+  <li>终止链接</li>
+</ol>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">select</span> <span class="n">pg_terminate_backend</span><span class="p">(</span><span class="mi">1234</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>PostgreSQL 有一些语句参数可以用来控制语句的运行状态，一旦语句运行期间的某些状态 值超过了这些运行参数所限定的范围，该语句会被系统自动杀掉。这些参数可以在服务实 例级、database 级、用户级、会话级和函数级设置。参数值设为 0 代表禁用。</p>
+
+<ul>
+  <li>
+    <p>deadlock_timeout</p>
+
+    <p>该参数表示在进行死锁检测之前需要等待多久。1 默认是 1000 毫秒。如果你的业务系统 中有大量更新操作，那么建议增大该值以减少死锁检测的次数。
+与其依赖这个参数来解决死锁，我们更建议在 UPDATE 语句中加 NOWAIT 子句来避免死 锁，例如:SELECT FOR UPDATE NOWAIT…。
+该语句会在发生死锁时自动终止执行。
+在 PostgreSQL 9.5 中，用户还有另一个选择:SELECT FOR UPDATE SKIP LOCKED，该语法 可以跳过已经被别的用户锁定的记录。</p>
+  </li>
+  <li>
+    <p>statement_timeout</p>
+
+    <p>该参数可以控制一个语句能够执行的最长时间，超出限定的时间后该语句会被自动终 止。该参数的默认值是 0，即无限制。如果你需要对一个运行可能耗时很久的函数加上 最长运行时间限制，那么最好不要把这个参数设置为全局级别，仅在要控制的函数的定 义中针对该函数自身设置一下即可。这样可以保证不会有“误杀”的情况发生，因为我 们无法预料别的语句是否需要执行更长时间。如果函数因执行时间超长而被终止，那么 调用该函数的事务也会跟着被回滚掉。</p>
+  </li>
+  <li>
+    <p>lock_timeout</p>
+
+    <p>该参数控制锁等待的最长时间，超出限定时间后等待锁的语句就会被自动终止。对于执 行数据更新的语句来说，该参数有较大价值，因为每次更新数据之前都必须先获取待修 改的记录上的排他锁，所以更新语句之间是最容易发生锁等待的。该参数的默认值为 0，表示不限制锁等待的时间。一般会在函数级或者会话级设置该参数。lock_timeout 的值应该设得比 statement_timeout 小，否则总会是语句先超时，这样 lock_timeout 就 毫无意义了。</p>
+
+    <ul>
+      <li>idle_in_transaction_session_timeout</li>
+    </ul>
+
+    <p>该参数表示一个事务可以处于 idle 状态的最长时间，超过限定的时间后该事务会被自动 回滚。该参数的默认值为 0，表示事务可以永久处于 idle 状态。该参数是 9.6 版引入的， 可以起到两个作用:防止一个空闲事务占着记录锁一直不释放从而阻塞别的事务继续运 行，还可以防止一个数据库连接被一个空闲事务永远占用。</p>
+  </li>
+</ul>
+
+<h3 id="查看被阻塞语句的情况">查看被阻塞语句的情况</h3>
+
+<p>从 9.1 版开始，pg_stat_activity 视图发生了较大变化，一些字段的名称发生了变化，一些 字段被删除了，另外也新增了一些字段。从 9.2 版开始，该视图中原来的 procpid 字段被改 名为 pid。
+在 PostgreSQL 9.6 中，pg_stat_activity 视图中增加了更多关于等待锁的语句的信息。在 之前的版本中，有一个名为 waiting 的布尔型字段，其值为 true 时表示该会话上有个语句 正在等待别的语句释放资源，但看不出是在等待获取什么资源。9.6 版中，waiting 字段被 取消，替代它的是两个名为 wait_event_type 和 wait_event 的字段，其中记录了当前会话 上的语句在等待什么资源。因此在9.6版之前，可以使用waiting = true过滤条件查出所 有被别人阻塞的语句;9.6版之后，应更改为使用wait_event IS NOT NULL过滤条件来查 找被阻塞的语句。
+除了 pg_stat_activity 视图的结构发生了变化外，PostgreSQL 9.6 中还对一些之前版本中 无法通过waiting = true过滤出来的锁等待进行了跟踪，这样用户就可以看到之前版本中 无法查询出来的更轻量级的锁等待。如需了解 wait_event 字段所有可能的值，请参考官方 手册中关于等待事件名和类型的说明。</p>
+
+<h1 id="四-数据库">四、 数据库</h1>
+
+<h2 id="1-创建数据库">1. 创建数据库</h2>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">DATABASE</span> <span class="n">mydb</span><span class="p">;</span>
+
+<span class="c1">-- 通过模板创建数据库。默认是通过 template1创建</span>
+<span class="c1">-- 永远不要修改template0，那是所有的基础</span>
+
+<span class="k">CREATE</span> <span class="k">DATABASE</span> <span class="n">my_db</span> <span class="k">TEMPLATE</span> <span class="n">my_template_db</span><span class="p">;</span>
+
+<span class="c1">-- 任何一个存在的数据库都可以作为模板。这里就是建立模板</span>
+<span class="c1">--  SET datistemplate = TRUE 意思是不允许修改。FALSE就允许自由编辑</span>
+<span class="k">UPDATE</span> <span class="n">pg_database</span> <span class="k">SET</span> <span class="n">datistemplate</span> <span class="o">=</span> <span class="k">TRUE</span> <span class="k">WHERE</span> <span class="n">datname</span> <span class="o">=</span> <span class="s1">'mydb'</span><span class="p">;</span>
+</code></pre></div></div>
+
+<h2 id="2-schema的适用">2. schema的适用</h2>
+
+<p>schema 可以对 database 中的对象进行逻辑分组管理。如果你的 database 中有很多表，那 么管理起来会很麻烦，可以考虑把它们分门别类放到不同 schema 中来进行管理。同一个 schema 中的对象名不允许重复，但同一个 database 的不同 schema 中的对象是可以重名 的。</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">-- 创建一个 scheme</span>
+<span class="k">CREATE</span> <span class="k">SCHEMA</span> <span class="n">customer1</span><span class="p">;</span>
+<span class="k">CREATE</span> <span class="k">SCHEMA</span> <span class="n">customer2</span><span class="p">;</span>
+
+<span class="c1">-- 查看 scheme</span>
+<span class="err">\</span><span class="n">dn</span>
+</code></pre></div></div>
+
+<p>N个scheme下有同样的表名如何区分呢？</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">-- 方法1，加上scheme的名字空间表示表名</span>
+<span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">customer1</span><span class="p">.</span><span class="n">dogs</span><span class="p">;</span>
+
+<span class="c1">-- 方法2， 设置search_path变量来解决</span>
+<span class="c1">-- 通过搜索指定或者用户下面的public，会优先搜索</span>
+<span class="c1">-- 下面的是个变量，比如当前用户是 Customer1 那么就优先搜索Customer1</span>
+
+<span class="n">search_path</span> <span class="o">=</span> <span class="nv">"$user"</span><span class="p">,</span> <span class="k">public</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>如果要安装插件，建议为插件单独设置 scheme，以防插件带来的表会污染整个环境。</p>
+
+<p>在安装扩展包之前，先为其创建一个 schema，语句如下:</p>
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">SCHEMA</span> <span class="n">my_extensions</span><span class="p">;</span>
+
+<span class="c1">-- 然后把这个新的 schema 加入 search_path:</span>
+<span class="k">ALTER</span> <span class="k">DATABASE</span> <span class="n">mydb</span> <span class="k">SET</span> <span class="n">search_path</span><span class="o">=</span><span class="s1">'$user'</span><span class="p">,</span> <span class="k">public</span><span class="p">,</span> <span class="n">my_extensions</span><span class="p">;</span>
+<span class="c1">-- 安装扩展包时，记得在CREATE EXTENSION语句中将你为其创建的新schema声明为其归属 schema。</span>
+
+</code></pre></div></div>
+
+<blockquote>
+  <p>对于现有连接来说，ALTER DATABASE .. SET search_path命令执行后是不能 直接生效的，你需要断开此连接并重连才可以。</p>
+</blockquote>
+
+<h1 id="五拓展包机制">五、拓展包机制</h1>
+
+<p>查询某个database中已安装的扩展</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">-- 查看已经安装的</span>
+<span class="k">SELECT</span> <span class="n">name</span><span class="p">,</span> <span class="n">default_version</span><span class="p">,</span> <span class="n">installed_version</span><span class="p">,</span> <span class="k">left</span><span class="p">(</span><span class="k">comment</span><span class="p">,</span><span class="mi">30</span><span class="p">)</span> <span class="k">As</span> <span class="k">comment</span>
+     <span class="k">FROM</span> <span class="n">pg_available_extensions</span>
+     <span class="k">WHERE</span> <span class="n">installed_version</span> <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>
+     <span class="k">ORDER</span> <span class="k">BY</span> <span class="n">name</span><span class="p">;</span>
+
+<span class="c1">-- 查看安装的所有的，去掉一句</span>
+<span class="k">SELECT</span> <span class="n">name</span><span class="p">,</span> <span class="n">default_version</span><span class="p">,</span> <span class="n">installed_version</span><span class="p">,</span> <span class="k">left</span><span class="p">(</span><span class="k">comment</span><span class="p">,</span><span class="mi">30</span><span class="p">)</span> <span class="k">As</span> <span class="k">comment</span>
+     <span class="k">FROM</span> <span class="n">pg_available_extensions</span>
+    <span class="c1">--  WHERE installed_version IS NOT NULL</span>
+     <span class="k">ORDER</span> <span class="k">BY</span> <span class="n">name</span><span class="p">;</span>
+
+
+<span class="c1">-- 查看安装包的更多详细内容</span>
+
+<span class="err">\</span><span class="n">dx</span><span class="o">+</span> <span class="o">&lt;</span><span class="err">扩展包名</span><span class="o">&gt;</span>
+
+<span class="c1">-- marktest=# \dx+ plpgsql</span>
+<span class="c1">--       Objects in extension "plpgsql"</span>
+<span class="c1">--             Object description</span>
+<span class="c1">-- -------------------------------------------</span>
+<span class="c1">--  function plpgsql_call_handler()</span>
+<span class="c1">--  function plpgsql_inline_handler(internal)</span>
+<span class="c1">--  function plpgsql_validator(oid)</span>
+<span class="c1">--  language plpgsql</span>
+<span class="c1">-- (4 rows)</span>
+
+<span class="c1">-- marktest=#</span>
+
+<span class="c1">-- 扩展包中可以包含各类数据库对象，包括函数、表、数据类型、数据类型转换器、编程语 言、运算符，等等。但函数通常占了其中的大部分。</span>
+
+</code></pre></div></div>
+
+<p>安装拓展 参见  《Postgresql即学即用》2.6章 Page62</p>
+
+<h1 id="六备份与恢复">六、备份与恢复</h1>
+
+<p>PostgreSQL 自身附带了三个备份工具:pg_dump、pg_dumpall 和 pg_basebackup，三者均位
+于 bin 文件夹下。</p>
+
+<ul>
+  <li>
+    <p>pg_dump 用于备份一个指定的 database，</p>
+  </li>
+  <li>
+    <p>pg_dumpall 可一次性备份所有 database 的数据 以及系统全局数据。由于 pg_dumpall 需要能够访问系统中的所有 database，因此必须由具 备 SUPERUSER 权限的角色来执行。</p>
+  </li>
+  <li>
+    <p>pg_basebackup 可以针对所有 database 实现系统级的 磁盘备份。</p>
+  </li>
+</ul>
+
+<p>要了解更多深入的内容，请参考 PostgreSQL 官方手册中的“备份与恢复”。</p>
+
+<p>业界也有一些常用的第三方工具来实现 PostgreSQL 的备份和恢复，但本节不会详细讨论。 两个用得比较多的开源工具是 pgBackRest 和 Barman。相比官方原生的工具，它们多了定 时备份、多服务器备份以及快捷恢复等功能。</p>
+
+<p>这部分云服务应该会有保证。</p>
+
+<h1 id="七基于表空间机制进行存储管理">七、基于表空间机制进行存储管理</h1>
+
+<p>PostgreSQL 使用“表空间”这一概念来将逻辑存储空间映射到磁盘上的物理存储空间。
+PostgreSQL 在安装阶段会自动生成两个表空间:一个是 pg_default，用于存储所有的用户 级数据;另一个是 pg_global，用于存储所有的系统级数据。这两个表空间就位于默认的 数据文件夹下。你可以不受限地创建表空间并将其物理存储位置设定到任何一块物理磁盘 上。你也可以为 database 设定默认表空间，这样该 database 中创建的任何新对象都会存储 到此表空间上。你也可以将现存的数据库对象迁移到新的表空间中。</p>
+
+<h1 id="八禁止行为">八、禁止行为</h1>
+
+<h2 id="1-切记不要删除postgresql系统文件">1. 切记不要删除PostgreSQL系统文件</h2>
+
+<p>pg_log 文件夹一般在 data 文件夹下，其体积可能增长得很快，尤其是当打开了日志开关的 时候。这个文件夹下的文件任何时候都可以安全删除，事实上很多人会设置一个定时任务 来定期清除这些日志文件。
+除了 pg_xlog 文件夹下的文件可以有条件地删除外，其他 PostgreSQL 系统文件夹中的文件 都不能删，即使有的文件夹名称中带有 log 字样因而看起来像是某种日志，也绝对不能删， 比如 pg_clog 文件夹中存储的是活跃事务提交日志，除非你想删库跑路，否则千万不要碰。</p>
+
+<p>pg_xlog 文件夹用于存储事务日志。</p>
+
+<p>要当心某些过于“尽责”的杀毒软件，特别是在 Windows 上。我们曾经遇到过杀毒软件把 很重要的 PostgreSQL 可执行文件给删掉的案例。如果在 Windows 环境下发现 PostgreSQL 无 法启动，记得首先查看一下事件查看器(event viewer)的记录，其中可能存在有用的线索。</p>
+
+<blockquote>
+  <p>在 PostgreSQL 10 中，pg_xlog 目录被改名为 pg_wal，pg_clog 被改名为 pg_xact， 以防止用户认为这些目录中放的都是日志，想删就删而不会造成任何后果。</p>
+</blockquote>
+
+<h2 id="2不要把操作系统管理员权限授予postgresql的系统-账号">2.不要把操作系统管理员权限授予PostgreSQL的系统 账号</h2>
+
+<p>很多人可能会误认为 postgres 这个操作系统账号必须拥有操作系统的管理员权限。事实 上，在有的 PostgreSQL 版本上，如果给予了 postgres 账号管理员权限，很有可能导致该 操作系统启动失败。
+postgres 账号应该就是一个普通用户账号，只要能够访问 data 文件夹以及其他表空间文件 夹即可。大多数 PostgreSQL 安装包会自动为 postgres 账号设定够用的权限，请不要画蛇 添足。在 SQL 注入攻击中，那些不必要的权限会为攻击者们提供可乘之机。</p>
+
+<h2 id="3-不要把shared_buffers缓存区设置得过大">3. 不要把shared_buffers缓存区设置得过大</h2>
+
+<p>禁止将 shared_buffers 设置得和系统当前内存总容量一样大，否则很可能会导致操作系统 崩溃或者是启动失败。在 32 位 Windows 系统上，该设置如果超过 512MB 就可能导致系 统出问题。在 64 位 Windows 上，该限制可以放宽到 1GB 或者更大一些也没问题。在有些 Linux 系统上，不能将 shared_buffers 设置得大于 SHMMAX 变量，而一般来说 SHMMAX 的值 是比较小的，所以这就给 shared_buffers 的设置带来了一些限制。
+PostgreSQL 9.3 修改了内核对于内存的使用方法，因此之前版本中那些因内核限制而导致 的问题从该版本开始不复存在。官方手册中“内核资源管理”一节介绍了更多关于这方面 的细节。</p>
+
+<h2 id="4-不要将postgresql服务器的侦听端口设为一个已被-其他程序占用的端口">4. 不要将PostgreSQL服务器的侦听端口设为一个已被 其他程序占用的端口</h2>
+
+<p>如果启动 PostgreSQL 时系统发现侦听端口已被占用，那么会在 pg_log 中记录类似这样的 错误日志:make sure PostgreSQL is not already running。以下是可能导致该问题的常见 原因。
+• postgres 服务实例已经启动好了，而你正试图再启动一遍。
+• PostgreSQL 服务侦听端口已被其他程序占用。
+• postgres 服务之前发生过异常关闭或者崩溃，在 data 文件夹下遗留了一个 postgresql.pid
+ 文件。请直接删除该文件并再次尝试启动。
+• 有一个孤立的 PostgreSQL 进程还在运行。如果前述方法都试过了但问题仍未解决，请
+终止所有还在运行的 PostgreSQL 进程，然后再次尝试启动。</p>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/postgresql/%E6%95%B0%E6%8D%AE%E5%BA%93/2021/06/30/Postgresql笔记2';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

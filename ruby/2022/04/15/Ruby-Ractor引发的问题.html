@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>WIP Ruby Ractor遇到的问题</title>
+  <meta name="description" content="背景我最近刚巧在看一些 函数式编程的东西，lambda演算。函数式可以解决CPU多核心利用的问题实际上在目前的Ruby上多线程无法真正利用多核。恰巧 @Jakit 在研究 Ractor，这是一个Ruby上正在开发的特性，原理上类似于把 Golang 底层的并发模型 Actor 带到Ruby。后来在交流Ractor...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/2022/04/15/Ruby-Ractor%E5%BC%95%E5%8F%91%E7%9A%84%E9%97%AE%E9%A2%98.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">WIP Ruby Ractor遇到的问题</h1>
+    <p class="artilce_meta"><time datetime="2022-04-15T18:00:25+08:00" itemprop="datePublished">Apr 15, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="背景">背景</h1>
+
+<p>我最近刚巧在看一些 函数式编程的东西，lambda演算。函数式可以解决CPU多核心利用的问题实际上在目前的Ruby上多线程无法真正利用多核。</p>
+
+<p>恰巧 @Jakit 在研究 Ractor，这是一个Ruby上正在开发的特性，原理上类似于把 Golang 底层的并发模型 Actor 带到Ruby。</p>
+
+<p>后来在交流Ractor的过程中发现一些问题。</p>
+
+<p>然后我试图把这些问题弄明白，并且记录在这里。</p>
+
+<h3 id="列举一些资料">列举一些资料</h3>
+
+<p>在讨论这些之间，你可能需要这些资料</p>
+
+<ul>
+  <li><a href="https://www.bilibili.com/video/bv1mu411C7wy">Ractor 扫盲</a></li>
+  <li><a href="https://www.bilibili.com/video/BV1CA4y197At?spm_id_from=333.999.0.0">Ruby中函数式编程</a></li>
+  <li><a href="https://www.bilibili.com/video/BV1iL4y157LC?spm_id_from=333.999.0.0">多线程的问题</a></li>
+  <li><a href="https://www.bilibili.com/video/BV1q44y137hT?spm_id_from=333.999.0.0">并行Ruby对内存的使用</a></li>
+</ul>
+
+<p>Ruby版本的计算机构成原理</p>
+<ul>
+  <li>
+    <p><a href="https://www.ituring.com.cn/book/1098">《计算的本质》</a></p>
+
+    <p>这里写下结论，《计算的本质》这本书主要通过 Ruby的方式描述了 图灵机实现、lambda演算
+  并且证明了  基于状态的图灵机 和 基于lambda演算 他们是等价的。
+  这是函数式编程的数学基础。
+  这意味着我们可以用函数式编程范式去替换传统的基于状态编写的程序的范式。</p>
+  </li>
+  <li>
+    <p>Actor模型 《七周七并发模型》Actor模型章节</p>
+  </li>
+</ul>
+
+<h1 id="让我们直观的感受下他们-benchmark-一下">让我们直观的感受下他们 benchmark 一下</h1>
+
+<p>我们想通过 直接执行、线程执行、进程执行、Ractor执行 一段斐波那契数列（计算密集型）以此来观察不同的模型到底执行效率如何？</p>
+
+<p>代码如下：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s1">'benchmark'</span>
+
+<span class="k">def</span> <span class="nf">fib</span> <span class="n">n</span>
+  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span>
+    <span class="mi">1</span>
+  <span class="k">else</span>
+    <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="c1"># 直接执行</span>
+<span class="nb">puts</span> <span class="no">Benchmark</span><span class="p">.</span><span class="nf">measure</span> <span class="p">{</span>
+  <span class="mi">8</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span>
+    <span class="n">fib</span><span class="p">(</span><span class="mi">40</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="p">}</span>
+
+<span class="c1"># 进程</span>
+<span class="nb">puts</span> <span class="no">Benchmark</span><span class="p">.</span><span class="nf">measure</span> <span class="p">{</span>
+  <span class="mi">8</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span>
+    <span class="nb">fork</span> <span class="p">{</span> <span class="n">fib</span><span class="p">(</span><span class="mi">40</span><span class="p">)</span> <span class="p">}</span>
+  <span class="k">end</span>
+  <span class="no">Process</span><span class="p">.</span><span class="nf">wait</span>
+<span class="p">}</span>
+
+
+<span class="c1"># 线程</span>
+<span class="nb">puts</span> <span class="no">Benchmark</span><span class="p">.</span><span class="nf">measure</span> <span class="p">{</span>
+  <span class="mi">8</span><span class="p">.</span><span class="nf">times</span><span class="p">.</span><span class="nf">map</span> <span class="p">{</span>
+    <span class="no">Thread</span><span class="p">.</span><span class="nf">new</span><span class="p">{</span><span class="n">fib</span><span class="p">(</span><span class="mi">40</span><span class="p">)}</span>
+  <span class="p">}.</span><span class="nf">each</span><span class="p">{</span><span class="o">|</span><span class="n">t</span><span class="o">|</span> <span class="n">t</span><span class="p">.</span><span class="nf">value</span><span class="p">}</span>
+<span class="p">}</span>
+
+
+<span class="c1"># Ractor</span>
+<span class="nb">puts</span> <span class="no">Benchmark</span><span class="p">.</span><span class="nf">measure</span> <span class="p">{</span>
+  <span class="mi">8</span><span class="p">.</span><span class="nf">times</span><span class="p">.</span><span class="nf">map</span> <span class="p">{</span>
+    <span class="no">Ractor</span><span class="p">.</span><span class="nf">new</span><span class="p">{</span> <span class="n">fib</span><span class="p">(</span><span class="mi">40</span><span class="p">)</span> <span class="p">}</span>
+  <span class="p">}.</span><span class="nf">each</span><span class="p">{</span><span class="o">|</span><span class="n">r</span><span class="o">|</span> <span class="n">r</span><span class="p">.</span><span class="nf">take</span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>接下来我简单说明：</p>
+
+<p>进程方式运行，我们会创建8个进程（这里主要是我Apple的M1新品是8核心，我们选择和核心数量匹配。这里使用fork方式创建进程。）</p>
+
+<p>多线程方案，也很简单创建8个线程。Ractor的方案同理，创建8个Ractor实例</p>
+
+<p>上面的代码,执行之后，我记录了benchmark结果和CPU的图</p>
+
+<p><img src="/assets/blog/ruby_ractor_benchmark/benchmark.png" alt="benchmark" /></p>
+
+<p>简单分析下这个图。主要对应了4部分运行阶段。</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>方法</th>
+      <th>user time</th>
+      <th>system time</th>
+      <th>user+system times</th>
+      <th>real time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>顺序执行</td>
+      <td>84.713012</td>
+      <td>0.131839</td>
+      <td>84.844851</td>
+      <td>( 84.845332)</td>
+    </tr>
+    <tr>
+      <td>进程</td>
+      <td>0.000214</td>
+      <td>0.002798</td>
+      <td>14.607795</td>
+      <td>( 14.787335)</td>
+    </tr>
+    <tr>
+      <td>多线程</td>
+      <td>84.604395</td>
+      <td>0.145657</td>
+      <td>84.750052</td>
+      <td>( 84.744966)</td>
+    </tr>
+    <tr>
+      <td>Ractor</td>
+      <td>116.438639</td>
+      <td>0.148765</td>
+      <td>116.587404</td>
+      <td>( 14.853680)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>可以直接看最右侧就是实际使用时间。</p>
+
+<p>1）顺序执行可以简单理解就是 8倍 <code class="language-plaintext highlighter-rouge">fib(40)</code> 的时间。</p>
+
+<p>2）进程是以fork的形式分成8个进程，这部分相当于操作系统在作调度。8个核心都用上了。相当于并行8个 <code class="language-plaintext highlighter-rouge">fib(40)</code>。操作系统表现正常。</p>
+
+<p>3）多线程 由于存在 GIL 全局解释器锁的问题，实际上只有一个CPU在工作。线程不会真的分散在多核心处理，反而是CPU在8个线程之间切换执行。对于fib这种计算密集型场景，多线程在这里并不会展现优势。从数值结果方面可以看出多线程的速度和顺序执行差不多。</p>
+
+<p>补充说明：顺序执行是 <code class="language-plaintext highlighter-rouge">A-B-C-D ...</code>的方式执行。多线程程序存在一个竞争问题，多个线程会争抢CPU资源，所以线程的执行具有随机性比如<code class="language-plaintext highlighter-rouge">A-D-F-C-A-D-B- ...</code> 并且如果多个线程之间访问共同的变量，会出现竞争问题、死锁问题。理论上消耗时间会大于顺序执行。</p>
+
+<p>可能有人会问，那为什么还需要多线程程序？因为如果程序是顺序执行的，对于用户来说顺序执行必须等待。我们必须等界面绘制完鼠标再响应，鼠标响应，键盘就不能响应，等待键盘输入，屏幕就不能绘制，一切都必须顺序等待。显然这样子的程序没人想要。多线程可以让很多任务交错、时间分片式进行，这样由于CPU的速度足够快，在用户看来像是所有程序都可以被执行，都可以被响应。虽然我们的程序没有那么高的高度，但是操作系统也作了类似的事情，把所有程序时间分片执行。</p>
+
+<p>另外，如果我们的遇到了IO场景，尤其是需要等待IO的返回，多线程的方式即使有GIL也可以减少每个线程平均等待的时间。等价于提速。</p>
+
+<p>4）Ractor是以多线程的方式工作，但是脱离GIL，每个线程可以被合理的放在CPU的核心上。表现的就像多进程一样。这就是Ractor的威力。虽然还在实验中。Ractor意味着Ruby也有了类似Golang的Actor模型，可以进行高并发编程。来弥补多线程的不足。</p>
+
+<p>多线程程序是非常难测试的，Ractor让这部分简单了许多。对于 IO 场景，Ractor可以减少等待时间，并且可以充分利用多核心CPU。在未来的多核心CPU时代，高并发编程领域，Ruby也可以扮演重要的角色。</p>
+
+<h1 id="小结">小结</h1>
+
+<p>一切都很美好。由于 Ractor 的出现，可以让Ruby也具备轻松创建多线程并且使用CPU多核心。</p>
+
+<p>但是后面会介绍，由于一些写法，可能会出现，你无法正确的获得 Ractor的能力。</p>
+
+<h1 id="情况1-数组">情况1 数组？</h1>
+
+<p>其实前面的 fib 函数良好的遵循了 函数式编程 的习惯： 无状态、一切皆是表达式。没有状态的存在。</p>
+
+<p>保持这种编程的风格，可以让程序良好的运作，尤其是多线程程序中。无状态意味着没有竞争。没有副作用。彼此隔绝，各自运行相安无事。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># 函数式，无状态，表达式</span>
+<span class="k">def</span> <span class="nf">fib</span> <span class="n">n</span>
+  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span>
+    <span class="mi">1</span>
+  <span class="k">else</span>
+    <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>下面我们改变一下 fib 的写法,然后我们直接测试 Ractor 就好，如下所示：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">fib</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">n</span> <span class="k">if</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">].</span><span class="nf">include?</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+  <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+<p>使用了4个核（1半）</p>
+
+<p>消耗时间： <code class="language-plaintext highlighter-rouge">213.800529  39.743517 253.544046 (104.313164)</code></p>
+
+<p>Why?</p>
+
+<p>分析这段</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">code</span> <span class="o">=</span> <span class="o">&lt;&lt;-</span><span class="no">CODE</span><span class="sh">
+def fib(n)
+  return n if [0,1].include?(n)
+  fib(n-1) + fib(n-2)
+end
+</span><span class="no">CODE</span>
+
+<span class="n">compile</span> <span class="o">=</span> <span class="no">RubyVM</span><span class="o">::</span><span class="no">InstructionSequence</span><span class="p">.</span><span class="nf">compile</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+
+<span class="nb">puts</span> <span class="n">compile</span><span class="p">.</span><span class="nf">disasm</span>
+
+</code></pre></div></div>
+
+<h2 id="改进-10">改进 1.0</h2>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">fib</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">n</span> <span class="k">if</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">].</span><span class="nf">freeze</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+  <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+<p>使用了4个核（1半）</p>
+
+<p>消耗时间 <code class="language-plaintext highlighter-rouge">249.007863  45.051512 294.059375 (113.910791)</code></p>
+
+<h2 id="改进-20">改进 2.0</h2>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">SHARE</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">].</span><span class="nf">freeze</span>
+<span class="k">def</span> <span class="nf">fib</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">n</span> <span class="k">if</span> <span class="no">SHARE</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+  <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+<p>使用了 8 个核心，一切又正常了。</p>
+
+<p><code class="language-plaintext highlighter-rouge">193.183082   0.234250 193.417332 ( 24.710143)</code></p>
+
+<h2 id="尝试改进-30">尝试改进 3.0</h2>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">SHARE</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+<span class="k">def</span> <span class="nf">fib</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">n</span> <span class="k">if</span> <span class="no">SHARE</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+  <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>结果是报错，无法继续</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>can not access non-shareable objects in constant Object::SHARE by non-main Ractor. (  from ./state-benchmark.rb:14:in `block (3 levels) in &lt;main&gt;'
+Ractor::IsolationError)
+</code></pre></div></div>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/2022/04/15/Ruby Ractor引发的问题';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

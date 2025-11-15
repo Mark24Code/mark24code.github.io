@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>【转】如何戳中事情的本质，聊聊马斯克的第一性原理</title>
+  <meta name="description" content="如何戳中事情的本质，聊聊马斯克的第一性原理1 年前 · 来自专栏 产品炸鸡马斯克是现在硅谷最炽热的明星，过年前后，他的SpaceX干了两个特别牛X的事，年前，是用重型猎鹰火箭将一辆特斯拉跑车射上了太空，给了我们以后漫步太空的希望，年后，又发射了2颗互联网卫星，准备组建太空互联网-星链StarLink，这意味我们以...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E6%96%B9%E6%B3%95%E8%AE%BA/2020/09/28/%E8%81%8A%E8%81%8A%E7%AC%AC%E4%B8%80%E6%80%A7%E5%8E%9F%E7%90%86.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">【转】如何戳中事情的本质，聊聊马斯克的第一性原理</h1>
+    <p class="artilce_meta"><time datetime="2020-09-28T20:20:40+08:00" itemprop="datePublished">Sep 28, 2020</time></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <p>如何戳中事情的本质，聊聊马斯克的第一性原理</p>
+
+<p>1 年前 · 来自专栏 产品炸鸡
+马斯克是现在硅谷最炽热的明星，过年前后，他的SpaceX干了两个特别牛X的事，年前，是用重型猎鹰火箭将一辆特斯拉跑车射上了太空，给了我们以后漫步太空的希望，年后，又发射了2颗互联网卫星，准备组建太空互联网-星链StarLink，这意味我们以后可以用卫星上网了。</p>
+
+<p>马斯克迄今为止在不同的领域了分别了获得了巨大的成功，包括电动车公司特斯拉、天空火箭公司SpaceX，互联网支付公司PayPaul。这些看起来好像是比亚迪王传福、国家航天局，阿里巴巴马云分别干的事，他一个人怎么就干成了，马斯克如何取得了成功？</p>
+
+<p>在一场TED访谈里，他谈到了他的成功的原因，原话是这么说的：</p>
+
+<p>我的确觉得有一种非常好的思考框架，就是物理。它是推理的第一性原则。
+我想说的是，把一切都归结于事物的最初本质，然后从此处开始推理，这不同于类比推理。</p>
+
+<p>我们生活当中，都是用类比推理，也就是照搬别人的做法然后稍加改动。你必须这样做，否则，从心理层面看，你这一天就过不去了。</p>
+
+<p>不过，当你想要创新时，你必须按物理原则办事。</p>
+
+<p>马斯克的话看起来是有些抽象，但是有三个要点。</p>
+
+<p>1、首先第一原则是一种思考框架。既然是一种思考框架，那么它的应用领域不限于造火箭、跑车这种高科技产品，可以在我们的实际工作和生活中应用并解决问题。
+2、其次它的实践方法就是“回归本质、拒绝推理”。也就是不参照已有经验情况下，从本源出发思考问题。</p>
+
+<p>看起来似乎非常简单，看看马斯克是怎么举案例来阐述的。</p>
+
+<p>案例一 SpaceX
+2002 年，马斯克成立了太空探索技术公司 SpaceX，寻求将火箭发送到火星，但他很快遇到了一个重大的挑战。 在拜访了世界各地的航空制造商之后，马斯克发现购买火箭的成本是个天文数字，高达 6500 万美元。 由于价格昂贵，他开始重新思考这个问题：</p>
+
+<p>“什么是火箭？ 航空级铝合金，加上一些钛，铜和碳纤维。 那么我问，商品市场上这些材料的价值是多少？ 原来，火箭的材料成本是火箭典型价格的 2％ 左右。”</p>
+
+<p>与其花费数千万美元购买火箭，马斯克决定成立自己的公司，以便宜的价格购买原材料，自己制造火箭，SpaceX 诞生了。在几年之内，SpaceX 已经将发射火箭的价格降低了近 10 倍，同时还能保持盈利。</p>
+
+<p>案例二  特斯拉
+同样，马斯克在创建特斯拉的过程中，也遇到了很大的挑战，对于电动汽车来说，要想产业化规模推广，取得成功，其最大的成本就是电池。因汽车处于产业早期，电池成为制约电池发展的最大瓶颈，当时的电池成本高达每千瓦时600美元，这看来是个无解的问题。他于是开始重新思考这个问题：</p>
+
+<p>“电池的材料是什么？目前这些材料的市场价格是什么？电池组有碳、镍、铝、钢以及一些分离的高分子，如果我们自己购买这些物质需要多少钱？其实，经过一番分析，我们发现这些材料只需要每千瓦时80美元。”</p>
+
+<p>于是马斯克建立了自己的电池工厂Gigafactory，在过去六年时间里，电动汽车电池的平均价格降幅达到了80%，特斯拉推出的Model 3售价仅3.5万美元。</p>
+
+<p>我们看完这两个案例，发现有什么共同点？</p>
+
+<p>火箭是高度垄断的行业，一般是由国家航天局主导的，所以发射成本居高不下。
+电动汽车在产业发展初期，市场没有打开，所以电池成本成了最大问题。
+成本太高会导致市场无法打开，市场无法打开成本降不下来…似乎陷入了一个死循环</p>
+
+<p>所以马斯克的思路是将产品直接分解为最基础的工业材料，并进行核算，发现能数10倍的降低成本。
+理论上看起来似乎很简单，但最核心的问题是什么？
+假设让我们来操作，给我们一堆铝合金，钛，铜和碳纤维，去造个火箭？我想是个人都会疯掉的。</p>
+
+<p>看过马斯克传记的人应该知道，他本人就是火箭领域的技术专家，懂得火箭从成品到材料的推演路径，具备了火箭制造完整的知识结构。有了这个做基础，才能做到用第一性原理推演到最基础的材料层面。</p>
+
+<p>所以总结来说，如果在一个领域想要通过创新的模式去解决问题，首先在相应的领域具备硬知识成为领域专家，具备可以用来思考和推演的路径。其次再尝试用第一性原则来从本质上思考和解决问题，从而跳出大多人采用的类推陷阱。</p>
+
+<p>对我们来说，如何用第一性原理思考和解决问题呢？举个例子
+我想学好英文？怎么解决？</p>
+
+<p>我们大多数人，第一反应可能就是，看看我周围的大多数人是怎么做的？接收他人反馈的效果，心得，结合自己的直观感受，成本，精力，时间分配，决定怎么做。例如:我们看到A在用背单词app，B在死啃语法书，C在上培训班，似乎效果都不错，如何选择？</p>
+
+<p>这就是类推思维，因为这样做事最省力气。</p>
+
+<p>可是so what?  背单词，啃语法，上培训班和学英文有什么联系呢？如果有联系，处于什么层次的联系？你怎么肯定这种联系？</p>
+
+<p>我们再换种思维框架，尝试用第一性原理来思考一下。</p>
+
+<p>人类的语言学习是怎么work的？它的本质是什么？既然语言学习是个普适的规律，何不观察下我们的母语，我们中文说的这么好，是因为我们从小背词汇了吗，我们系统学习了语法知识吗，显然不是。</p>
+
+<p>如果你养育过孩子，对人类的语言学习过程印象就会非常深刻，我女儿2岁多时，走在路上，遇到一条小狗，你告诉她，看，这是“小狗”，她会重复道，”小狗！”，过了一会儿看到一条大狗，她会开心喊道，看，“大小狗！”。</p>
+
+<p>后面的日子，你得不断重复纠正，唠叨，这是大！狗！，这是贵宾，这是棕色狗。反反复复，她就会逐步掌握关于狗、空间，大小，品种、颜色等各种语言概念。</p>
+
+<p>实际上，语言和吃饭睡觉一样，靠的是我们从小到大，在高密度，不断重复输入中习得的。</p>
+
+<p>在理解这个第一原则的基础上，就很简单了，让你的工作语言和生活语言尽可能让英文重复，在家里，泡泡美剧，刷刷Quora，在公司，专业书籍和查阅资料尽可能换成英文的。你想快，就加大重复密度。事实上，根本不用去学，甚至不用背一个单词，就自然习得了语言。</p>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E6%96%B9%E6%B3%95%E8%AE%BA/2020/09/28/聊聊第一性原理';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

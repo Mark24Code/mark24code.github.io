@@ -1,0 +1,2131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mark24</title>
+    <description>记录灵感、技术、思考</description>
+    <link>https://mark24code.github.io/</link>
+    <atom:link href="https://mark24code.github.io/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Sat, 15 Nov 2025 16:06:08 +0800</pubDate>
+    <lastBuildDate>Sat, 15 Nov 2025 16:06:08 +0800</lastBuildDate>
+    <generator>Jekyll v4.3.3</generator>
+    
+      <item>
+        <title>为什么每个人都讨厌 fork(2) ？</title>
+        <description>&lt;ul&gt;
+  &lt;li&gt;作者：&lt;a href=&quot;https://github.com/byroot&quot;&gt;Jean Boussier&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;译者：&lt;a href=&quot;https://github.com/Mark24Code&quot;&gt;Mark24&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;原文: &lt;a href=&quot;https://byroot.github.io/ruby/performance/2025/01/25/why-does-everyone-hate-fork.html&quot;&gt;why-does-everyone-hate-fork&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;我想写一篇关于 &lt;a href=&quot;https://rubygems.org/gems/pitchfork&quot;&gt;Pitchfork&lt;/a&gt; 的文章，解释它的起源、为什么它会是现在这个样子，以及我对其未来的看法。但在达到这一点之前，我认为我需要解释一些事情，fork 被认为是一种过时的旧物，甚至可以说是“恶魔的创造”。然而，在 Ruby 生态系统中，它却无处不在。&lt;/p&gt;
+
+&lt;p&gt;请注意，如果您有一些系统编程经验，您在这里可能学不到太多。&lt;/p&gt;
+
+&lt;p&gt;如果您曾经部署过 Ruby 应用程序到生产环境，那么您几乎肯定已经与 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 打过交道，无论您是否意识到。您是否配置过 Puma 的 worker 设置？嗯，Puma 使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 来启动这些工作进程，更准确地说，是 Ruby 的 &lt;a href=&quot;https://devdocs.io/ruby~3.4/process#method-c-_fork&quot;&gt;Process.fork&lt;/a&gt; 方法，这是 Ruby API 对底层 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 系统调用的封装。&lt;/p&gt;
+
+&lt;p&gt;即使你不是 Ruby 开发者，如果你使用过 PHP、Nginx、Apache HTTPd、Redis 等，你也使用了一个高度依赖 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 的系统。&lt;/p&gt;
+
+&lt;p&gt;然而，许多人会认为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 是邪恶的，不应该被使用。我个人有点既同意又不同意这种观点，我将尝试解释原因。&lt;/p&gt;
+
+&lt;h1 id=&quot;一点历史&quot;&gt;一点历史&lt;/h1&gt;
+
+&lt;p&gt;根据维基百科，fork 概念首次出现可以追溯到 1962 年，由提出&lt;a href=&quot;https://en.wikipedia.org/wiki/Conway%27s_law&quot;&gt;康威定律(Conway’s law)&lt;/a&gt;的同一个人提出，后来在 UNIX 的第一个版本中引入。&lt;/p&gt;
+
+&lt;p&gt;最初，它被设计为一种用于创建新进程的原语。你会调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 来复制当前进程，然后从那里开始将这个新进程修改为你想要的样子，紧接着调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;exec(2)&lt;/code&gt; ，我们一般这样使用。直到今天，你仍然可以在 Ruby 中这样做。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;译者注：一切不懂这方面的读者可能觉得莫名其妙。这地方介绍的不清楚，我补充一点。 这是 Unix/Linux 操作系统,创建子进程的标准方法。先调用 fork 这样会迅速的从当前进程复制一份出来，然后紧接着执行 exec 传入具体 bash 的命令。这样就创建了一个子进程，并且关联了当前进程为父进程。exec 执行内容会占据 之前 fork 的进程，作为一个独立进程执行。 这样设计存在历史原因，也相当聪明，等于复制模版，再更改模板内的内容。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;child_pid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;fork&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;c1&quot;&gt;# We&apos;re in the parent process, and we know the child process ID.&lt;/span&gt;
+  &lt;span class=&quot;c1&quot;&gt;# We can wait for the child to exit or send signals etc.&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;wait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;child_pid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+  &lt;span class=&quot;c1&quot;&gt;# We&apos;re in the child process.&lt;/span&gt;
+  &lt;span class=&quot;c1&quot;&gt;# We can change the current user and other attributes.&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;uid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+  &lt;span class=&quot;c1&quot;&gt;# And then we can replace the current program with another.&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;exec&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;echo&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;hello&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;从某种意义上说，这种设计相当优雅。你拥有少量简单的基础组件，可以将它们组合在一起以获得你所需要的精确行为，而不是一个庞大的函数，需要传递无数个参数。&lt;/p&gt;
+
+&lt;p&gt;但这种方法也非常低效，因为完全复制一个进程来创建一个新的进程通常是小题大做。在上面的例子中，如果你想象我们的父程序有数GB字节的可寻址内存，那么将所有这些内存复制过来，然后几乎立刻将其全部丢弃，以便用一个极其小的程序（如/bin/echo）来替换，这是一种巨大的浪费。&lt;/p&gt;
+
+&lt;p&gt;当然，现代操作系统实际上并不会复制所有这些内容，而是使用写时复制（Copy-on-Write），但这仍然非常昂贵，如果父进程很大，很容易就需要数百毫秒。&lt;/p&gt;
+
+&lt;p&gt;这是因为使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 来启动其他程序的历史用法现在大多被认为是过时的，大多数新的软件将使用更现代的 API，如 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;posix_spawn(3)&lt;/code&gt; 或 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;vfork(2)+exec(2)&lt;/code&gt; 。&lt;/p&gt;
+
+&lt;p&gt;但 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 的用途并不仅限于此。我不知道这是否从一开始就被设计好了，还是后来才逐渐形成的一种用法，但我前面提到的所有软件都使用了 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt;，而且从未在其后调用过 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;exec(2)&lt;/code&gt;。&lt;/p&gt;
+
+&lt;h1 id=&quot;fork-作为并行原语&quot;&gt;Fork 作为并行原语&lt;/h1&gt;
+
+&lt;p&gt;再次，我甚至不是在七十年代初出生的，所以我不太确定这种做法究竟是从什么时候开始的，但某个时候 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 开始被用作并行性原语，尤其是在服务器方面。&lt;/p&gt;
+
+&lt;p&gt;让我们假设您想从头开始实现一个简单的“echo”服务器，在 Ruby 中可能看起来像这样：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&apos;socket&apos;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;server&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;TCPServer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&apos;localhost&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;8000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;server&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;accept&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;line&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;gets&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;write&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;close&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;该脚本首先在端口 8000 上打开一个监听套接字，然后阻塞在 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;accept(2)&lt;/code&gt; 系统调用上等待客户端连接。当该方法返回时，它给我们一个双向套接字，我们可以从中读取，在这种情况下使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;#gets&lt;/code&gt; ，也可以向客户端写回。&lt;/p&gt;
+
+&lt;p&gt;虽然这使用了现代 Ruby，那与当时各种服务器的编写方式非常相似，但过于简化。&lt;/p&gt;
+
+&lt;p&gt;如果您想玩它，可以使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;telnet localhost 8000&lt;/code&gt; 开始编写内容。&lt;/p&gt;
+
+&lt;p&gt;但是那个服务器有一个大问题：它只支持单个并发用户。如果你尝试同时开启两个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;telnet&lt;/code&gt; 会话，你会看到第二个无法连接。&lt;/p&gt;
+
+&lt;p&gt;所以人们开始利用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 来支持更多用户：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&apos;socket&apos;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;server&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;TCPServer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&apos;localhost&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;8000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;children&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;server&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;accept&lt;/span&gt;
+  &lt;span class=&quot;c1&quot;&gt;# prune exited children&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;children&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;reject!&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pid&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;wait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;WNOHANG&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)}&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;child_pid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;fork&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;children&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;child_pid&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;close&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;line&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;gets&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;write&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;close&lt;/span&gt;
+    &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;exit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;逻辑与之前相同，但现在一旦 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;accept(2)&lt;/code&gt; 返回一个套接字，我们不再在它上面阻塞，而是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 一个新的子进程，并让那个子进程执行阻塞操作，直到客户端关闭连接。&lt;/p&gt;
+
+&lt;p&gt;如果您是一位敏锐的读者（或者您已经对 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 语义有所了解），您可能已经注意到在调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork&lt;/code&gt; 之后，父进程和新的子进程都可以访问套接字。这是因为，在 UNIX 中，套接字是“文件”，因此由“文件描述符”表示，而 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 语义的一部分是所有文件描述符都可以继承。&lt;/p&gt;
+
+&lt;p&gt;这就是为什么重要的是让父进程关闭套接字，否则，它将在父进程中永远保持打开状态(技术上，一旦对象被垃圾回收，Ruby 会自动关闭它，但你明白了这个意思)，这也是许多人讨厌 fork(2) 的第一个原因之一。&lt;/p&gt;
+
+&lt;h1 id=&quot;一把双刃剑&quot;&gt;一把双刃剑&lt;/h1&gt;
+
+&lt;p&gt;如上所示，子进程继承所有打开的文件描述符的事实允许实现一些非常有用的事情，但如果你忘记关闭一个你不想共享的文件描述符，这也可能导致灾难性的错误。&lt;/p&gt;
+
+&lt;p&gt;例如，如果您正在 fork 一个与 SQL 数据库有活动连接的进程，并且您在两个进程中都继续使用该连接，会发生奇怪的事情：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;bundler/inline&quot;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;gemfile&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;gem&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;trilogy&quot;&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;gem&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;bigdecimal&quot;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# for trilogy&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;client&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Trilogy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ping&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;child_pid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;fork&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;sleep&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.1&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# Give some time to the child&lt;/span&gt;
+
+  &lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;times&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;p&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;SELECT &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;first&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;kill&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:KILL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;child_pid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;wait&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;child_pid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+  &lt;span class=&quot;kp&quot;&gt;loop&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&apos;SELECT &quot;oops&quot;&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;这里脚本使用 trilogy 客户端连接到 MySQL，然后在一个循环中无限查询 SELECT “oops” ，然后创建一个子进程。一旦子进程被创建，父进程发出 5 个查询，每个查询应该返回一个从 0 到 4 的单个数字，并打印其结果。&lt;/p&gt;
+
+&lt;p&gt;如果您运行此脚本，您将得到一些随机的输出，类似于这样：&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;s2&quot;&gt;&quot;oops&quot;&lt;/span&gt;
+1
+&lt;span class=&quot;s2&quot;&gt;&quot;oops&quot;&lt;/span&gt;
+&lt;span class=&quot;s2&quot;&gt;&quot;oops&quot;&lt;/span&gt;
+3
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;这里发生的情况是，两个进程都在同一个套接字内写入。对于 MySQL 服务器来说，这不是什么大问题，因为我们的查询很小，所以它们会被“原子性地”写入套接字。如果我们发出更大的查询，两个查询可能会交错，这会导致服务器以某种协议错误的形式关闭连接。&lt;/p&gt;
+
+&lt;p&gt;但是对客户来说，这真的很糟糕。因为两个进程的响应都通过同一个套接字发送回来，每个客户端都在发出 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;read(2)&lt;/code&gt; ，可能会收到它刚刚发出的查询的响应，但也可能收到另一个由其他进程发出的无关查询的响应。&lt;/p&gt;
+
+&lt;p&gt;当两个进程尝试在同一个套接字上 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;read(2)&lt;/code&gt; 时，它们各自获取部分数据，但你无法正确控制哪个进程获取什么，尝试同步这两个进程以使它们各自获得预期的响应是不切实际的。&lt;/p&gt;
+
+&lt;p&gt;考虑到这一点，你可以想象在调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 之前正确关闭应用程序的所有套接字和其他打开的文件会有多大的麻烦。也许你在自己的代码中会非常勤奋，但你可能正在使用一些可能不会期望调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 并且不允许你关闭它们的文件描述符的库。&lt;/p&gt;
+
+&lt;p&gt;对于 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork+exec&lt;/code&gt; 用例，有一个很棒的功能让这变得容易得多，你可以在调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;exec&lt;/code&gt; 时标记一个文件描述符需要关闭，操作系统会为你处理这个， &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;O_CLOEXEC&lt;/code&gt; （在 exec 时关闭），在 Ruby 中方便地作为 IO 类上的一个方法公开：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;no&quot;&gt;STDIN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;close_on_exec&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;true&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;但是，当它后面没有跟随着一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;exec&lt;/code&gt; 时， &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork&lt;/code&gt; 系统调用就没有这样的标志。或者更准确地说，有一个， &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;O_CLOFORK&lt;/code&gt; ，它存在于一些 UNIX 系统上，主要是 IBM 的系统，并在 2020 年添加到了 POSIX 规范中。但今天它并不被广泛支持，最重要的是 Linux 不支持它。有人在 2011 年提交了一个补丁，将其添加到 Linux 中，但似乎对此没有太多兴趣，另一个人在 2020 年又尝试了一次，但遇到了一些强烈的反对，这很遗憾，因为它会非常有用。&lt;/p&gt;
+
+&lt;p&gt;相反，大多数想要实现分支安全的代码所做的是，它尝试通过持续检查当前进程 ID 来检测是否发生了分支：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;query&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;pid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;vi&quot;&gt;@old_pid&lt;/span&gt;
+    &lt;span class=&quot;vi&quot;&gt;@connection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;close&lt;/span&gt;
+    &lt;span class=&quot;vi&quot;&gt;@connection&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;nil&lt;/span&gt;
+    &lt;span class=&quot;vi&quot;&gt;@old_pid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;pid&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+  &lt;span class=&quot;vi&quot;&gt;@connection&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;connect&lt;/span&gt;
+  &lt;span class=&quot;vi&quot;&gt;@connection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;query&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;或者依赖某些 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;at_fork&lt;/code&gt; 回调，在 C 语言中通常是指 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;pthread_atfork&lt;/code&gt; ，自从 Ruby 3.1 以来，你可以封装 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Process._fork&lt;/code&gt; （注意 _ ）：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;MyLibraryAtFork&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;_fork&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+      &lt;span class=&quot;c1&quot;&gt;# in child&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+      &lt;span class=&quot;c1&quot;&gt;# in parent&lt;/span&gt;
+      &lt;span class=&quot;no&quot;&gt;MyLibrary&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;close_all_ios&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;pid&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;singleton_class&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;prepend&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;MyLibraryAtFork&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;由于 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 在 Ruby 中非常普遍，许多处理套接字的流行库，如 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Active Record&lt;/code&gt; 或 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;redis&lt;/code&gt; gem，都尽力透明地处理这个问题，所以你不必担心。因此，在大多数 Ruby 程序中，它只是正常工作。&lt;/p&gt;
+
+&lt;p&gt;但是，对于本地语言来说，这可能会相当繁琐，这也是许多人绝对讨厌 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 的原因之一。任何使用文件或套接字的代码在调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 之后可能会完全损坏，除非特别关注了 fork 安全性，而这很少是情况。&lt;/p&gt;
+
+&lt;h1 id=&quot;一些您的线程可能会死亡&quot;&gt;一些您的线程可能会死亡&lt;/h1&gt;
+
+&lt;p&gt;回到我们的echo服务器，你可能想知道为什么在这里使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 而不是线程。再次强调，我当时并不在那里，但我的理解是线程在后来的某个时候才成为了一件事（八十年代末？），而且即使它们存在了，也需要相当长的时间才能标准化和解决，因此才能跨平台使用。&lt;/p&gt;
+
+&lt;p&gt;也存在这样的观点，使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 进行多进程处理更容易理解。每个进程都有自己的内存空间，因此你不必过多担心竞态条件和其他线程陷阱，所以我明白为什么即使线程成为了一种选择，有些人可能还是更喜欢坚持使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 。&lt;/p&gt;
+
+&lt;p&gt;但是，由于线程是在 fork(2) 之后很久才被创造的，因此负责实现和标准化它们的人遇到了一些麻烦，没有找到让它们两者都能良好协作的方法。&lt;/p&gt;
+
+&lt;p&gt;这里 &lt;a href=&quot;https://pubs.opengroup.org/onlinepubs/009696799/functions/fork.html&quot;&gt;POSIX 标准 fork 条目&lt;/a&gt;关于该内容的说明是：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;一个进程应使用单个线程创建。如果一个多线程进程调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork()&lt;/code&gt;，新进程应包含调用线程的副本及其整个地址空间，可能包括互斥锁和其他资源的状态。因此，为了避免错误，子进程只能在调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;exec&lt;/code&gt; 函数之前执行异步信号安全的操作。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;换句话说，标准承认经典的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork + exec&lt;/code&gt; 模式可以在多线程进程中实现，但对于不带着 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;exec&lt;/code&gt; 的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork&lt;/code&gt; 使用，标准则显得有些置身事外。他们建议仅使用异步信号安全的操作，而这实际上只是很小一部分功能。&lt;strong&gt;所以，根据标准，如果你在创建了一些线程之后调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt;，且并不打算立即调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;exec&lt;/code&gt; ，那么这里就充满了潜在的危险&lt;/strong&gt;。&lt;/p&gt;
+
+&lt;p&gt;原因在于，只有调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 的线程在子进程中保持存活，其他线程虽然存在，但已经死亡。如果另一个线程曾经锁定了一个互斥锁（mutex）或其他类似的资源，那么这个锁将永远保持锁定状态，如果新线程尝试获取它的话，这可能会导致死锁。&lt;/p&gt;
+
+&lt;p&gt;该标准还包括一个关于为什么是这样的原因说明部分，这部分内容有点长但很有趣：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;在多线程世界中使 fork()工作通常存在的问题是如何处理所有线程。有两种选择。一种是将所有线程复制到新进程中。这导致程序员或实现必须处理那些在系统调用上挂起的线程，或者那些可能即将执行不应该在新进程中执行的系统调用的线程。另一种选择是只复制调用 fork()的线程。这造成了一个困难，即进程本地资源的状态通常保存在进程内存中。如果一个不调用 fork()的线程持有一个资源，那么在子进程中这个资源永远不会被释放，因为负责释放资源的线程在子进程中不存在。&lt;/p&gt;
+
+  &lt;p&gt;当程序员编写多线程程序时， […] fork() 函数仅用于运行新程序，而在调用 fork() 和调用 exec 函数之间调用需要某些资源的函数的效果是未定义的。&lt;/p&gt;
+
+  &lt;p&gt;将 forkall()函数加入标准中被考虑过并拒绝了。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;所以他们确实考虑了拥有另一个版本的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; ，称为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;forkall()&lt;/code&gt; ，这个版本也会复制其他线程，但他们无法想出一个清晰的语义（semantic）来解释在某些情况下会发生什么。&lt;/p&gt;
+
+&lt;p&gt;相反，他们为用户提供了一种方法，在 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork&lt;/code&gt; 附近调用回调以恢复状态，例如，重新初始化互斥锁。然而，如果你去看那个回调手册页 &lt;a href=&quot;https://man7.org/linux/man-pages/man3/pthread_atfork.3.html&quot;&gt;pthread_atfork(3)&lt;/a&gt; ，你可以读到：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;pthread_atfork()的最初意图是允许子进程恢复到一个一致的状态。 […] 实际上，这项任务通常过于困难，难以实现。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;所以尽管 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;pthread_atfork&lt;/code&gt; 仍然存在并且可以使用，但标准承认正确使用它是非常困难的。&lt;/p&gt;
+
+&lt;p&gt;这就是为什么许多系统程序员会告诉你永远不要将 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 与多线程程序混合使用，或者至少在创建线程后永远不要调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; ，因为那时，一切都不确定了。因此，你多少必须选择你的阵营，看来线程明显赢了。&lt;/p&gt;
+
+&lt;p&gt;但这是针对 C 或 C++ 程序员的。&lt;/p&gt;
+
+&lt;p&gt;在今天的 Ruby 程序员的情况下，使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 而不是线程的原因是，这是在 MRI 上获得真正并行性的唯一方式(是的，从某种程度上来说也有 Ractors，但这将是下一篇帖子的主题) ，MRI 是 Ruby 的默认且最常用的实现。由于臭名昭著的 GVL，Ruby 线程只允许并行化 IO 操作，不能并行化 Ruby 代码执行，因此几乎所有的 Ruby 应用服务器都以某种方式集成了 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; ，以便它们可以利用超过单个 CPU 核心。&lt;/p&gt;
+
+&lt;p&gt;幸运的是，Ruby 缓解了将线程与 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 混合使用的一些陷阱。例如，由于它们的实现方式，Ruby 互斥锁在所有者死亡时会自动释放。在伪 Ruby 代码中，它们看起来像这样：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Mutex&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;lock&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;vi&quot;&gt;@owner&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;current&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;raise&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;ThreadError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;deadlock; recursive locking&quot;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;vi&quot;&gt;@owner&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;alive?&lt;/span&gt;
+      &lt;span class=&quot;nb&quot;&gt;sleep&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;vi&quot;&gt;@owner&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Fiber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;current&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;当然，在现实中它们并不是在循环中睡眠以等待，它们使用一种更高效的方式来阻塞，但这只是为了给你一个大致的概念。重要的一点是，Ruby 互斥锁会保留对获取锁的 纤维（因此是线程）的引用，并在其死亡时自动忽略它。因此，在 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork&lt;/code&gt; 之后，所有由后台线程持有的互斥锁会立即释放，这避免了大多数死锁场景。&lt;/p&gt;
+
+&lt;p&gt;当然，这并不完美，如果一个线程在持有互斥锁时死亡，它很可能留下了由互斥锁保护的资源处于不一致的状态，在实践中我从未遇到过这样的情况，当然，这可能是因为全局解释器锁（GVL）的存在在一定程度上减少了对互斥锁的需求。&lt;/p&gt;
+
+&lt;p&gt;现在，Ruby 线程并非完全不受这些陷阱的影响，因为归根结底在 MRI 上，Ruby 线程是由本地线程支持的，所以如果另一个线程释放了 GVL 并调用了一个锁定互斥锁的 C API，你最终可能会遇到一个棘手的死锁问题。&lt;/p&gt;
+
+&lt;p&gt;尽管我从未得到确凿的证据，但我怀疑这对一些 Ruby 用户来说正在发生，因为据我了解，Ruby 用来解析主机名的 glibc 的 &lt;a href=&quot;https://man7.org/linux/man-pages/man3/getaddrinfo.3.html&quot;&gt;getaddrinfo(3)&lt;/a&gt; 确实使用了全局互斥锁，而 Ruby 在释放 GVL 的情况下调用它，允许并发发生 fork。&lt;/p&gt;
+
+&lt;p&gt;为了防止这种情况，&lt;a href=&quot;https://bugs.ruby-lang.org/issues/20590&quot;&gt;我在 MRI 中增加了另一个锁&lt;/a&gt;，以防止在进行 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;getaddrinfo(3)&lt;/code&gt; 调用时发生 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Process.fork&lt;/code&gt; 。这远非完美，但考虑到 Ruby 多么依赖 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Process.fork&lt;/code&gt; ，这似乎是一个明智的做法。&lt;/p&gt;
+
+&lt;p&gt;依赖 fork 的 Ruby 程序在 macOS 上崩溃并不罕见，因为许多 macOS 系统 API 会隐式地创建线程或锁定互斥锁，而 macOS 选择在发生这种情况时一致性地崩溃。&lt;/p&gt;
+
+&lt;p&gt;所以即使使用纯 Ruby 代码，你偶尔也会遇到 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 的陷阱，你不能随意使用它。&lt;/p&gt;
+
+&lt;h1 id=&quot;结论&quot;&gt;结论&lt;/h1&gt;
+
+&lt;p&gt;所以回答标题中的问题， &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 被讨厌的原因是它组合性不好，特别是在原生代码中。如果你想使用它，你必须非常小心你正在编写和链接的代码。每当你使用一个库时，你必须确保它不会生成一些线程，或者持有文件描述符，并且在 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 和线程之间选择时，大多数系统程序员会选择线程。它们有自己的陷阱，但它们组合性更好，而且很可能你正在调用的 API 在后台使用线程，所以这个选择在某种程度上已经为你做好了。&lt;/p&gt;
+
+&lt;p&gt;但 Ruby 代码的情况远没有这么糟糕，因为它使得编写安全的代码变得更加容易，而且 Ruby 的理念使得像 Active Record 这样的库会为你处理这些复杂的细节。所以问题主要出现在你想要绑定到一些会生成线程的本地库时，比如 grpc 或 libvips ，因为它们通常不期望 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 会发生，并且通常不接受它作为一个约束。&lt;/p&gt;
+
+&lt;p&gt;尤其是因为 fork 大多在应用程序初始化结束时使用，即使技术上不是 fork 安全的库也会工作，因为它们通常在第一次请求时才懒洋洋地初始化它们的线程和文件描述符。&lt;/p&gt;
+
+&lt;p&gt;无论如何，即使你仍然认为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 是邪恶的，但在 Ruby 提供另一个可用的原语来实现真正的并行性（这应该是下一篇文章的主题）之前，它将仍然是一个必要的邪恶。&lt;/p&gt;
+
+</description>
+        <pubDate>Sat, 08 Feb 2025 17:26:39 +0800</pubDate>
+        <link>https://mark24code.github.io/ruby/2025/02/08/%E4%B8%BA%E4%BB%80%E4%B9%88%E6%AF%8F%E4%B8%AA%E4%BA%BA%E9%83%BD%E8%AE%A8%E5%8E%8C-fork(2).html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ruby/2025/02/08/%E4%B8%BA%E4%BB%80%E4%B9%88%E6%AF%8F%E4%B8%AA%E4%BA%BA%E9%83%BD%E8%AE%A8%E5%8E%8C-fork(2).html</guid>
+        
+        
+        <category>Ruby</category>
+        
+      </item>
+    
+      <item>
+        <title>所以，你想移除 GVL？</title>
+        <description>&lt;ul&gt;
+  &lt;li&gt;作者：&lt;a href=&quot;https://github.com/byroot&quot;&gt;Jean Boussier&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;译者：&lt;a href=&quot;https://github.com/Mark24Code&quot;&gt;Mark24&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;原文: &lt;a href=&quot;https://byroot.github.io/ruby/performance/2025/01/29/so-you-want-to-remove-the-gvl.html&quot;&gt;so-you-want-to-remove-the-gvl&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;我想写一篇关于 &lt;a href=&quot;https://rubygems.org/gems/pitchfork&quot;&gt;Pitchfork&lt;/a&gt; 的文章，解释它的起源、为什么它会是这个样子，以及我对其未来的看法。但在达到这一点之前，我认为我需要分享我对一些事情的思维模型，在这个例子中，是 Ruby 的 GVL。&lt;/p&gt;
+
+&lt;p&gt;长期以来，人们常说 Rails 应用程序主要是 I/O 密集型，因此 Ruby 的 GVL （全局解释器锁）并不是什么大问题，这也影响了 Ruby 基础设施中一些基础组件的设计，如 Puma 和 Sidekiq。正如我在&lt;a href=&quot;https://byroot.github.io/ruby/performance/2025/01/23/the-mythical-io-bound-rails-app.html&quot;&gt;之前的文章中解释的那样&lt;/a&gt;，我认为对于大多数 Rails 应用程序来说，这并不完全正确。不管怎样，&lt;a href=&quot;https://byroot.github.io/ruby/performance/2025/01/25/why-does-everyone-hate-fork.html&quot;&gt;GVL 的存在仍然要求这些线程化系统使用 fork(2)&lt;/a&gt; 才能充分利用服务器的所有核心：每个核心一个进程。为了避免所有这些问题，有些人呼吁简单地移除 GVL。&lt;/p&gt;
+
+&lt;p&gt;但这真的这么简单吗？&lt;/p&gt;
+
+&lt;h1 id=&quot;gvl-和线程安全&quot;&gt;GVL 和线程安全&lt;/h1&gt;
+
+&lt;p&gt;如果你阅读有关 GVL 的帖子，你可能听说过它不是为了保护你的代码免受竞态条件的影响，而是为了保护 Ruby 虚拟机免受你的代码影响。换句话说，无论是否有 GVL，你的代码都可能受到竞态条件的影响，这是绝对正确的。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;但这并不意味着 GVL 不是您应用程序中 Ruby 代码线程安全的重要组件。&lt;/strong&gt; 让我们用一个简单的代码示例来说明：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;译者注：这里表达很英语，比较绕口。中文的意思就是想表达：GVL 其实也会影响到你 Ruby 代码的线程安全。下面举例说明。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;no&quot;&gt;QUOTED_COLUMN_NAMES&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;quote_column_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;QUOTED_COLUMN_NAMES&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quote&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;您说这段代码是线程安全的吗？还是不是？&lt;/p&gt;
+
+&lt;p&gt;嗯，如果你回答“它是线程安全的”，你并不完全正确。但如果你回答“它不是线程安全的”，你也不完全正确。&lt;/p&gt;
+
+&lt;p&gt;实际答案是：“视情况而定”。&lt;/p&gt;
+
+&lt;p&gt;首先，这取决于你对线程安全的定义有多严格，然后取决于那个 quote 方法是否是幂等的，最后还取决于你使用的 Ruby 解释器的实现。&lt;/p&gt;
+
+&lt;p&gt;让我解释一下。&lt;/p&gt;
+
+&lt;p&gt;首先， &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;||=&lt;/code&gt; 是一种语法糖，它隐藏了这段代码实际工作方式的一些细节，所以让我们去掉它的语法糖：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;no&quot;&gt;QUOTED_COLUMN_NAMES&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;quote_column_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;quoted&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;QUOTED_COLUMN_NAMES&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+  &lt;span class=&quot;c1&quot;&gt;# Ruby 可以在这里切换线程&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quoted&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;quoted&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+    &lt;span class=&quot;no&quot;&gt;QUOTED_COLUMN_NAMES&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quote&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;在这个形式下，更容易看出 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;||=&lt;/code&gt; 并不是一个单一的操作，而是多个操作。因此，即使在 MRI（即 CRuby 解释器）上，存在全局解释器锁（GVL），从技术上来说，Ruby在计算 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;quoted = ...&lt;/code&gt; 之后，也有可能抢占一个线程，并恢复另一个线程，而这个线程可能会带着相同的参数进入同一个方法。&lt;/p&gt;
+
+&lt;p&gt;换句话说，即使有 GVL，此代码也受竞态条件影响。更准确地说，它受“检查-执行（check-then-act）” 竞态条件影响。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;译者注：“Check-then-act”是一种常见的操作模式，指的是先检查某个条件，然后根据检查结果执行相应操作。然而，这种模式在多线程环境下容易引发竞态条件（Race Condition），因为检查和执行之间存在时间间隔，在此期间其他线程可能改变相关状态，导致基于过时的检查结果执行操作。 作者这里就想表达这个经典的情况。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;如果它存在竞态条件，你可以逻辑上推断出它不是线程安全的。但在这里，情况又有所不同。如果 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;quote(name)&lt;/code&gt; 是幂等的，技术上确实存在竞态条件，但它又没有实际的负面影响。&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;quote(name)&lt;/code&gt; 可能会被执行两次而不是一次，其中一个结果会被丢弃，谁会在乎呢？这就是为什么在我看来，上述代码实际上仍然是线程安全的，不管怎样。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;译者注：“幂等”（Idempotent）是一个数学和计算机科学中的概念，指的是一个操作或函数在多次执行后，其效果与执行一次相同。换句话说，无论执行多少次，结果都不会改变。幂等性在很多领域都有重要的应用，尤其是在分布式系统、数据库操作和网络协议中。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;我们可以通过使用几个线程来实验验证这一点：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;no&quot;&gt;QUOTED_COLUMN_NAMES&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;times&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;to_h&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;quote_column_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;QUOTED_COLUMN_NAMES&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;`&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;to_s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;gsub&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&apos;`&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&apos;``&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;`&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;freeze&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;threads&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;times&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;Thread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;mi&quot;&gt;10_000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;times&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quote_column_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;foo&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;`foo`&quot;&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;raise&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;There was a bug&quot;&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+      &lt;span class=&quot;no&quot;&gt;QUOTED_COLUMN_NAMES&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;delete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;foo&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;threads&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;each&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;如果您使用 MRI 运行此脚本，它将正常运行，不会崩溃，并且 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;quote_column_name&lt;/code&gt; 将始终返回您预期的结果。&lt;/p&gt;
+
+&lt;p&gt;然而，如果您尝试使用 TruffleRuby 或 JRuby 运行它，它们是 Ruby 的替代实现，没有 GVL，您将得到&lt;a href=&quot;https://gist.github.com/byroot/1470a8fc71c2712a1f3ae875a9a40710&quot;&gt;大约 300 行错误&lt;/a&gt;：&lt;/p&gt;
+
+&lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;ruby &lt;span class=&quot;nt&quot;&gt;-v&lt;/span&gt; /tmp/quoted.rb
+truffleruby 24.1.2, like ruby 3.2.4, Oracle GraalVM Native &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;arm64-darwin20]
+java.lang.RuntimeException: Ruby Thread &lt;span class=&quot;nb&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;51 from /tmp/quoted.rb:20 terminated with internal error:
+    at org.truffleruby.core.thread.ThreadManager.printInternalError&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;ThreadManager.java:316&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+    ... 20 more
+Caused by: java.lang.NullPointerException
+    at org.truffleruby.core.hash.library.PackedHashStoreLibrary.getHashed&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;PackedHashStoreLibrary.java:78&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+    ... 120 more
+java.lang.RuntimeException: Ruby Thread &lt;span class=&quot;nb&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;52 from /tmp/quoted.rb:20 terminated with internal error:
+    at org.truffleruby.core.thread.ThreadManager.printInternalError&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;ThreadManager.java:316&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+    ... 20 more
+... etc
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;错误并不总是完全相同，有时似乎比其他时候更严重。但总的来说，它会在 TruffleRuby 或 JRuby 解释器内部深处崩溃，因为对同一哈希的并发访问导致它们遇到 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;NullPointerException&lt;/code&gt; 。&lt;/p&gt;
+
+&lt;p&gt;因此，我们可以说在 Ruby 的参考实现中这段代码是线程安全的，但在 Ruby 的所有实现中并不都是线程安全的。&lt;/p&gt;
+
+&lt;p&gt;该方式之所以如此，是因为在 MRI 中，线程调度器只能在执行纯 Ruby 代码时切换运行中的线程。每次调用实现于 C 的内置方法时，你都会隐式地受到 GVL 的保护。因此，所有实现于 C 的方法本质上都是“原子的”，除非它们明确释放 GVL。但一般来说，只有 IO 方法会释放它。&lt;/p&gt;
+
+&lt;p&gt;这就是为什么，这段从 &lt;a href=&quot;https://github.com/rails/rails/blob/0643592211dec558f93e57451a34393941144c8e/activerecord/lib/active_record/connection_adapters/sqlite3/quoting.rb#L9&quot;&gt;Active Record 摘取的代码&lt;/a&gt;，没有使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Hash&lt;/code&gt; 但使用了 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Concurrent::Map&lt;/code&gt;。&lt;/p&gt;
+
+&lt;p&gt;在 MRI 中，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Concurrent::Map&lt;/code&gt; 几乎只是 Hash 的一个别名，但在 JRuby 和 TruffleRuby 中，它被定义为带有互斥锁的散列表。官方 Rails 不支持 TruffleRuby 或 JRuby，但在实际生产中，我们倾向于通过这种小改动来完成支持。&lt;/p&gt;
+
+&lt;h1 id=&quot;直接移除不就好了么&quot;&gt;直接移除不就好了么&lt;/h1&gt;
+
+&lt;p&gt;这就是为什么会有“移除 GVL”和“真的移除 GVL”。&lt;/p&gt;
+
+&lt;p&gt;简单的方法可以像 TruffleRuby 和 JRuby 那样：什么也不做，或者说是几乎什么也不做。&lt;/p&gt;
+
+&lt;p&gt;由于TruffleRuby、JRuby 实现是基于 Java 虚拟机（JVM）的，而 JVM 是内存安全的，因此它们将这种情况下“失败但不会直接崩溃”的艰巨任务委托给了 JVM 运行时。鉴于 MRI 是用 C 语言实现的，而 C 语言以“不支持内存安全”而闻名，如果仅仅移除 GVL，当你的代码触发这种竞态条件时，虚拟机可能会遇到段错误（segmentation fault）或者更糟糕的情况，因此事情并没有那么简单。&lt;/p&gt;
+
+&lt;p&gt;Ruby 需要在每个可能发生竞态条件的对象上实现类似于 JVM 的做法，为每个对象设置某种原子计数器。每次访问对象时，你都会增加它并检查它是否设置为 1 ，以确保没有其他人正在使用它。&lt;/p&gt;
+
+&lt;p&gt;这本身是一项相当具有挑战性的任务，因为它意味着要检查 C 语言中实现的所有方法（包括 Ruby 本身以及流行的 C 扩展），以插入所有这些原子递增和递减操作。&lt;/p&gt;
+
+&lt;p&gt;它还需要在大多数 Ruby 对象中为那个新计数器额外占用一些空间，可能是 4 或 8 个字节，因为原子操作在小整数类型上不容易完成。除非当然有一些我不知情的巧妙技巧。&lt;/p&gt;
+
+&lt;p&gt;这也会导致虚拟机的速度变慢，因为所有这些原子递增和递减很可能会有明显的开销，因为原子操作意味着 CPU 必须确保所有核心同时看到这个操作，所以它实际上锁定了 CPU 缓存的那部分。我不会尝试猜测这种开销在实践中会有多少，但肯定不是免费的。&lt;/p&gt;
+
+&lt;p&gt;然后结果就是，很多原本是线程安全的纯 Ruby 代码，将不再具备这种特性。因此，除了 ruby-core 需要做的工作之外，Ruby 用户可能还需要在他们的代码、gem 等中调试大量线程安全问题。&lt;/p&gt;
+
+&lt;p&gt;因此，尽管 JRuby 和 TruffleRuby 团队努力使其与 MRI 尽可能兼容，但由于缺少 GVL 这一特性，大多数非平凡代码库在它们之上运行前可能至少需要进行一些调试。这并不一定需要大量努力，这取决于情况，但比您平均每年的 Ruby 升级要麻烦得多。&lt;/p&gt;
+
+&lt;h1 id=&quot;移除gvl-的替代品方案&quot;&gt;移除GVL 的替代品方案&lt;/h1&gt;
+
+&lt;p&gt;但是，这并不是移除 GVL 的唯一方法，另一种常见的设想是用无数的小锁来替换一个全局锁，每个可变对象一个锁。&lt;/p&gt;
+
+&lt;p&gt;关于需要完成的工作，它与之前的方法相当相似，你需要遍历所有 C 代码，并在每次接触可变对象时显式插入锁定和解锁语句。这还需要在每个对象上占用一些空间，可能比仅仅一个计数器要多一些。&lt;/p&gt;
+
+&lt;p&gt;采用这种方法，C 扩展可能仍需要一些工作，但纯 Ruby 代码将保持完全兼容。&lt;/p&gt;
+
+&lt;p&gt;如果您听说过最近半途而废的尝试移除 Python 的 GIL（相当于 Python 版本的 GVL），那么他们就是用的这种方法。那么，让我们看看他们做了哪些改动，&lt;a href=&quot;https://github.com/python/cpython/blob/180ee43bde99b8ce4c4f1d5237ab191e26118061/Include/object.h#L109-L162&quot;&gt;从他们定义在 object.h 的基础对象布局开始&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;它有很多仪式性代码（Ceremonial Code），所以这里有一个简化版本：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;译者注：“仪式代码”（Ceremonial Code）是指在编程过程中，为了满足某些框架、语言特性或规范要求而必须编写的一些额外代码，这些代码本身对核心功能的实现并没有直接帮助，但却是必要的步骤。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cm&quot;&gt;/* Nothing is actually declared to be a PyObject, but every pointer to
+ * a Python object can be cast to a PyObject*.  This is inheritance built by hand.
+ */&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#ifndef Py_GIL_DISABLED
+&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_object&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Py_ssize_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ob_refcnt&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PyTypeObject&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ob_type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#else
+&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;// Objects that are not owned by any thread use a thread id (tid) of zero.&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// This includes both immortal objects and objects whose reference count&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// fields have been merged.&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#define _Py_UNOWNED_TID             0
+&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_object&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// ob_tid stores the thread id (or zero). It is also used by the GC and the&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// trashcan mechanism as a linked list pointer and by the GC to store the&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// computed &quot;gc_refs&quot; refcount.&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;uintptr_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ob_tid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;uint16_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ob_flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PyMutex&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ob_mutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;           &lt;span class=&quot;c1&quot;&gt;// per-object lock&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ob_gc_bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;         &lt;span class=&quot;c1&quot;&gt;// gc-related state&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ob_ref_local&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;      &lt;span class=&quot;c1&quot;&gt;// local reference count&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Py_ssize_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ob_ref_shared&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;   &lt;span class=&quot;c1&quot;&gt;// shared (atomic) reference count&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PyTypeObject&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ob_type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#endif
+&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;那里有相当多的内容，让我来概括下。简单起见，我的整个解释都将假设 64 位架构。&lt;/p&gt;
+
+&lt;p&gt;也请注意，虽然我曾经是 Pythonista ，那是在 15 年前，而现在我只是从远处观察 Python 的发展。总之，我会尽力准确描述他们正在做的事情，但完全有可能我会有些地方描述错误。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;译者注：Pythonista 是指那些对 Python 编程语言非常热爱和精通的人，通常是对代码质量和编程风格有较高追求的开发者。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;无论如何，当 GIL（Python 的全局解释器锁）没有被编译禁用的时候，每个 Python 对象都以 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;16B&lt;/code&gt; 开头，第一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;8B&lt;/code&gt; 称为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ob_refcnt&lt;/code&gt; 用于引用计数，正如其名，但实际上只使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;4B&lt;/code&gt; 作为计数器，其他 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;4B&lt;/code&gt; 用作位图来设置对象上的标志，就像在 Ruby 中一样。然后剩余的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;8B&lt;/code&gt; 只是一个指向对象类的指针。&lt;/p&gt;
+
+&lt;p&gt;与比较，Ruby 的对象头称为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;struct RBasic&lt;/code&gt; 也是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;16B&lt;/code&gt; 。同样，它有一个指向类的指针，另一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;8B&lt;/code&gt; 用作存储许多不同的大位图(big bitmap)。&lt;/p&gt;
+
+&lt;p&gt;然而，当在编译期间禁用 GIL 时，对象头现在是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;32B&lt;/code&gt; ，大小加倍。它以 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;8B ob_tid&lt;/code&gt; 开头，用于线程 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ID&lt;/code&gt;，存储哪个线程拥有该特定对象。然后 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ob_flags&lt;/code&gt; 被显式布局，但已缩减到 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;2B&lt;/code&gt; ，为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;1B ob_mutex&lt;/code&gt; 腾出空间，并为一些我不太了解的 GC 状态腾出另一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;1B&lt;/code&gt; 。&lt;/p&gt;
+
+&lt;p&gt;该 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;4B ob_refcnt&lt;/code&gt; 字段仍然存在，但这次命名为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ob_ref_local&lt;/code&gt; ，并且还有一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;8B ob_ref_shared&lt;/code&gt; ，最后是对象类的指针。&lt;/p&gt;
+
+&lt;p&gt;仅通过对象布局的改变，你就能感受到额外的复杂性，以及内存开销。每个对象额外 16 个字节不是微不足道的。&lt;/p&gt;
+
+&lt;p&gt;现在，正如你可能从 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;refcnt&lt;/code&gt;(ref count) 字段中猜到的，Python 的内存主要通过引用计数来管理。它们还有一个标记和清除收集器，但它只是为了处理循环引用。在这方面，它与 Ruby 相当不同，但看看他们为了使这个线程安全而必须做的事情仍然很有趣。&lt;/p&gt;
+
+&lt;p&gt;让我们看看在 &lt;a href=&quot;https://github.com/python/cpython/blob/180ee43bde99b8ce4c4f1d5237ab191e26118061/Include/refcount.h#L245-L294&quot;&gt;refcount.h 中定义的 Py_INCREF&lt;/a&gt; 。在这里，它充满了针对各种架构的 ifdef ，所以这里有一个简化版本，只包含当 GIL 激活时执行的代码，并移除了一些调试代码：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;cp&quot;&gt;#define _Py_IMMORTAL_MINIMUM_REFCNT ((Py_ssize_t)(1L &amp;lt;&amp;lt; 30))
+&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;inline&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Py_ALWAYS_INLINE&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;_Py_IsImmortal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyObject&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ob_refcnt&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_Py_IMMORTAL_MINIMUM_REFCNT&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;inline&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Py_ALWAYS_INLINE&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Py_INCREF&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyObject&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_Py_IsImmortal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ob_refcnt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;它非常简单，即使你不熟悉 C 语言，也应该能够读懂它。但基本上，它会检查引用计数是否设置为标记永生对象的魔法值，如果不是永生的，它就简单地执行一个常规的、非原子的、因此非常便宜的计数器递增。&lt;/p&gt;
+
+&lt;p&gt;关于“永生对象”（Immortal Objects）的补充说明，这是一个由 &lt;a href=&quot;https://instagram-engineering.com/copy-on-write-friendly-python-garbage-collection-ad6ed5233ddf&quot;&gt;Instagram 工程师引入的非常酷的概念&lt;/a&gt;，我也一直想将其引入到 Ruby 中。如果你对类似“写时复制”（Copy-on-Write）和内存节省这类话题感兴趣，那么它绝对值得一读。&lt;/p&gt;
+
+&lt;p&gt;现在让我们看看移除 GIL 后的相同 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Py_INCREF&lt;/code&gt; 函数：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cp&quot;&gt;#define _Py_IMMORTAL_REFCNT_LOCAL UINT32_MAX
+# define _Py_REF_SHARED_SHIFT        2
+&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;inline&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Py_ALWAYS_INLINE&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;_Py_IsImmortal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyObject&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_Py_atomic_load_uint32_relaxed&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ob_ref_local&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;_Py_IMMORTAL_REFCNT_LOCAL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;inline&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Py_ALWAYS_INLINE&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;_Py_IsOwnedByCurrentThread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyObject&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ob&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ob&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ob_tid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_Py_ThreadId&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;inline&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Py_ALWAYS_INLINE&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Py_INCREF&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyObject&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;local&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_Py_atomic_load_uint32_relaxed&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ob_ref_local&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;new_local&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;local&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;new_local&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// local is equal to _Py_IMMORTAL_REFCNT_LOCAL: do nothing&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_Py_IsOwnedByCurrentThread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;_Py_atomic_store_uint32_relaxed&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ob_ref_local&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;new_local&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;_Py_atomic_add_ssize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ob_ref_shared&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_Py_REF_SHARED_SHIFT&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;这是现在更加复杂。首先，需要原子地加载 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ob_ref_local&lt;/code&gt; ，正如之前提到的，这比正常加载要昂贵，因为它需要 CPU 缓存同步。然后，我们仍然有对不朽对象的检查，没有新内容。&lt;/p&gt;
+
+&lt;p&gt;有趣的部分是最后的 if ，因为有两种不同的情况，一种是对象由当前线程拥有，另一种则不是。因此，第一步是比较 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ob_tid&lt;/code&gt; 和 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_Py_ThreadId()&lt;/code&gt; 。这个函数太大，无法在这里包含，但你可以检查 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;object.h&lt;/code&gt; 中的实现，在大多数平台上，这基本上是免费的，因为线程 ID 总是存储在 CPU 寄存器中。&lt;/p&gt;
+
+&lt;p&gt;当对象由当前线程拥有时，Python 可以通过先进行非原子性增加后进行原子性存储来避免问题。而在相反的情况下，整个增加操作必须原子性，这要昂贵得多，因为它涉及到比较和交换操作。这意味着在发生竞态条件的情况下，CPU 将重试增加操作，直到在没有竞态条件的情况下完成。&lt;/p&gt;
+
+&lt;p&gt;用 Ruby 伪代码描述，它可能看起来像这样：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;atomic_compare_and_swap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;was&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;now&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;c1&quot;&gt;# 假设这个方法是一个 原子性 CPU 操作&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;vi&quot;&gt;@memory&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;was&lt;/span&gt;
+    &lt;span class=&quot;vi&quot;&gt;@memory&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;now&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;true&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;false&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;atomic_increment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;add&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;kp&quot;&gt;loop&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;atomic_load&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;vi&quot;&gt;@memory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;break&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;atomic_compare_and_swap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;add&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;因此，您可以看到，曾经是一个非常平凡的操作，即一个主要的 Python 热点，变成了一个明显更复杂的过程。Ruby 不使用引用计数，所以如果尝试移除 GVL，这个特定的情况不会立即翻译成 Ruby，但 Ruby 仍然有一系列非常频繁调用的类似例程，会受到类似的影响。&lt;/p&gt;
+
+&lt;p&gt;例如，因为 Ruby 的垃圾回收是代际和增量式的，当两个对象之间创建新的引用时，比如从 A 到 B ，Ruby 可能需要标记 A 为需要重新扫描，这是通过在位图中翻转一个位来完成的。这是需要使用原子操作进行更改的一个例子。&lt;/p&gt;
+
+&lt;p&gt;但我们还没有谈到实际的锁定。当我第一次听说 Python 试图移除它们的 GIL 时，我本以为他们会利用现有的引用计数 API 来将锁定放入其中，但显然，他们并没有这样做。我不确定为什么，但我猜因为语义并不完全匹配。&lt;/p&gt;
+
+&lt;p&gt;相反，他们必须做我之前提到的事情，即检查 C 中实现的所有方法，以添加显式的加锁和解锁调用。为了说明，我们可以看看 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;list.clear()&lt;/code&gt; 方法，它是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Array#clear&lt;/code&gt; 的 Python 等价方法。&lt;/p&gt;
+
+&lt;p&gt;在移除 GIL 的努力之前，它看起来是这样的：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;PyList_Clear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyObject&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyList_Check&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;PyErr_BadInternalCall&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;list_clear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyListObject&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;它看起来比实际要简单，因为大部分复杂性都在 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;list_clear&lt;/code&gt; 例程中，但无论如何，它相当直接。&lt;/p&gt;
+
+&lt;p&gt;项目开始一段时间后，&lt;a href=&quot;https://github.com/python/cpython/issues/127536&quot;&gt;Python 开发者注意到他们忘记给 list.clear 和其他几个方法添加锁&lt;/a&gt;，因此他们进行了修改：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;PyList_Clear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyObject&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyList_Check&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;PyErr_BadInternalCall&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Py_BEGIN_CRITICAL_SECTION&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;list_clear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyListObject&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Py_END_CRITICAL_SECTION&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;不太糟糕，他们设法将其全部封装在两个宏中，当 Python 启用 GIL 时，这些宏只是空操作。&lt;/p&gt;
+
+&lt;p&gt;我不会解释 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Py_BEGIN_CRITICAL_SECTION&lt;/code&gt; 中发生的一切，有些东西我无论如何也理解不了，但简而言之，它最终会进入 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_PyCriticalSection_BeginMutex&lt;/code&gt; ，其中有一个快速路径和一个慢速路径：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;inline&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;_PyCriticalSection_BeginMutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyCriticalSection&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PyMutex&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;m&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyMutex_LockFast&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;m&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;PyThreadState&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tstate&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_PyThreadState_GET&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_cs_mutex&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;m&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_cs_prev&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tstate&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;critical_section&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;tstate&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;critical_section&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uintptr_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;_PyCriticalSection_BeginSlow&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;m&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;快速路径所做的，是假设对象的 ob_mutex 字段设置为 0 ，并尝试通过原子比较和交换将其设置为 1 ：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;//_Py_UNLOCKED is defined as 0 and _Py_LOCKED as 1 in Include/cpython/lock.h&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;inline&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;PyMutex_LockFast&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyMutex&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;m&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;expected&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_Py_UNLOCKED&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;lock_bits&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;m&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_Py_atomic_compare_exchange_uint8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;lock_bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;expected&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_Py_LOCKED&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;如果那样可以工作，它知道物体已被解锁，因此只需进行一点账目管理即可。&lt;/p&gt;
+
+&lt;p&gt;如果这种方法不起作用，那么它就会进入慢速路径，而在这里情况开始变得相当复杂。但为了快速描述一下，它首先会使用一个自旋锁（spin-lock），并且进行40次迭代。所以，在某种程度上，它会连续不断地执行40次比较和交换逻辑，寄希望于最终能够成功。如果这仍然不起作用，它就会将线程“挂起”（park），并等待一个信号来恢复运行。如果你对了解更多感兴趣，可以查看 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Python/lock.c&lt;/code&gt; &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;中的_PyMutex_LockTimed&lt;/code&gt; 函数，并从那里跟踪代码。然而，对于我们的当前话题来说，互斥锁代码本身并没有那么有趣，因为假设大多数对象只被单个线程访问，所以快速路径才是最重要的。&lt;/p&gt;
+
+&lt;p&gt;但除了这条快速路径的成本之外，如何将锁定和解锁语句集成到现有代码库中也很重要。如果你忘记了一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;lock()&lt;/code&gt; ，可能会导致虚拟机崩溃，而如果你忘记了一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;unlock() &lt;/code&gt;，可能会导致虚拟机死锁，这可以说是更糟糕的情况。&lt;/p&gt;
+
+&lt;p&gt;所以，让我们回到那个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;list.clear()&lt;/code&gt; 例子：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;PyList_Clear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyObject&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyList_Check&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;PyErr_BadInternalCall&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Py_BEGIN_CRITICAL_SECTION&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;list_clear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyListObject&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Py_END_CRITICAL_SECTION&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;您可能已经注意到 Python 是如何进行错误检查的。当发现一个不良的前置条件时，它通过一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;PyErr_*&lt;/code&gt; 函数生成一个异常，并返回 -1 。这是因为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;list.clear()&lt;/code&gt; 总是返回 None （Python 的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;nil&lt;/code&gt; ），所以其 C 实现的返回类型只是一个 int 。对于一个返回 Ruby 对象的函数，在错误条件下，它会返回一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;NULL&lt;/code&gt; 指针。&lt;/p&gt;
+
+&lt;p&gt;例如 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;list.__getitem__&lt;/code&gt; ，它是 Python 中的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Array#fetch&lt;/code&gt; 的等价物，定义为：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;PyObject&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;PyList_GetItem&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyObject&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Py_ssize_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyList_Check&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;PyErr_BadInternalCall&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;valid_index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Py_SIZE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;_Py_DECLARE_STR&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;list_err&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;list index out of range&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;PyErr_SetObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyExc_IndexError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_Py_STR&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;list_err&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PyListObject&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ob_item&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;您可以在尝试使用越界索引访问 Python 列表时看到该错误：&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; a &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[]&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; a[12]
+Traceback &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;most recent call last&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;:
+  File &lt;span class=&quot;s2&quot;&gt;&quot;&amp;lt;stdin&amp;gt;&quot;&lt;/span&gt;, line 1, &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &amp;lt;module&amp;gt;
+IndexError: list index out of range
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;您可以识别相同的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IndexError&lt;/code&gt; 和相同的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;list index out of range&lt;/code&gt; 消息。&lt;/p&gt;
+
+&lt;p&gt;所以在这两种情况下，当用 C 实现的 Python 方法需要抛出异常时，它们会构建异常对象，将其存储在某些线程局部状态中，然后返回一个特定的值以让解释器知道发生了异常。当解释器注意到函数的返回值是这些特殊值之一时，它开始回溯堆栈。从某种意义上说，Python 异常是经典 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;if (error) { return error }&lt;/code&gt; 模式的语法糖。&lt;/p&gt;
+
+&lt;p&gt;现在让我们看看 Ruby 的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Array#fetch&lt;/code&gt; ，看看你是否注意到在处理越界情况时有什么不同：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;VALUE&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;rb_ary_fetch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;argc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;VALUE&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;VALUE&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ary&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// snip...&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;long&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;idx&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;NUM2LONG&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pos&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;idx&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RARRAY_LEN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ary&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;idx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;block_given&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;rb_yield&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pos&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argc&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;rb_raise&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rb_eIndexError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;index %ld outside of...&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;cm&quot;&gt;/* snip... */&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ifnone&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RARRAY_AREF&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ary&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;idx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;你注意到在 rb_raise 之后没有明确的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;return&lt;/code&gt; 吗？&lt;/p&gt;
+
+&lt;p&gt;这是因为 Ruby 异常与 Python 异常非常不同，因为它们依赖于 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;setjmp(3)&lt;/code&gt;和 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;longjmp(3)&lt;/code&gt; 。&lt;/p&gt;
+
+&lt;p&gt;不深入细节，这两个函数本质上允许你为堆栈设置一个“保存点”并跳转回它。当它们被使用时，有点像非局部跳转 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;goto&lt;/code&gt; ，你直接跳转回父函数，所有中间函数都不会返回。&lt;/p&gt;
+
+&lt;p&gt;因此，Ruby 中的等效操作需要调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;setjmp&lt;/code&gt; ，并使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;EC_PUSH_TAG&lt;/code&gt; 宏将相关的检查点推送到执行上下文（本质上当前纤程），因此本质上每个核心方法现在都需要一个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rescue&lt;/code&gt; 子句，这并非免费。这是可行的，但可能比 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Py_BEGIN_CRITICAL_SECTION&lt;/code&gt; 更昂贵。&lt;/p&gt;
+
+&lt;h1 id=&quot;我们继续&quot;&gt;我们继续&lt;/h1&gt;
+
+&lt;p&gt;但我们过于专注于是否能够移除 GVL，以至于我们没有停下来思考是否应该这么做。&lt;/p&gt;
+
+&lt;p&gt;在 Python 的情况下，据我所知，推动移除 GIL 的努力主要来自机器学习社区，很大程度上是因为高效地喂养显卡需要相当高的并行度，而 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 并不适合。&lt;/p&gt;
+
+&lt;p&gt;然而，根据我的理解，Python Web 社区，如 Django 用户，似乎对 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 满意，尽管 Python 在 Copy-on-Write（写时复制）方面相对于 Ruby 处于重大劣势，因为正如我们之前所看到的，它的引用计数实现意味着大多数对象不断被写入，因此 CoW 页面很快就会失效。&lt;/p&gt;
+
+&lt;p&gt;另一方面，Ruby 的标记-清除 GC 对写时复制（Copy-On-Write）非常友好，因为几乎所有 GC 跟踪数据都不是存储在对象本身中，而是在外部位图中。因此，GVL 无锁线程的主要论点之一，即减少内存使用，在 Ruby 的情况下就不那么重要了。&lt;/p&gt;
+
+&lt;p&gt;鉴于 Ruby（无论好坏）主要用于 Web 应用，这至少可以部分解释为什么移除 GVL 的压力不像 Python 那样强烈。同样，Node.js 和 PHP 也没有自由线程(free threading)，但据我所知，它们各自的社区对此并没有太多抱怨，除非我错过了什么。&lt;/p&gt;
+
+&lt;p&gt;如果 Ruby 要采用某种形式的自由线程，它可能需要在所有对象中添加某种形式的锁，并且会频繁地修改它，这可能会严重降低写时复制（Copy-on-Write）的效率。因此，这不会是一个纯粹的附加功能。&lt;/p&gt;
+
+&lt;p&gt;类似地，移除 Python GIL 的主要障碍之一一直是其对单线程性能的负面影响。当你处理易于并行化的算法时，即使单线程性能下降，通过使用更多的并行性，你可能仍然能够取得优势。但如果你使用 Python 的场景并行化困难，那么自由线程可能对你来说并不特别有吸引力。&lt;/p&gt;
+
+&lt;p&gt;历史上，Guido van Rossum 对移除 GIL 的立场是，只要它不影响单线程性能，他就欢迎这样做，这就是为什么它从未发生。现在，随着 Guido 不再是 Python 的仁慈独裁者，Python 指导委员会似乎愿意接受单线程性能的一些退步，但还不清楚这实际上会有多大。有一些数字在流传，但大多是来自合成基准测试等。我个人很想知道这种变化对 Web 应用的影响，在对此类变化发生在 Ruby 上感到热情之前。同时，需要注意的是，&lt;a href=&quot;https://peps.python.org/pep-0703/&quot;&gt;移除已被接受，但有一些前提条件&lt;/a&gt;，所以它还没有完成，他们可能在某个时候决定回头也是有可能的。&lt;/p&gt;
+
+&lt;p&gt;另一个需要考虑的问题是，对 Ruby 的性能影响可能比对 Python 更严重，因为需要额外开销的对象是可变对象，而与 Python 不同的是，Ruby 中的字符串也属于可变对象。想想一个普通的 Web 应用程序会执行多少次字符串操作。&lt;/p&gt;
+
+&lt;p&gt;另一方面，我想到的一个支持移除 GVL 的论点就是 YJIT。鉴于 YJIT 生成的本地代码及其关联的元数据仅限于进程范围，不再依赖 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fork(2)&lt;/code&gt; 进行并行处理，仅通过共享所有这些内存，就能节省相当多的内存。然而，移除 GVL 也会让 YJIT 的工作变得更加困难，因此这也可能阻碍其进展。&lt;/p&gt;
+
+&lt;p&gt;另一个支持自由线程的论点是，派生的进程难以共享连接。因此，当您开始将 Rails 应用程序扩展到大量 CPU 核心时，您将比具有自由线程的堆栈拥有更多连接到您的数据存储，这可能会成为一个大瓶颈，尤其是在一些像 PostgreSQL 这样的具有昂贵连接的数据库中。目前，这主要通过使用外部连接池器来解决，如 PgBouncer 或 ProxySQL，我知道它们并不完美。这又是一个可能出错的新组件，但我认为这比自由线程要少很多麻烦。&lt;/p&gt;
+
+&lt;p&gt;最后，我想指出，GVL 并不是全部。如果目标是替换 fork(2) 为多线程，即使移除了 GVL，我们可能仍然不完全达到目标，因为 Ruby 的 GC 是“暂停世界（stop the world）”，所以随着单个进程中代码执行量的增加，因此分配也会更多，我们可能会发现它将成为新的竞争点。所以，我个人更愿意在希望移除 GVL 之前，先实现一个完全并发的 GC。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;译者注：暂停世界（stop the world） ：因为 GC（垃圾回收） 的时候会暂停所有程序的执行，进行对游离变量的盘点、回收，再恢复执行。所以使用 GC 语言可能会很慢、甚至无法预测的卡住。高性能的游戏领域会用 C、C++ 这种手动控制内存回收的语言，避免这种特点。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h1 id=&quot;所以保持现状&quot;&gt;所以，保持现状？&lt;/h1&gt;
+
+&lt;p&gt;在这个时候，有些人可能觉得我好像在试图洗脑人们，让他们认为 GVL 永远不会成为问题，但那并不是我的真实想法。&lt;/p&gt;
+
+&lt;p&gt;我绝对认为 GVL 目前在实际应用中造成了一些非常真实的问题，即竞争。但这与想要移除 GVL 是截然不同的，我相信情况可以通过其他方式显著改善。&lt;/p&gt;
+
+&lt;p&gt;如果您已经阅读了我&lt;a href=&quot;https://byroot.github.io/ruby/performance/2025/01/23/io-instrumentation.html&quot;&gt;关于如何在 Ruby 中正确测量 IO 时间&lt;/a&gt;的短文，您可能已经熟悉了 GVL 竞争问题，但让我在这里包含相同的测试脚本：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;bundler/inline&quot;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;gemfile&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;gem&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;bigdecimal&quot;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# for trilogy&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;gem&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;trilogy&quot;&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;gem&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;gvltools&quot;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;GVLTools&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;LocalTimer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;enable&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;measure_time&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;realtime_start&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;clock_gettime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;CLOCK_MONOTONIC&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:float_millisecond&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;gvl_time_start&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;GVLTools&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;LocalTimer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;monotonic_time&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;yield&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;realtime&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;clock_gettime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Process&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;CLOCK_MONOTONIC&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:float_millisecond&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;realtime_start&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;gvl_time&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;GVLTools&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;LocalTimer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;monotonic_time&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;gvl_time_start&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;gvl_time_ms&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;gvl_time&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;1_000_000.0&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;io_time&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;realtime&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;gvl_time_ms&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;io: &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;io_time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;round&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;ms, gvl_wait: &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gvl_time_ms&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;round&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;ms&quot;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;trilogy&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Trilogy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;# Measure a first time with just the main thread&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;measure_time&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;trilogy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;SELECT 1&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;fibonacci&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt;  &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;..&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;include?&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fibonacci&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fibonacci&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;# Spawn 5 CPU-heavy threads&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;threads&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;times&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;Thread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;kp&quot;&gt;loop&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;fibonacci&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;25&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;# Measure again with the background threads&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;measure_time&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;trilogy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;SELECT 1&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;如果您运行它，您应该会得到类似的结果：&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;realtime: 0.22ms, gvl_wait: 0.0ms, io: 0.2ms
+realtime: 549.29ms, gvl_wait: 549.22ms, io: 0.1ms
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;本脚本演示了 GVL 竞争如何对应用程序的延迟造成破坏。即使您使用像 Unicorn 或 Pitchfork 这样的单线程服务器，这也并不意味着应用程序只使用单个线程。拥有各种后台线程来执行一些服务任务，如监控，是非常常见的。其中一个例子是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;statsd-instrument&lt;/code&gt; gem。当您发出一个指标时，它会在内存中收集，然后一个后台线程负责批量序列化和发送这些指标。它应该主要是 IO 工作，因此不应该对主线程有太大影响，但在实践中，可能会发生这些类型的后台线程比您希望的更长时间地持有 GVL。&lt;/p&gt;
+
+&lt;p&gt;所以，尽管我的演示脚本非常极端，你绝对可以在生产环境中体验到一定程度的 GVL 竞争，无论你使用什么服务器。&lt;/p&gt;
+
+&lt;p&gt;但我认为尝试移除 GVL 并不一定是解决这个问题的最佳方法，因为这需要多年的泪水和汗水，才能获得点好处。&lt;/p&gt;
+
+&lt;p&gt;在 2006 年之前，多核 CPU 基本上不存在，然而，你仍然能够以相对顺畅的方式在电脑上多任务处理，比如在 Excel 中处理数字的同时在 Winamp 中播放音乐，而且这一切都不需要并行处理。&lt;/p&gt;
+
+&lt;p&gt;那是因为即使是 Windows 95 也有一个相当不错的线程调度器，但 Ruby 还没有。当 Ruby 中的线程准备好执行并需要等待 GVL 时，它会将其放入一个 FIFO 队列中，每当正在运行的线程释放 GVL，无论是由于进行了某些 I/O 操作还是因为运行了分配的 100 毫秒后，Ruby 的线程调度器就会弹出下一个线程。&lt;/p&gt;
+
+&lt;p&gt;没有任何优先级的概念。一个半不错的调度器应该能够注意到一个线程主要是 IO，打断当前线程来更快地调度 IO 密集型线程可能是值得的。&lt;/p&gt;
+
+&lt;p&gt;在尝试移除 GVL 之前，尝试实现一个合适的线程调度器是值得的。这个想法归功于 &lt;a href=&quot;https://github.com/jhawthorn/&quot;&gt;John Hawthorn&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;与此同时，&lt;a href=&quot;https://github.com/tenderlove&quot;&gt;Aaron Patterson(tenderlove)&lt;/a&gt; 在 &lt;a href=&quot;https://bugs.ruby-lang.org/issues/20861&quot;&gt;Ruby 3.4 中发布了一个更改，允许通过环境变量减少 100 毫秒的量子&lt;/a&gt;。这并不能解决所有问题，但可能已经在某些情况下有所帮助，所以这是一个开始。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;译者注：量子（quantum）是 Ruby 解释器中的一个超时时间，默认100毫秒，Ruby 3.4 可以被轻松设置。解释器在执行线程的时候，如果超过了这个时间，就会回收 GVL，切换另一个线程执行。主要用来调度多个线程工作使用。当降低这个时间，可以更精细的切分正在执行的函数，加快多个线程排队轮转执行的速度，可以提高 IO 密集型应用的性能。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;另一个约翰在我们的一次对话中分享的想法是，允许在 GVL 释放时进行更多的 CPU 操作。目前，大多数数据库客户端只在 IO 时真正释放 GVL，把它想象成这样：&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sql&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;nil&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;request&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;build_network_packet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sql&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;release_gvl&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;write&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;request&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;read&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;parse_db_response&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;对于返回大量数据的简单查询，很可能你在持有 GVL（全局解释器锁）的情况下构建 Ruby 对象所花费的时间，比在释放 GVL 的情况下等待数据库响应的时间要多得多。&lt;/p&gt;
+
+&lt;p&gt;这是因为非常非常少的 Ruby C API 可以使用 GVL 释放，特别是任何分配对象或可能抛出异常的内容都必须获取 GVL。&lt;/p&gt;
+
+&lt;p&gt;如果取消这一限制，使得你可以在释放 GVL 的情况下创建基本的 Ruby 对象（如字符串、数组和哈希表），那么很可能会让 GVL 释放的时间更长，并显著减少线程竞争。&lt;/p&gt;
+
+&lt;h1 id=&quot;结论&quot;&gt;结论&lt;/h1&gt;
+
+&lt;p&gt;我本人并不真正支持取消 GVL，我认为这种权衡并不值得，至少目前还不值得，我也不认为它将像一些人想象的那样成为一个巨大的变革。&lt;/p&gt;
+
+&lt;p&gt;如果它对经典（主要是单线程）性能没有影响，我可能不会介意，但它几乎肯定会显著降低单线程性能，因此这感觉有点像“多得不如现得”的论点。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;译者注：a bird in the hand is worth two in the bush（一鸟在手胜过双鸟在林）。这里翻译为：多得不如现得。到手才是真的，落袋为安的意思。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;相反，我认为我们可以对 Ruby 进行一些更容易和更小的改动，这将能在更短的时间内以及更少的努力下改善情况，既对 Ruby 核心也对 Ruby 用户来说都是如此。&lt;/p&gt;
+
+&lt;p&gt;当然，这只是单一 Ruby 用户的观点，主要考虑的是我自己的使用场景，最终决定权在 Matz 手中，根据他认为社区想要和需要什么来决定。&lt;/p&gt;
+
+&lt;p&gt;目前，Matz 不想移除 GVL，而是接受了 Ractor 的提议。也许他的观点有一天会改变，我们拭目以待。&lt;/p&gt;
+
+&lt;p&gt;Ractor 我本想在这篇帖子中讨论的，但已经太长了，所以可能下次再说。&lt;/p&gt;
+</description>
+        <pubDate>Sat, 08 Feb 2025 13:05:24 +0800</pubDate>
+        <link>https://mark24code.github.io/ruby/2025/02/08/%E6%89%80%E4%BB%A5-%E4%BD%A0%E6%83%B3%E7%A7%BB%E9%99%A4-GVL.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ruby/2025/02/08/%E6%89%80%E4%BB%A5-%E4%BD%A0%E6%83%B3%E7%A7%BB%E9%99%A4-GVL.html</guid>
+        
+        
+        <category>Ruby</category>
+        
+      </item>
+    
+      <item>
+        <title>Ruby 的“线程竞争”就是 GVL 排队</title>
+        <description>&lt;ul&gt;
+  &lt;li&gt;作者：&lt;a href=&quot;https://island94.org/about&quot;&gt;Ben Sheldon&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;译者：&lt;a href=&quot;https://github.com/Mark24Code&quot;&gt;Mark24&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;原文: &lt;a href=&quot;https://island94.org/2025/01/ruby-thread-contention-simply-gvl-queuing&quot;&gt;博客地址&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;最近 Jean Boussier 发布了很多精彩的帖子：&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://byroot.github.io/ruby/performance/2025/01/23/the-mythical-io-bound-rails-app.html&quot;&gt;《应用程序形状（application shapes）》&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;instrumenting the GVL (Global VM Lock)&quot;&gt;《监控GVL（instrumenting the GVL (Global VM Lock)）》&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;以及 &lt;a href=&quot;https://byroot.github.io/ruby/performance/2025/01/29/so-you-want-to-remove-the-gvl.html&quot;&gt;《关于移除 GVL 的想法（thoughts on removing the GVL）》&lt;/a&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;它们都是值得一读的！&lt;/p&gt;
+
+&lt;p&gt;长期以来，我一直误解了“线程竞争”这个词语。作为 GoodJob（👍）的作者和 &lt;a href=&quot;https://github.com/ruby-concurrency/concurrent-ruby&quot;&gt;Concurrent Ruby&lt;/a&gt; 的维护者，以及做了十多年的 Ruby 和 Rails 相关工作，这一点确实有点尴尬。但确实如此。&lt;/p&gt;
+
+&lt;p&gt;我已经阅读了很久关于线程竞争的内容。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;我可能最初是在 Nate Berkopec 的 &lt;a href=&quot;https://www.speedshop.co/2020/05/11/the-ruby-gvl-and-scaling.html&quot;&gt;Speedshop 博客&lt;/a&gt;中了解到线程竞争的。&lt;/li&gt;
+  &lt;li&gt;线程竞争问题从 Maciej Mensfeld &lt;a href=&quot;https://mensfeld.pl/2022/01/reduce-your-method-calls-by-99-9-by-replacing-threadpass-with-queuepop/&quot;&gt;《关于 Thread.pass 问题(problems with Thread.pass
+)》&lt;/a&gt;的帖子开始闯入我的脑海。&lt;/li&gt;
+  &lt;li&gt;关于 Rail &lt;a href=&quot;https://github.com/rails/rails/issues/50450&quot;&gt;“默认 puma 线程数”&lt;/a&gt; 的激烈讨论。&lt;/li&gt;
+  &lt;li&gt;Ivo Anjo 对 &lt;a href=&quot;https://ivoanjo.me/blog/2023/07/23/understanding-the-ruby-global-vm-lock-by-observing-it/&quot;&gt;GVL 精彩的深入研究&lt;/a&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;通过这一切，我把线程竞争看作是竞争：一场斗争，一堆线程都在互相推搡着运行，乱糟糟地踩在彼此身上，这是一个低效、令人不悦且杂乱无章的混乱局面。但实际情况根本不是这样！&lt;/p&gt;
+
+&lt;p&gt;相反：当你有任意数量的线程在 Ruby 中时，每个线程都会有序地排队等待获取 Ruby GVL，然后它们会温和地持有 GVL，直到它们优雅地放弃它或者它被礼貌地从他们那里拿走，然后线程回到队列的末尾，在那里它们再次耐心地等待。&lt;/p&gt;
+
+&lt;p&gt;这是 Ruby 中“线程竞争”的含义：GVL 的有序排队。并不那么疯狂。&lt;/p&gt;
+
+&lt;h1 id=&quot;让我们更进一步&quot;&gt;让我们更进一步&lt;/h1&gt;
+
+&lt;p&gt;我是在研究 &lt;a href=&quot;https://github.com/bensheldon/good_job/issues/1554&quot;&gt;“是否应该降低 GoodJob 的线程优先级”&lt;/a&gt;（我确实降低了）时意识到这一点的。这个问题是在GitHub（我的日常工作场所）进行了一些探索之后出现的。在 GitHub，我们有一个用于维护的后台线程，如果这个后台线程执行时机恰好与 Web 服务器（Unicorn）响应 Web 请求的时间重合，就会偶尔导致我们无法达到某个Web请求的性能目标。&lt;/p&gt;
+
+&lt;p&gt;Ruby线程是操作系统线程。而操作系统线程是抢占式的，这意味着操作系统负责在活动线程之间切换CPU执行。但是，Ruby控制着它的全局虚拟机锁（GVL）。Ruby在线程执行方面扮演了重要角色，Ruby 通过选择将 GVL 交给哪个Ruby线程以及何时收回GVL来决定操作系统正在执行哪个线程。&lt;/p&gt;
+
+&lt;p&gt;（旁白：Ruby 3.3 引入了 M:N 线程，这解耦了 Ruby 线程与操作系统线程的映射，但在这里忽略这个细节。）&lt;/p&gt;
+
+&lt;p&gt;Ruby VM 内部发生的事情在&lt;a href=&quot;https://ruby-hacking-guide.github.io/thread.html&quot;&gt;《Ruby 黑客指南》&lt;/a&gt;中有非常好的 C语言级别的解释。但我会尽力在这里简要解释：&lt;/p&gt;
+
+&lt;p&gt;当线程到达队列的顶部并获得GVL时，该线程将开始运行其 Ruby 代码，直到它放弃 GVL。放弃 GVL 可能出于以下两个原因：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;当线程从执行 Ruby 代码转向进行 IO 操作时，它会释放 GVL（通常情况下；如果 IO 库没有这样做，通常被认为是一个 bug）。当线程完成其 IO 操作后，线程会排到队列的末尾。&lt;/li&gt;
+  &lt;li&gt;当线程执行时间超过线程 “量子(quantum)” 的长度时，Ruby VM 会收回 GVL，线程再次回到队列的末尾。Ruby 线程“量子”默认为 100ms（这可以通过 Thread#priority 配置，或者从 &lt;a href=&quot;https://bugs.ruby-lang.org/issues/20861&quot;&gt;Ruby 3.4 开始直接通过环境变量配置&lt;/a&gt;）。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;那个第二种情况相当有趣。当一个 Ruby 线程开始运行时，Ruby 虚拟机使用另一个后台线程（在虚拟机级别），该线程休眠 10 毫秒（“滴答（Tick）”），然后检查 Ruby 线程已经运行了多长时间。如果线程运行的时间超过了量子的长度，Ruby 虚拟机就会从活跃线程中收回 GVL（“抢占”），并将 GVL 交给在 GVL 队列中等待的下一个线程。之前正在执行的线程现在会排到队列的末尾。换句话说：&lt;/p&gt;
+
+&lt;h5 id=&quot;线程量子quantum-决定了线程通过队列的速度且不会比滴答tick-更快&quot;&gt;“线程量子(quantum) 决定了线程通过队列的速度，且不会比滴答(Tick) 更快。”&lt;/h5&gt;
+
+&lt;p&gt;就是这样！这就是 Ruby 线程争用的情况。一切都井然有序，只是可能比预期或希望的要花费更长的时间。&lt;/p&gt;
+
+&lt;h1 id=&quot;有什么问题&quot;&gt;有什么问题&lt;/h1&gt;
+
+&lt;p&gt;多线程行为中令人畏惧的“尾部延迟（Tail Latency）”可能会发生，这与 “Ruby 线程量子”（Ruby Thread Quantum）有关。&lt;/p&gt;
+
+&lt;p&gt;比如：当你有一个时间非常短请求时，例如：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;一个可能需要 10 毫秒请求，比如向 Memcached/Redis 发起十个 1 毫秒的调用以获取一些缓存值，然后返回它们（I/O 密集型线程）&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;但是它相邻的运行线程是这样：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;一个需要 1000 毫秒的请求，大部分时间都花在字符串操作上，例如一个后台线程正在处理一堆复杂的哈希和数组，并将它们序列化成一个要发送到埋点服务器的数据。或者为 Turbo Broadcasts 渲染慢速/大型/复杂的视图（CPU 密集型线程）。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;在这种情况下，CPU 密集型线程将非常贪婪地持有 GVL，它看起来会是这样：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;IO密集线程：启动 1 毫秒网络请求并释放 GVL&lt;/li&gt;
+  &lt;li&gt;CPU密集线程：在 GVL 被取回之前，在 CPU 上执行 100 毫秒的工作&lt;/li&gt;
+  &lt;li&gt;IO密集线程：再次获取 GVL 并启动下一个 1 毫秒网络请求并释放 GVL&lt;/li&gt;
+  &lt;li&gt;CPU密集线程：在 GVL 被取回之前，在 CPU 上执行 100 毫秒的工作&lt;/li&gt;
+  &lt;li&gt;重复……再重复……&lt;/li&gt;
+  &lt;li&gt;现在 1,000 毫秒后，理论上应该只花费 10 毫秒的 I/O 密集型线程终于完成了。这非常糟糕！&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;这是在这个只有两个线程的简单场景中最坏的情况。随着更多不同工作负载的线程，你可能会遇到更多的问题。Ivo Anjo 也&lt;a href=&quot;https://ivoanjo.me/blog/2023/02/11/ruby-unexpected-io-vs-cpu-unfairness/&quot;&gt;对此进行了讨论&lt;/a&gt;。你可以通过降低整体线程量子来加快速度，或者通过降低CPU密集型线程的优先级（降低这个线程的量子）来实现。这将导致CPU密集型线程被更细致地切分，但由于最小时间片由时钟周期 Tick（10 毫秒）决定，所以对于上面这个 I/O 密集型线程来说，其等待时间理论上永远不会低于 100 毫秒，这比优化前快了 10 倍。&lt;/p&gt;
+
+&lt;h1 id=&quot;译者注&quot;&gt;译者注&lt;/h1&gt;
+
+&lt;h3 id=&quot;1-考证-quantum-的存在&quot;&gt;1. 考证 quantum 的存在&lt;/h3&gt;
+
+&lt;p&gt;线程的 quantum 时间是 100ms&lt;/p&gt;
+
+&lt;p&gt;源码位置 &lt;a href=&quot;https://github.com/ruby/ruby/blob/8dbbc79e8b19f0bf000f88d0e45b26185c5fcd4b/thread.c#L119&quot;&gt;thread.c#L119&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// .....&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;thread_default_quantum_ms&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// .....&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;2-考证-tick10ms-的存在&quot;&gt;2. 考证 Tick（10ms） 的存在&lt;/h3&gt;
+
+&lt;p&gt;源码位置 &lt;a href=&quot;https://github.com/ruby/ruby/blob/8dbbc79e8b19f0bf000f88d0e45b26185c5fcd4b/thread_pthread.c#L2829&quot;&gt;thread_pthread.c#L2829&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;timer_thread_set_timeout&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rb_vm_t&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;vm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;#if 0
+    return 10; // ms
+#else&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;timeout&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;ractor_sched_lock&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;vm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+       &lt;span class=&quot;c1&quot;&gt;// .......&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;timeout&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// ms&lt;/span&gt;
+       &lt;span class=&quot;c1&quot;&gt;// .......&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// .......&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;timeout&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#endif
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</description>
+        <pubDate>Fri, 07 Feb 2025 14:48:51 +0800</pubDate>
+        <link>https://mark24code.github.io/ruby/2025/02/07/Ruby-%E7%9A%84-%E7%BA%BF%E7%A8%8B%E7%AB%9E%E4%BA%89-%E5%B0%B1%E6%98%AF-GVL-%E6%8E%92%E9%98%9F.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ruby/2025/02/07/Ruby-%E7%9A%84-%E7%BA%BF%E7%A8%8B%E7%AB%9E%E4%BA%89-%E5%B0%B1%E6%98%AF-GVL-%E6%8E%92%E9%98%9F.html</guid>
+        
+        
+        <category>Ruby</category>
+        
+      </item>
+    
+      <item>
+        <title>brew删除所有安装包</title>
+        <description>&lt;p&gt;brew删除所有安装包&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;brew remove --force $(brew list --formula) --ignore-dependencies&lt;/code&gt;&lt;/p&gt;
+</description>
+        <pubDate>Wed, 25 Dec 2024 21:27:55 +0800</pubDate>
+        <link>https://mark24code.github.io/macos/2024/12/25/brew%E5%88%A0%E9%99%A4%E6%89%80%E6%9C%89%E5%AE%89%E8%A3%85%E5%8C%85.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/macos/2024/12/25/brew%E5%88%A0%E9%99%A4%E6%89%80%E6%9C%89%E5%AE%89%E8%A3%85%E5%8C%85.html</guid>
+        
+        
+        <category>MacOS</category>
+        
+      </item>
+    
+      <item>
+        <title>ubuntu安装AMD驱动</title>
+        <description>&lt;p&gt;Ubuntu 24.04 / LinuxMint22 安装 AMD 驱动&lt;/p&gt;
+
+&lt;h1 id=&quot;前沿&quot;&gt;前沿&lt;/h1&gt;
+
+&lt;p&gt;跨大版本升级，如果发现桌面黑掉、播放器无法播放视频，可能是 GPU 驱动失效。&lt;/p&gt;
+
+&lt;p&gt;下面看下 Linux 下如何重新安装 AMD 驱动。&lt;/p&gt;
+
+&lt;p&gt;适合 Ubuntu系。&lt;/p&gt;
+
+&lt;h1 id=&quot;参考来源&quot;&gt;参考来源&lt;/h1&gt;
+
+&lt;p&gt;AMD 驱动的文档: &lt;a href=&quot;https://amdgpu-install.readthedocs.io/en/latest/install-installing.html#uninstalling-the-amdgpu-stack&quot;&gt;https://amdgpu-install.readthedocs.io/en/latest/install-installing.html#uninstalling-the-amdgpu-stack&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;所有驱动的下载地址: &lt;a href=&quot;https://repo.radeon.com/amdgpu-install/&quot;&gt;https://repo.radeon.com/amdgpu-install/&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;步骤&quot;&gt;步骤&lt;/h1&gt;
+
+&lt;h2 id=&quot;step1&quot;&gt;step1：&lt;/h2&gt;
+
+&lt;p&gt;下载 deb 到本地&lt;/p&gt;
+
+&lt;p&gt;比如目前最新的：&lt;a href=&quot;https://repo.radeon.com/amdgpu-install/23.40.3/ubuntu/jammy/amdgpu-install_6.0.60003-1_all.deb&quot;&gt;https://repo.radeon.com/amdgpu-install/23.40.3/ubuntu/jammy/amdgpu-install_6.0.60003-1_all.deb&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;step2&quot;&gt;step2:&lt;/h2&gt;
+
+&lt;p&gt;安装 deb&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sudo dpkg -i &amp;lt;/path/to&amp;gt;/amdgpu-install_6.0.60003-1_all.deb&lt;/code&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;step3&quot;&gt;step3:&lt;/h2&gt;
+
+&lt;p&gt;更新源&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sudo apt update&lt;/code&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;step4&quot;&gt;step4:&lt;/h2&gt;
+
+&lt;p&gt;安装 amd 驱动&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;amdgpu-install&lt;/code&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;step5&quot;&gt;step5:&lt;/h2&gt;
+
+&lt;p&gt;卸载&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;amdgpu-uninstall&lt;/code&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;其他情况&quot;&gt;其他情况&lt;/h1&gt;
+
+&lt;p&gt;如果自己 直接安装 amdgpu 大概率会出现依赖 broken 的问题&lt;/p&gt;
+
+&lt;p&gt;如何解决？&lt;/p&gt;
+
+&lt;p&gt;使用 新立得管理软件，过滤出 broken 的全部删除，取消 amdgpu 相关的升级标记。&lt;/p&gt;
+
+&lt;p&gt;重新的安装 amdgpu&lt;/p&gt;
+</description>
+        <pubDate>Sun, 28 Jul 2024 16:58:21 +0800</pubDate>
+        <link>https://mark24code.github.io/ubuntu/linux/amd/2024/07/28/ubuntu%E5%AE%89%E8%A3%85AMD%E9%A9%B1%E5%8A%A8.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ubuntu/linux/amd/2024/07/28/ubuntu%E5%AE%89%E8%A3%85AMD%E9%A9%B1%E5%8A%A8.html</guid>
+        
+        
+        <category>Ubuntu</category>
+        
+        <category>Linux</category>
+        
+        <category>AMD</category>
+        
+      </item>
+    
+      <item>
+        <title>MRuby Devkit 一个简单的脚手架，帮助你像 Go 一样把 Ruby 编译成可执行二进制</title>
+        <description>&lt;h1 id=&quot;mruby-devkit&quot;&gt;MRuby Devkit&lt;/h1&gt;
+
+&lt;p&gt;MRuby Devkit 是一个开箱即用的脚手架。 基于 MRuby 将你的 Ruby 代码打包成 二进制可执行文件。&lt;/p&gt;
+
+&lt;p&gt;方便开发类似于 Golang 的二进制可执行文件。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;—— 灵感来自于 Golang 可以编译为二进制可执行文件的迷人特性。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h1 id=&quot;一使用约定&quot;&gt;一、使用约定&lt;/h1&gt;
+
+&lt;h2 id=&quot;前置运行环境&quot;&gt;前置运行环境&lt;/h2&gt;
+
+&lt;p&gt;MacOS、Linux&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;GCC/Clang&lt;/li&gt;
+  &lt;li&gt;Make&lt;/li&gt;
+  &lt;li&gt;Git&lt;/li&gt;
+  &lt;li&gt;Ruby3
+    &lt;ul&gt;
+      &lt;li&gt;Rake 安装 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gem install rake&lt;/code&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;约定&quot;&gt;约定&lt;/h2&gt;
+
+&lt;h3 id=&quot;1-srcmainrb-程序入口&quot;&gt;1. &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;src/main.rb&lt;/code&gt; 程序入口&lt;/h3&gt;
+
+&lt;p&gt;程序入口不可修改。它是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;run&lt;/code&gt;、&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;build&lt;/code&gt; 寻找的入口。&lt;/p&gt;
+
+&lt;h3 id=&quot;2-srclibrb-是多文件&quot;&gt;2. &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;src/lib/*.rb&lt;/code&gt; 是多文件&lt;/h3&gt;
+
+&lt;p&gt;lib 中适合存放拆分的多文件。&lt;/p&gt;
+
+&lt;p&gt;多文件中，如果存在依赖关系。需要特殊命名比如 01xxx， 02xxx …… 控制相对顺序。&lt;/p&gt;
+
+&lt;p&gt;多文件最终会被拼接成一个上下文送入编译。&lt;/p&gt;
+
+&lt;h3 id=&quot;3-mrubyconfrb-是-mgem-配置文文件&quot;&gt;3. &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;mruby.conf.rb&lt;/code&gt; 是 mgem 配置文文件&lt;/h3&gt;
+
+&lt;p&gt;可以引入 &lt;a href=&quot;https://mruby.org/libraries/&quot;&gt;第三方 mgem &lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;裁剪需要加入的 gem，控制编译选项。&lt;/p&gt;
+
+&lt;h4 id=&quot;注意&quot;&gt;注意：&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;第三方标准库并不是每一个都可以被正确 build 比如 mgem-curses 无法 build，因为存在 BUG。&lt;/li&gt;
+  &lt;li&gt;要正确的配置编译选项，确保 mruby 产生。&lt;/li&gt;
+  &lt;li&gt;配置的 mgem 可以直接在上下文中使用，不需要 require&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;差异&quot;&gt;差异&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;MRuby 和 CRuby 标准库有差异，请关注官方的文档&lt;/li&gt;
+  &lt;li&gt;工作模式是：裁剪 mgem 、功能，最后编译的解释器 + mruby 代码 进行联合工作。 mruby 代码不需要 require 语句导入包。&lt;/li&gt;
+  &lt;li&gt;MRuby 有可能工作在嵌入式环境中，以及可能没有文件系统的硬件中。所以编译成 二进制应用。&lt;/li&gt;
+  &lt;li&gt;MRuby 和 CRuby 内核不同。 MRuby 实现精简高效，全部采用可跨平台的 C 语言，内存实现高效，精简，适用于嵌入式、跨平台。&lt;/li&gt;
+  &lt;li&gt;MRuby 更像是 C 项目在开发，需要了解 C 语言以及构建的概念&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;二开发&quot;&gt;二、开发&lt;/h1&gt;
+
+&lt;h2 id=&quot;0-编写程序&quot;&gt;0. 编写程序&lt;/h2&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;src&lt;/code&gt; 下编写 ruby 程序&lt;/p&gt;
+
+&lt;h2 id=&quot;1-运行程序&quot;&gt;1. 运行程序&lt;/h2&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;模仿 golang 的 go run&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rake run&lt;/code&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;2-编译当前程序默认使用当前计算机平台&quot;&gt;2. 编译当前程序（默认使用当前计算机平台）&lt;/h2&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;模仿 golang 的 go build&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rake build&lt;/code&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;3交叉编译的包&quot;&gt;3.交叉编译的包&lt;/h2&gt;
+
+&lt;p&gt;借助 Github Action 编译不同平台的可执行二进制文件。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;可以 fork 仓库在 Github Action 运行结果下可以看到构建产物。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Github Action 提供免费的 Runner&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Windows&lt;/li&gt;
+  &lt;li&gt;MacOS AMD64&lt;/li&gt;
+  &lt;li&gt;MacOS ARM64&lt;/li&gt;
+  &lt;li&gt;Ubuntu AMD64&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;如果你想获得 Linux aarch64 需要自建 Runner
+所以你需要修改 &lt;a href=&quot;https://github.com/Mark24Code/mruby-devkit/blob/main/.github/workflows/raspbian-aarch64.yml&quot;&gt;.github/workflows/raspbian-aarch64.yml&lt;/a&gt; 使用自己的支持 aarch64 的 runner。&lt;/p&gt;
+
+&lt;h2 id=&quot;4-内置-rake-命令&quot;&gt;4. 内置 Rake 命令&lt;/h2&gt;
+
+&lt;p&gt;rake -T 查看可用命令&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜  build git:(main) rake -T
+rake build               # build program
+rake build_merge         # merge program in build
+rake build_to_c          # build to c code
+rake cache_merge         # merge program in cache
+rake clean               # clean
+rake init_build          # init build dir
+rake init_cache          # init develop cache dir
+rake mruby:build         # build mruby
+rake mruby:build_config  # replace mruby build config
+rake mruby:custom_build  # custom config build mruby
+rake mruby:download      # download mruby
+rake mruby:init          # init
+rake run                 # run program
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;todo&quot;&gt;TODO&lt;/h1&gt;
+
+&lt;ul class=&quot;task-list&quot;&gt;
+  &lt;li class=&quot;task-list-item&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;task-list-item-checkbox&quot; disabled=&quot;disabled&quot; checked=&quot;checked&quot; /&gt;交叉编译&lt;/li&gt;
+  &lt;li class=&quot;task-list-item&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;task-list-item-checkbox&quot; disabled=&quot;disabled&quot; checked=&quot;checked&quot; /&gt;多文件&lt;/li&gt;
+  &lt;li class=&quot;task-list-item&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;task-list-item-checkbox&quot; disabled=&quot;disabled&quot; checked=&quot;checked&quot; /&gt;run 命令&lt;/li&gt;
+  &lt;li class=&quot;task-list-item&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;task-list-item-checkbox&quot; disabled=&quot;disabled&quot; checked=&quot;checked&quot; /&gt;build 命令&lt;/li&gt;
+  &lt;li class=&quot;task-list-item&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;task-list-item-checkbox&quot; disabled=&quot;disabled&quot; checked=&quot;checked&quot; /&gt;自动初始化&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;平台&quot;&gt;平台：&lt;/h1&gt;
+
+&lt;p&gt;MacOS&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;AMD64 ✅&lt;/li&gt;
+  &lt;li&gt;ARM64 ✅&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Debian/Ubuntu/Mint Linux&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;AMD64 ✅&lt;/li&gt;
+  &lt;li&gt;Aarch64 ✅&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        <pubDate>Fri, 28 Jun 2024 19:09:57 +0800</pubDate>
+        <link>https://mark24code.github.io/ruby/2024/06/28/MRuby-Devkit-%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84%E8%84%9A%E6%89%8B%E6%9E%B6-%E5%B8%AE%E5%8A%A9%E4%BD%A0%E5%83%8F-Go-%E4%B8%80%E6%A0%B7%E6%8A%8A-Ruby-%E7%BC%96%E8%AF%91%E6%88%90%E5%8F%AF%E6%89%A7%E8%A1%8C%E4%BA%8C%E8%BF%9B%E5%88%B6.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ruby/2024/06/28/MRuby-Devkit-%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84%E8%84%9A%E6%89%8B%E6%9E%B6-%E5%B8%AE%E5%8A%A9%E4%BD%A0%E5%83%8F-Go-%E4%B8%80%E6%A0%B7%E6%8A%8A-Ruby-%E7%BC%96%E8%AF%91%E6%88%90%E5%8F%AF%E6%89%A7%E8%A1%8C%E4%BA%8C%E8%BF%9B%E5%88%B6.html</guid>
+        
+        
+        <category>Ruby</category>
+        
+      </item>
+    
+      <item>
+        <title>踢馆挑战 Ruby(MRuby) vs Golang 性能对比</title>
+        <description>&lt;h1 id=&quot;前言&quot;&gt;前言&lt;/h1&gt;
+
+&lt;p&gt;大家好我是 &lt;a href=&quot;https://github.com/Mark24Code&quot;&gt;Mark24&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;今天主要是想聊下一个有趣的发现，MRuby 和 Golang 的巅峰对决。&lt;/p&gt;
+
+&lt;p&gt;简单介绍下今天的主角，挑战者 &lt;a href=&quot;https://mruby.org/&quot;&gt;MRuby&lt;/a&gt; 是 遵循 Ruby ISO 语法规范的一个实现。M 是 ”embed（嵌入）”的“m”，同时也是 minimalistic（极简的）的“m”，是作者重新设计的一个 Ruby 解释器。&lt;/p&gt;
+
+&lt;p&gt;MRuby 是把 Ruby 的开发体验带到嵌入式世界。为了兼容嵌入式的各种苛刻要求。MRuby 的实现相比于 CRuby 添加了大量的改进。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;更小的体积&lt;/li&gt;
+  &lt;li&gt;整个语言可以裁剪特性分开构建&lt;/li&gt;
+  &lt;li&gt;软件实时性&lt;/li&gt;
+  &lt;li&gt;节约内存&lt;/li&gt;
+  &lt;li&gt;更好的移植性&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;由于其可移植性，被设计的尽可能不依赖于系统，相较于 CRuby 不可以独立的打包成二进制。MRuby 的解释器是可以被独立编译的。方便携带。&lt;/p&gt;
+
+&lt;p&gt;也因为可移植性，所以在日常的计算机系统中也是可用。&lt;/p&gt;
+
+&lt;p&gt;MRuby 由于其体积和性能，常常和 Lua 进行比较。适合嵌入软件系统中来工作。&lt;/p&gt;
+
+&lt;h1 id=&quot;mruby-脚手架-mark24codemruby-devkit&quot;&gt;MRuby 脚手架 Mark24Code/mruby-devkit&lt;/h1&gt;
+
+&lt;p&gt;MRuby 编译成二进制，还是需要手动做一些事情。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/Mark24Code/mruby-devkit&quot;&gt;Mark24Code/mruby-devkit&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;我粗糙的做了一个简单的脚手架，可以工作在 MacOS、Debian Distro Linux 中。&lt;/p&gt;
+
+&lt;p&gt;可以方便的进行把 Ruby 编译成二进制可执行文件。&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;模仿 golang 的 go run
+
+`rake &apos;run[main.rb]&apos;`
+
+模仿 golang 的 go build
+
+`rake &apos;build[main.rb]&apos;`
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h1 id=&quot;benchmark&quot;&gt;Benchmark&lt;/h1&gt;
+
+&lt;p&gt;我们简单的通过 斐波那契 数列来进行简单的计算对比。&lt;/p&gt;
+
+&lt;h2 id=&quot;1-最简单的递归算法&quot;&gt;1. 最简单的递归算法&lt;/h2&gt;
+
+&lt;p&gt;操作系统使用：macOS 13.6.7&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;go 使用 go1.22.4 darwin/arm64&lt;/li&gt;
+  &lt;li&gt;mruby 使用 mruby 3.3.0 (2024-02-14)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;算法保持一致，代码如下：&lt;/p&gt;
+
+&lt;div class=&quot;language-golang highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;// fib.go&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;package&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;main&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+	&lt;span class=&quot;s&quot;&gt;&quot;fmt&quot;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fib&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;num&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;num&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;num&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fib&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;num&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fib&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;num&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;fmt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fib&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;40&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;# fib.rb&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;fib&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fib&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fib&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fib&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;40&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;日志&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# go
+time ./fib
+102334155./fib  0.37s user 0.01s system 99% cpu 0.382 total
+
+# mruby
+102334155
+./build/fib  15.30s user 0.05s system 99% cpu 15.357 total
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;语言&lt;/th&gt;
+      &lt;th&gt;时间（秒/s）&lt;/th&gt;
+      &lt;th&gt;倍率&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;mruby&lt;/td&gt;
+      &lt;td&gt;0.37&lt;/td&gt;
+      &lt;td&gt;1&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;golang&lt;/td&gt;
+      &lt;td&gt;15.30&lt;/td&gt;
+      &lt;td&gt;41.35&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;看到这里估计各位都笑了，在想什么玩意儿，在这里踢馆。&lt;/p&gt;
+
+&lt;p&gt;实际上递归其实非常不适合 MRuby。MRuby 对内存做了约束，MRuby 在系统监视器中，一致保持着 1.4M 的内存在运行。它无法很好的展开内存。&lt;/p&gt;
+
+&lt;p&gt;我们换一个语法。使用迭代的算法。&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;# fib2.rb&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;fib&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;fib_minus_2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;# F(0)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;fib_minus_1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;# F(1)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;fib_n&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;nil&lt;/span&gt;
+
+  &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;..&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;each&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fib_n&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fib_minus_1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fib_minus_2&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fib_minus_2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fib_minus_1&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fib_minus_1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fib_n&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;fib_n&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fib&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;80&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-go highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;// fib2.go&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;package&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;main&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;fmt&quot;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;// fibonacci 函数使用迭代方法计算第 n 项斐波那契数&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fib&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+	&lt;span class=&quot;n&quot;&gt;fibMinus2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;// F(0)&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;fibMinus1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;// F(1)&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;fibN&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;
+
+	&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;fibN&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fibMinus1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fibMinus2&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;fibMinus2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fibMinus1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fibMinus1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fibN&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+	&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fibN&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;fmt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;%d&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fib&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;80&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;日志&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# mruby
+23416728348467685
+./build/fib2  0.00s user 0.00s system 75% cpu 0.009 total
+
+# go
+23416728348467685./fib2  0.00s user 0.01s system 77% cpu 0.009 total
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;这样的算法已经难分伯仲。&lt;/p&gt;
+
+&lt;h1 id=&quot;参考&quot;&gt;参考&lt;/h1&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.ituring.com.cn/book/1339&quot;&gt;《关于 mruby 的一切》&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        <pubDate>Thu, 06 Jun 2024 23:34:02 +0800</pubDate>
+        <link>https://mark24code.github.io/ruby/2024/06/06/%E8%B8%A2%E9%A6%86%E6%8C%91%E6%88%98MRubyvsGolang%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ruby/2024/06/06/%E8%B8%A2%E9%A6%86%E6%8C%91%E6%88%98MRubyvsGolang%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94.html</guid>
+        
+        
+        <category>Ruby</category>
+        
+      </item>
+    
+      <item>
+        <title>选择编程语言的思考</title>
+        <description>&lt;p&gt;选择编程语言的思考&lt;/p&gt;
+
+&lt;p&gt;语言是个工具。理论上他们是等价的，实际上选错了，你到达不了目标。&lt;/p&gt;
+
+&lt;p&gt;到底是坐拖拉机去拉萨，还是做高铁去。体验非常不同。&lt;/p&gt;
+
+&lt;h1 id=&quot;一本质上资源决定语言选择&quot;&gt;一、本质上资源决定语言选择&lt;/h1&gt;
+
+&lt;p&gt;编程语言其实是分层的。如何理解这句话？首先编程语言的抽象程度不同，底层、高级负责的事情不同。灵活程度不同，决定了个人还是多人合作。使用的场景不同，比如嵌入式，Web 开发，游戏开发。总之每种语言特点是不同的。&lt;/p&gt;
+
+&lt;p&gt;你有多少人、多少时间、多少资源，平台，还有你要做什么。决定了你要选择何种编程语言。&lt;/p&gt;
+
+&lt;p&gt;语言是一种朴素的工具，工具能做和擅长做，这之间差距可能非常大。这种跨度是否可以被一个人有限的资源和时间填平，这将会影响结果是否成功。&lt;/p&gt;
+
+&lt;p&gt;如果底层的条件无法满足，项目必定失败。这是内因。&lt;/p&gt;
+
+&lt;h2 id=&quot;1底层语言&quot;&gt;1.底层语言:&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;C ：简洁、灵活，容易实现解释器。他是实战派 的胜利者。从众多竞争者中被自然选择出来。从而成为事实标准。他是操作系统、底层库的语言。C 现在成了一种标准。所有厂商都会迎合和接受这个标准，来接入目前生态。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;C 不适合开发原型。他适合学习、研究。因为灵活，所以对人要求非常高。需要非常有经验。&lt;/p&gt;
+
+&lt;p&gt;C 往往被当作一个优化性能的手段，来替换掉项目中有瓶颈的部分（往往是其他语言项目）。&lt;/p&gt;
+
+&lt;p&gt;C 完全取决于设计者的经验和学识，你需要在混乱没有标准的底层世界中，寻找自己的坐标，构建软件。总之，我觉得在想到这里再去构建软件，不容易。这是属于刀根火种的时代。了解和欣赏就可以了，现代的人们应该往上走。别浪费时间。&lt;/p&gt;
+
+&lt;h2 id=&quot;2高级语言&quot;&gt;2.高级语言：&lt;/h2&gt;
+
+&lt;p&gt;每种高级语言都为了不同目的设计，有的强调性能，有的强调灵活。&lt;/p&gt;
+
+&lt;p&gt;但是有约束语言的不可得三角（我总结的） ：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;功能&lt;/li&gt;
+  &lt;li&gt;体积&lt;/li&gt;
+  &lt;li&gt;速度&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;三者不可得，最多满足其二。所以所有语言都有达不到的短板。&lt;/p&gt;
+
+&lt;p&gt;有的语言为了安全性设计的极为繁琐。有的语言为了速度，兼容更少的系统。有的语言极富表现力，代价就是非常的缓慢。&lt;/p&gt;
+
+&lt;p&gt;总的来说，每种特点都有。&lt;/p&gt;
+
+&lt;p&gt;对于个人来说，个人拥有的时间、耐心、资源都极其有限。&lt;/p&gt;
+
+&lt;p&gt;选一个 表现力强的，构建原型。是非常合适的。
+获得成功之后，再选择性能强的精耕细作。&lt;/p&gt;
+
+&lt;p&gt;我始终觉得，个人软件和大公司软件，使用的技术其实是不同的。各种定位也不应该相同。如果能够跳出来思考。选择什么，更像是资源约束下决定的。&lt;/p&gt;
+
+&lt;p&gt;动态语言是构建原型的首选。既是相比静态语言速度慢，对于 90% 的情况也足够了。况且现代动态语言也越来越快了。&lt;/p&gt;
+
+&lt;p&gt;JavaScript、Python、Ruby 都可以。在事情成功，发展壮大之前。你的程序应该很难够到现在的计算机硬件的天花板。&lt;/p&gt;
+
+&lt;p&gt;毕竟在他们刚出来的时候，应该还不如今天，依然有很多软件获得了成功。&lt;/p&gt;
+
+&lt;p&gt;后面也许省资源会考虑 Go，安全部分会考虑 Rust，企业的成熟可靠，用工性价比高，也许会选择 Java。&lt;/p&gt;
+
+&lt;p&gt;总的来说，这些前期都不需要考虑。&lt;/p&gt;
+
+&lt;h1 id=&quot;二宏观和微观思考&quot;&gt;二、宏观和微观思考&lt;/h1&gt;
+
+&lt;h2 id=&quot;1本质上都一样&quot;&gt;1.本质上都一样&lt;/h2&gt;
+
+&lt;p&gt;MacOS、Linux、Windows 在打包二进制的时候，只是 ELF 文件描述有点差异。&lt;/p&gt;
+
+&lt;p&gt;他们遵循的基本原理都一样。&lt;/p&gt;
+
+&lt;p&gt;不同语言，最终都直接或者间接的来自于 C。&lt;/p&gt;
+
+&lt;p&gt;所以不必有选择困难症，他们本质上是一样的。&lt;/p&gt;
+
+&lt;p&gt;遇到瓶颈，可以尝试用更高性能的语言替换掉。FFI 调用之类的。&lt;/p&gt;
+
+&lt;p&gt;遇到瓶颈是成功的。&lt;/p&gt;
+
+&lt;h2 id=&quot;2生命周期&quot;&gt;2.生命周期&lt;/h2&gt;
+
+&lt;p&gt;实际上大多数软件，没有办法被人看到。甚至都无法继续维护下去。被人看到是成功的，有一天要用别的语言替换掉心爱的语言重写，是成功的烦恼。&lt;/p&gt;
+
+&lt;p&gt;成功是少数。成功需要运气。大多数的软件被人偶尔执行。一旦写出来基本就不变了。一周后就被丢弃。一个月后就会被忘记。&lt;/p&gt;
+
+&lt;p&gt;聚光灯下从来是少数，二八定律永恒生效。&lt;/p&gt;
+
+&lt;h2 id=&quot;3语言技术也有生命周期&quot;&gt;3.语言/技术也有生命周期&lt;/h2&gt;
+
+&lt;p&gt;语言、框架、系统，都是有生命周期的。MacOS 每个大版本都不兼容。 Windows 也在组件淘汰。曾经叱咤风云的 smalltalk、VB、dolphin 今天只能留在维基百科和计算机历史故事里。&lt;/p&gt;
+
+&lt;p&gt;当年天才云集、如日中天的 Sun 公司，因为资金链断裂，倒闭之后，也只留下 Java 作为遗产。&lt;/p&gt;
+
+&lt;p&gt;工具发展是个动态的过程。&lt;/p&gt;
+
+&lt;p&gt;不必太完美主义，或者细节。一切都是动态的混沌。世界的进化有时候跟你也没什么关系。&lt;/p&gt;
+
+&lt;p&gt;程序的编写，更多是你一个人的事情。你熟悉就是最好的。&lt;/p&gt;
+
+&lt;p&gt;之于这些工具的宿命，可能维护者失业、去世、公司倒闭、裁员。某个技术就戛然而止。&lt;/p&gt;
+
+&lt;p&gt;所以一切不必较真，乐在其中更重要。&lt;/p&gt;
+
+&lt;h1 id=&quot;三最终的选择&quot;&gt;三、最终的选择&lt;/h1&gt;
+
+&lt;p&gt;前期当然不应该人云亦云，甚至应该多多尝试。&lt;/p&gt;
+
+&lt;p&gt;最后选择一个喜欢的，能让你在三分钟热度内搞定的。&lt;/p&gt;
+
+&lt;p&gt;选择一个不混乱的，内部自洽和谐的。&lt;/p&gt;
+
+&lt;p&gt;选择一个对于你容易的、顺眼的、符合你思考方式的。&lt;/p&gt;
+
+&lt;p&gt;选择一个你喜欢的特点，胜过其他的。&lt;/p&gt;
+
+&lt;p&gt;选择一个成熟的，而不是时髦的，这会让你后面更顺畅一点。你没那多时间陪它们成功。&lt;/p&gt;
+
+&lt;p&gt;每个人的选择，都会是不同的。这很正常。每个人的思维习惯不同。但是他们本质上是一样的，最终会条条大路通罗马。&lt;/p&gt;
+
+&lt;p&gt;因为不可得三角，你一定会需要很多语言，帮助你实现目标。&lt;/p&gt;
+</description>
+        <pubDate>Wed, 29 May 2024 16:52:24 +0800</pubDate>
+        <link>https://mark24code.github.io/%E7%A8%8B%E5%BA%8F%E6%80%9D%E8%80%83/2024/05/29/%E9%80%89%E6%8B%A9%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80%E7%9A%84%E6%80%9D%E8%80%83.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/%E7%A8%8B%E5%BA%8F%E6%80%9D%E8%80%83/2024/05/29/%E9%80%89%E6%8B%A9%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80%E7%9A%84%E6%80%9D%E8%80%83.html</guid>
+        
+        
+        <category>程序思考</category>
+        
+      </item>
+    
+      <item>
+        <title>Ruby打包技术之旅</title>
+        <description>&lt;p&gt;2025.11.15 追加&lt;/p&gt;
+
+&lt;p&gt;homebrew 打包 portable ruby 的思路&lt;/p&gt;
+
+&lt;p&gt;将所有依赖 全部静态化重构最后打包出静态 ruby，并且还可以安装 gem&lt;/p&gt;
+
+&lt;p&gt;https://github.com/spinel-coop/rv-ruby/releases&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;追加：&lt;/p&gt;
+
+&lt;p&gt;2025 迎来了新的方案：&lt;/p&gt;
+
+&lt;p&gt;https://github.com/tamatebako/tebako&lt;/p&gt;
+
+&lt;p&gt;通过各种 hack 完全可以把 ruby 打包成独立的二进制执行文件。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;结论：&lt;/p&gt;
+
+&lt;p&gt;似乎找到了 2 个 Portable Ruby 实例&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;table&gt;
+      &lt;tbody&gt;
+        &lt;tr&gt;
+          &lt;td&gt;[Windows&lt;/td&gt;
+          &lt;td&gt;Ruby (Portable) 3.3.1.1 ](https://community.chocolatey.org/packages/ruby.portable)&lt;/td&gt;
+        &lt;/tr&gt;
+      &lt;/tbody&gt;
+    &lt;/table&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;table&gt;
+      &lt;tbody&gt;
+        &lt;tr&gt;
+          &lt;td&gt;[MacOS&lt;/td&gt;
+          &lt;td&gt;homebrew/portable-ruby ](https://github.com/Homebrew/homebrew-portable-ruby/pkgs/container/portable-ruby%2Fportable-ruby)&lt;/td&gt;
+        &lt;/tr&gt;
+      &lt;/tbody&gt;
+    &lt;/table&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;原文：&lt;/p&gt;
+
+&lt;h1 id=&quot;背景&quot;&gt;背景&lt;/h1&gt;
+
+&lt;p&gt;大家好，我是 Mark24。&lt;/p&gt;
+
+&lt;p&gt;设想一下，如果你在用 Ruby 开发一个 GUI 应用，或者是 游戏。如何把产物可以送到你用户的手中。尽可能的轻松跑起来？&lt;/p&gt;
+
+&lt;p&gt;我目前感兴趣的是游戏应用。所以后面都是建立在游戏跑在终端的角度考虑。&lt;/p&gt;
+
+&lt;p&gt;虽然我们在讨论 Ruby ，但是对于所有动态脚本语言的思路是通用的。&lt;/p&gt;
+
+&lt;p&gt;解决打包动态语言的问题。最后一公里，如何送到用户手中。&lt;/p&gt;
+
+&lt;h1 id=&quot;思路一-编译并静态链接经典二进制包&quot;&gt;思路一： 编译并静态链接，经典二进制包&lt;/h1&gt;
+
+&lt;h2 id=&quot;1-像静态语言一样获得直接的二进制文件-&quot;&gt;1. 像静态语言一样，获得直接的二进制文件 ❌&lt;/h2&gt;
+
+&lt;p&gt;比如 Go、Rust、Crystal 的构建产物。&lt;/p&gt;
+
+&lt;p&gt;结论：&lt;/p&gt;
+
+&lt;p&gt;Go、Rust、Crystal …… 他们依然是在有限条件下运行。只不过这种条件实际上特别宽泛，好像他们的产物可以在各种系统下运行。&lt;/p&gt;
+
+&lt;p&gt;实际上 MacOS、Linux、Windows 的底层都是不鼓励静态链接。并且一些关键的包，也不提供静态链接需要的库。&lt;/p&gt;
+
+&lt;p&gt;这是为了体积考虑，也是为了安全更新考虑。&lt;/p&gt;
+
+&lt;p&gt;这些能够相对来说把自己打成静态链接的语言，实际上都做了大量的工作，自己实现了底层需要的部分。&lt;/p&gt;
+
+&lt;p&gt;动态语言无法直接把代码打包成这样。 这条路是违背原理的。&lt;/p&gt;
+
+&lt;h2 id=&quot;2极致的静态方向-&quot;&gt;2：极致的静态方向 ✅&lt;/h2&gt;
+
+&lt;p&gt;这个思路是 MRuby。&lt;/p&gt;
+
+&lt;p&gt;MRuby 是一个轻量级的 Ruby 为嵌入式设计。它可以交叉编译成不同的架构。被设计的尽可能的少依赖，多拓展。&lt;/p&gt;
+
+&lt;p&gt;一定程度上，MRuby 就像是 Go。&lt;/p&gt;
+
+&lt;p&gt;可以用 MRuby 来构建应用、游戏。 MRuby 也有 SDL 的绑定&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/cyberarm/mruby-gosu&quot;&gt;cyberarm/mruby-gosu&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;21-dragon-ruby-&quot;&gt;2.1 Dragon Ruby ✅&lt;/h3&gt;
+
+&lt;p&gt;这里有篇演讲， Dragon Ruby 的游戏引擎设计者，如何使用 MRuby 来构建一个应用。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.youtube.com/watch?v=s2rngApV1WU&quot;&gt;RubyConf 2022: Building a Commercial Game Engine using mRuby and SDL by Amir Rajan&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Dragon Ruby 从 IDE 到 游戏产物全部是静态二进制。&lt;/p&gt;
+
+&lt;p&gt;但是具体的原理不详。依然不知道 Dragon Ruby 是如何做到的。&lt;/p&gt;
+
+&lt;h3 id=&quot;22-taylor-&quot;&gt;2.2 Taylor ✅&lt;/h3&gt;
+
+&lt;p&gt;Taylor 是个个人开源框架，试图挑战 Dragon Ruby。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/HellRok/Taylor&quot;&gt;HellRok/Taylor&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Taylor 的思路也是经典思路，容器中构建一个可以被静态的环境，绕过系统(MacOS 不允许静态链接系统 lib)。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/HellRok/Taylor/tree/f2ce4024efc28a82a65ab5f10769310d114d94af/scripts/export&quot;&gt;scripts/export&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;这些代码可能很难理解，在于他们究竟如何在发挥具体作用。&lt;/p&gt;
+
+&lt;p&gt;Taylor 正在重大重构中，但是目前的版本，是完全可以工作的！&lt;/p&gt;
+
+&lt;h1 id=&quot;思路二解释器项目代码--压缩包&quot;&gt;思路二：解释器+项目代码 =&amp;gt; 压缩包&lt;/h1&gt;
+
+&lt;p&gt;这个思路需要一个 可以移动执行的 Ruby 解释器。&lt;/p&gt;
+
+&lt;h2 id=&quot;1-静态编译-ruby-为-portable-ruby-&quot;&gt;1. 静态编译 ruby 为 portable ruby ✅&lt;/h2&gt;
+
+&lt;p&gt;如果拥有了 Portable Ruby，那么 软件包 = （Portable Ruby + 项目代码）。&lt;/p&gt;
+
+&lt;p&gt;这条路相对可行。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;静态链接的尝试 &lt;a href=&quot;https://mark24code.github.io/ruby/2024/05/27/%E4%BD%BF%E7%94%A8Ruby-build-%E5%9C%A8-MacOS%E4%B8%8A-%E7%BC%96%E8%AF%91-Portable-ruby.html&quot;&gt;使用 Ruby-build 在 MacOS 上 编译 Portable ruby&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;还是前面的问题，Ruby 没有像 Go 等实现了全部的底层依赖的静态库。所以 编译 ！= portable。&lt;/p&gt;
+
+&lt;p&gt;Portable 的重点就是，尽可能的不依赖。如果实在无法避开的依赖，比如 Linux 中的 glibc（系统底层），需要使用较低版本来编译。
+因为 glibc 永远是高版本兼容低版本，所以这样尽可能的获得兼容性。&lt;/p&gt;
+
+&lt;p&gt;Crystal、Go …… 他们一样。也只能工作在有限的 glibc 中。&lt;/p&gt;
+
+&lt;p&gt;Crystal 给出了平台很好体现了这一点：&lt;a href=&quot;https://crystal-lang.org/reference/1.12/syntax_and_semantics/platform_support.html&quot;&gt;Crystal Platform Support&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;用户不需要安装 Ruby，但是需要安装 Ruby 需要的底层库。来获得动态链接库。&lt;/p&gt;
+
+&lt;p&gt;这个思路获得了成功。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;1）让你本地安装 lib；或者直接安装 ruby（过程中就获得了需要的 lib）&lt;/li&gt;
+  &lt;li&gt;2）打包 portable ruby&lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;3）使用 Mac 的 App 壳应用&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/gosu/ruby-app&quot;&gt;App 壳应用 Gosu&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;可以获得一个 Mac 的应用。&lt;/p&gt;
+
+&lt;h4 id=&quot;11-portable-rub--portable-libs--&quot;&gt;1.1 Portable rub + Portable libs 🤔 ✅&lt;/h4&gt;
+
+&lt;p&gt;前面说了，如果可以创造出 静态的包。Ruby 也可以像 Go、Java 一样。这里参考这样一个项目，尝试在容器中模拟一个这样的环境。尽可能把所需的依赖全部集成起来，产出 portable ruby&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/YOU54F/traveling-ruby&quot;&gt;YOU54F/traveling-ruby&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;不过这个产物我没怎么跑起来。但是这个是经典思路，是完全可行的。&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;app code + （Portable Ruby + lib） =  software&lt;/code&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;思路三-普通思路前置安装器-&quot;&gt;思路三： 普通思路，前置安装器 ✅&lt;/h1&gt;
+
+&lt;p&gt;用户安装 Ruby 运行游戏。由于前面无法实现彻底的静态打包，即使是安装依赖库，整个过程是差不多的。用户依然要安装。&lt;/p&gt;
+
+&lt;p&gt;如果这样避不开。推荐常见的处理办法 —— 前置的安装器（Installer）。解决环境依赖问题。&lt;/p&gt;
+
+&lt;p&gt;在 Windows 上 Ruby 是需要 安装包来安装。整个过程就像这样。&lt;/p&gt;
+
+&lt;p&gt;这一点，在 Windows 上也成功实现了：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Ruby2D 的 demo&lt;/li&gt;
+  &lt;li&gt;Raylib-bindings 的 demo&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;构建过程和 Sample Project： &lt;a href=&quot;https://github.com/Mark24Code/ruby-windows-example&quot;&gt;ruby-windows-example&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;思路四-切换可以打包的语言&quot;&gt;思路四： 切换可以打包的语言&lt;/h1&gt;
+
+&lt;h3 id=&quot;1-使用-静态语言-crystal--&quot;&gt;1. 使用 静态语言 Crystal ✅ 🕘&lt;/h3&gt;
+
+&lt;p&gt;Crystal 的语法和 Ruby 非常相似，也有 游戏库、GUI 的绑定。&lt;/p&gt;
+
+&lt;p&gt;可以做到类似的事情。这一点就像 C++&lt;/p&gt;
+
+&lt;p&gt;但是缺点是 Crystal 目前还在建设中。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://crystal-lang.org/reference/1.12/syntax_and_semantics/platform_support.html&quot;&gt;crystal platform support&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Crystal 对 MacOS ARM、Windows 的支持还不足。&lt;/p&gt;
+
+&lt;p&gt;现在无法当作一个成熟方案。&lt;/p&gt;
+
+&lt;h3 id=&quot;2-使用-jrubyjava-&quot;&gt;2. 使用 JRuby(Java) ✅&lt;/h3&gt;
+
+&lt;p&gt;Java 其实采用了类似的思路，自己实现了底层。所以 Java 自身可以打包成静态的二进制。&lt;/p&gt;
+
+&lt;p&gt;我们可以把打包工作建立在 Java 的基础上。&lt;/p&gt;
+
+&lt;p&gt;这个实践方向是 Glimmer&lt;/p&gt;
+
+&lt;p&gt;Glimmer DSL for SWT 能够在 JRuby 之上将 Ruby 应用程序打包到原生安装程序（如 Mac DMG/PKG/APP、Windows MSI/EXE 和 Linux RPM/DEB）中，使开发者能够给最终用户（非程序员）一个单一的文件来运行，以安装所有需要的内容，比如 JRuby（可以运行任何 Ruby 代码）、它的 JVM 依赖项，以及正在安装的应用程序：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/AndyObtiva/glimmer-dsl-swt/blob/master/docs/reference/GLIMMER_PACKAGING_AND_DISTRIBUTION.md&quot;&gt;GLIMMER_PACKAGING_AND_DISTRIBUTION&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Glimmer DSL for LibUI，它直接在 Ruby 上运行而不是 JRuby，也有一个关于打包 Ruby 应用程序的部分，你可能想要查看（它提到了 Windows 和 Mac 的打包解决方案）：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/AndyObtiva/glimmer-dsl-libui?tab=readme-ov-file#packaging&quot;&gt;readme-ov-file#packaging&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;以下是使用 Glimmer DSL for SWT 打包的应用程序示例，这些应用程序由最终用户安装，没有问题：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/AndyObtiva/MathBowling&quot;&gt;https://github.com/AndyObtiva/MathBowling&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/AndyObtiva/glimmer-cs-gladiator&quot;&gt;https://github.com/AndyObtiva/glimmer-cs-gladiator&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/AndyObtiva/are-we-there-yet&quot;&gt;https://github.com/AndyObtiva/are-we-there-yet&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/AndyObtiva/dcr&quot;&gt;https://github.com/AndyObtiva/dcr&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/AndyObtiva/glimmer_klondike_solitaire&quot;&gt;https://github.com/AndyObtiva/glimmer_klondike_solitaire&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/AndyObtiva/glimmer_metronome&quot;&gt;https://github.com/AndyObtiva/glimmer_metronome&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/AndyObtiva/glimmer_wordle&quot;&gt;https://github.com/AndyObtiva/glimmer_wordle&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;这些都是作者发来的例子。尝试跑了几个，没有成功。
+还需要研究研究。&lt;/p&gt;
+
+&lt;h1 id=&quot;总结&quot;&gt;总结&lt;/h1&gt;
+
+&lt;p&gt;如何把 Ruby 带到终端，其实一直不停的有人研究。项目生生死死。这里列举一些，供参考。&lt;/p&gt;
+
+&lt;p&gt;1）容器打包, 静态链接 portable ruby 思路：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/phusion/traveling-ruby&quot;&gt;phusion/traveling-ruby&lt;/a&gt; 已经不维护&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/YOU54F/traveling-ruby&quot;&gt;YOU54F/traveling-ruby&lt;/a&gt; 后继者&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/HellRok/Taylor&quot;&gt;HellRok/Taylor&lt;/a&gt; MRuby 容器打包&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/ahogappa0613/kompo&quot;&gt;ahogappa0613/kompo&lt;/a&gt; 2024 新项目，拦截的方式，修改 Ruby 解释器，静态打包。我没跑起来；&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;2）临时文件系统思路：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/pmq20/ruby-packer&quot;&gt;pmq20/ruby-packer&lt;/a&gt; 已经不维护&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;3）JRuby 思路：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/AndyObtiva/glimmer&quot;&gt;AndyObtiva/glimmer&lt;/a&gt; 是 Gosu、Shoes 的继承者，还在开发&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;4）Portable Ruby 思路：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/gosu/ruby-app&quot;&gt;gosu/ruby-app&lt;/a&gt; 不维护&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;5）只打包应用脚本，指定系统 Ruby&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://sveinbjorn.org/platypus&quot;&gt;platypus&lt;/a&gt; 只打包你的脚本，封装成 app，只适合简单脚本&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;6）静态语言&lt;/p&gt;
+
+&lt;p&gt;使用 Crystal ， Ruby 语法的 Go like 语言开发应用&lt;/p&gt;
+
+&lt;p&gt;7）使用 Zig&lt;/p&gt;
+
+&lt;p&gt;这是一个问号，Zig 作为一个新语言可以作为 C 的环境，而且自己实现了所有的静态库。&lt;/p&gt;
+
+&lt;p&gt;不知道 Zig 作为 CRuby 的编译器会如何？ 但是 Zig 目前依然在发展中。&lt;/p&gt;
+
+&lt;p&gt;8）使用容器&lt;/p&gt;
+
+&lt;p&gt;容器技术是任何语言的一个打包工具。&lt;/p&gt;
+
+&lt;p&gt;对于开发者友好，但是终端用户还是有门槛的。&lt;/p&gt;
+
+&lt;p&gt;不适合游戏应用。&lt;/p&gt;
+
+&lt;p&gt;9）Gem&lt;/p&gt;
+
+&lt;p&gt;如果都能接受用户总归要自己安装 Ruby 的设定。&lt;/p&gt;
+
+&lt;p&gt;把游戏、应用，封装成 gem，可以自动处理依赖、版本问题。&lt;/p&gt;
+
+&lt;p&gt;10）切换 Ruby 的实现： CRuby 无法实现静态打包&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/artichoke/artichoke&quot;&gt;artichoke&lt;/a&gt; Rust 实现的 Ruby 。开在开发中。（暂不支持 gem）&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/natalie-lang/natalie&quot;&gt;natalie&lt;/a&gt; C++实现的 Ruby。开发中。可以 编译 纯 Ruby 脚本。（暂不支持 gem）&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;补充：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;table&gt;
+      &lt;tbody&gt;
+        &lt;tr&gt;
+          &lt;td&gt;[Windows&lt;/td&gt;
+          &lt;td&gt;Ruby (Portable) 3.3.1.1 ](https://community.chocolatey.org/packages/ruby.portable)&lt;/td&gt;
+        &lt;/tr&gt;
+      &lt;/tbody&gt;
+    &lt;/table&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;table&gt;
+      &lt;tbody&gt;
+        &lt;tr&gt;
+          &lt;td&gt;[MacOS&lt;/td&gt;
+          &lt;td&gt;homebrew/portable-ruby ](https://github.com/Homebrew/homebrew-portable-ruby/pkgs/container/portable-ruby%2Fportable-ruby)&lt;/td&gt;
+        &lt;/tr&gt;
+      &lt;/tbody&gt;
+    &lt;/table&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;补充资料：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://ruby-compilers.com/&quot;&gt;Ruby Compilers 清单&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        <pubDate>Wed, 29 May 2024 10:59:38 +0800</pubDate>
+        <link>https://mark24code.github.io/ruby/2024/05/29/Ruby%E6%89%93%E5%8C%85%E6%8A%80%E6%9C%AF%E4%B9%8B%E6%97%85.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ruby/2024/05/29/Ruby%E6%89%93%E5%8C%85%E6%8A%80%E6%9C%AF%E4%B9%8B%E6%97%85.html</guid>
+        
+        
+        <category>Ruby</category>
+        
+      </item>
+    
+      <item>
+        <title>使用Ruby-build 在 MacOS上 编译 Portable ruby</title>
+        <description>&lt;p&gt;&lt;a href=&quot;https://mark24code.github.io/ruby/2024/05/27/%E4%BD%BF%E7%94%A8Ruby-build-%E5%9C%A8-MacOS%E4%B8%8A-%E7%BC%96%E8%AF%91-Portable-ruby.html&quot;&gt;我的 Blog&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;大家好，我是 Mark24。&lt;/p&gt;
+
+&lt;p&gt;分享下我的笔记，使用 Ruby-build 在 MacOS 上 编译 Portable ruby&lt;/p&gt;
+
+&lt;p&gt;设想一下，如果 ruby 可以变成 portable 的，放在 U 盘上就可以带走，传输到任何一台电脑上就可以执行。&lt;/p&gt;
+
+&lt;p&gt;Portable Ruby + 你的 Ruby 代码 的 zip 包，就像一个行走的独立软件。就像 Go 打包的一样。&lt;/p&gt;
+
+&lt;p&gt;你还可以把他们塞入 一些壳软件里。就像 Electron 那样运行（内部是个浏览器）。&lt;/p&gt;
+
+&lt;p&gt;当然 Ruby 社区曾经有很多方案 Traveling Ruby、Ruby Packer，都用各自的方式实现类似的效果，不过都不维护了。&lt;/p&gt;
+
+&lt;p&gt;下面用一个简单的方法来制作 Portable Ruby。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;截止 2024-05-27 最新版本是 3.3.1 。
+每个版本因为特性的不同构建是一个动态的过程。就以 3.3.1 为例。&lt;/p&gt;
+
+&lt;p&gt;过程偷懒，建立在 ruby-build(https://github.com/rbenv/ruby-build) 的基础上。&lt;/p&gt;
+
+&lt;p&gt;不论是 asdf、rvm …… 他们的背后都是 ruby-build 一个方便安装的 standalone 的工具。ruby-build 解决了大部分的问题，我们只需要找到合适的构建参数。&lt;/p&gt;
+
+&lt;h2 id=&quot;一前置依赖&quot;&gt;一、前置依赖&lt;/h2&gt;
+
+&lt;p&gt;1.安装 Mac 的基础工具集&lt;/p&gt;
+
+&lt;p&gt;终端输入 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;xcode-select --install&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;2.安装上 homebrew&lt;/p&gt;
+
+&lt;p&gt;https://brew.sh/&lt;/p&gt;
+
+&lt;p&gt;获得 类似于 Linux 上的包管理工具&lt;/p&gt;
+
+&lt;p&gt;3.安装 Ruby 编译需要的前置依赖&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 安装前置依赖
+# ruby-build 是安装工具
+# openssl@3 readline libyaml gmp 是必要的依赖
+# rust 是 YJIT 必要的依赖，不装就不会构建 YJIT 功能
+
+brew install ruby-build openssl@3 readline libyaml gmp rust
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;二编译&quot;&gt;二、编译&lt;/h2&gt;
+
+&lt;p&gt;0.知识点&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;C 语言（CRuby 是 C 语言项目）编译一般分为 3 个基本过程
+
+1）预处理：处理一些前置的宏替换
+2）编译：把 .c 代码文件翻译成 .o 机器码文件目标文件
+3）链接：把 .o 文件和系统的底层库（比如标准输入输出）正确的关联起来。生成可执行文件
+
+链接这部，有两个基本的实现
+
+1）静态链接
+2）动态链接
+
+静态链接比较简单，就是把所有用到的代码打包成一个整体。软件就像一个 exe 文件，带到哪儿都可以执行。
+优点就是，随处执行。缺点就是体积大，更新困难，比如你依赖的系统部分有安全缺陷。你必须整体替换。
+
+动态链接，就是软件把用到公共部分（系统、上游 lib）的部分，指他们的动态库（linux 是 so 文件， windows 是 dll 文件，mac 里是 dylib 文件）。
+优点：体积小， 如果公共部分有安全漏洞，系统更新，只需要更新动态链接库文件，所有引用的软件都会获得更新。
+缺点：除了无法 portable，软件运行的前提是系统拥有相应的 库。
+
+动态链接是常态，不论是 Linux、MacOS、Windows。动态链接的实践这么多年运行的一直很好。通常库都是按照动态链接库方向来设计的。没有提供静态库。
+
+MacOS 还禁止系统动态库进行 静态链接。
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;最简单的编译&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;关键参数：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;$HOME/portable-ruby&lt;/code&gt; 是你存放的目录&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;--enable-load-relative&lt;/code&gt; 地址是相对目录，这对我们移动很重要&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;--with-static-linked-ext&lt;/code&gt; 静态链接&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;RUBY_CONFIGURE_OPTS=&quot;--enable-load-relative --with-static-linked-ext&quot; ruby-build 3.2.2 $HOME/portable-ruby
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;2.一些优化选项&lt;/p&gt;
+
+&lt;p&gt;可以参考 https://github.com/rbenv/ruby-build&lt;/p&gt;
+
+&lt;p&gt;额外的选项&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;--with-out-ext=win32,win32ole&lt;/code&gt; 去掉 MacOS 上不需要的拓展&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;--disable-install-doc &lt;/code&gt; 关闭文档，减小体积&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;--disable-install-rdoc&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;--disable-dependency-tracking&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;RUBY_CONFIGURE_OPTS=&quot;--enable-load-relative --with-static-linked-ext --with-out-ext=win32,win32ole --disable-install-doc --disable-install-rdoc --disable-dependency-tracking &quot; ruby-build 3.2.2 $HOME/portable-ruby
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;ruby-build 能做的更多，比如支持交叉编译&lt;/p&gt;
+
+&lt;h2 id=&quot;三portable-ruby&quot;&gt;三、Portable Ruby&lt;/h2&gt;
+
+&lt;p&gt;编译正确完成，你应该获得了 portable ruby&lt;/p&gt;
+
+&lt;p&gt;在拥有 依赖库的电脑上（对，我们前面解释了，系统部分是禁止 静态链接的）。&lt;/p&gt;
+
+&lt;p&gt;你的可以把你的 ruby 代码 + portable ruby 放在一个文件夹里。 用 一个 shell 脚本，通过相对路径连接起来执行。&lt;/p&gt;
+
+&lt;p&gt;比如这样&lt;/p&gt;
+
+&lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;#!/usr/bin/env bash&lt;/span&gt;
+./portable-ruby/bin/ruby ./main.rb
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;某种意义上， Portable Ruby + Ruby Script 和 Go、Crystal 打包的可执行文件，是一样的。就是大了一点 :D&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://mark24code.github.io/ruby/2024/05/27/%E4%BD%BF%E7%94%A8Ruby-build-%E5%9C%A8-MacOS%E4%B8%8A-%E7%BC%96%E8%AF%91-Portable-ruby.html&quot;&gt;我的 Blog&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Mon, 27 May 2024 19:31:01 +0800</pubDate>
+        <link>https://mark24code.github.io/ruby/2024/05/27/%E4%BD%BF%E7%94%A8Ruby-build-%E5%9C%A8-MacOS%E4%B8%8A-%E7%BC%96%E8%AF%91-Portable-ruby.html</link>
+        <guid isPermaLink="true">https://mark24code.github.io/ruby/2024/05/27/%E4%BD%BF%E7%94%A8Ruby-build-%E5%9C%A8-MacOS%E4%B8%8A-%E7%BC%96%E8%AF%91-Portable-ruby.html</guid>
+        
+        
+        <category>Ruby</category>
+        
+      </item>
+    
+  </channel>
+</rss>

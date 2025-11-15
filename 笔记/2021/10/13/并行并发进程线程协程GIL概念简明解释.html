@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>并行并发进程线程协程GIL概念简明解释笔记</title>
+  <meta name="description" content="根据参考文章做了一些简要的笔记和概括一、并发(Concurrency)和并行(Parallel)的区别并发和并行是相近的概念。和并发所描述的情况一样，并行也是指两个或多个任务被同时执行。但是严格来讲，并发和并行的概念并是不等同的，两者存在很大的差别。简单的一张图可以简单明了的理解 并行和并发直观来讲，并发是两个等...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E7%AC%94%E8%AE%B0/2021/10/13/%E5%B9%B6%E8%A1%8C%E5%B9%B6%E5%8F%91%E8%BF%9B%E7%A8%8B%E7%BA%BF%E7%A8%8B%E5%8D%8F%E7%A8%8BGIL%E6%A6%82%E5%BF%B5%E7%AE%80%E6%98%8E%E8%A7%A3%E9%87%8A.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">并行并发进程线程协程GIL概念简明解释笔记</h1>
+    <p class="artilce_meta"><time datetime="2021-10-13T11:47:39+08:00" itemprop="datePublished">Oct 13, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <p>根据参考文章做了一些简要的笔记和概括</p>
+
+<h1 id="一并发concurrency和并行parallel的区别">一、并发(Concurrency)和并行(Parallel)的区别</h1>
+
+<p>并发和并行是相近的概念。和并发所描述的情况一样，并行也是指两个或多个任务被同时执行。但是严格来讲，并发和并行的概念并是不等同的，两者存在很大的差别。</p>
+
+<p>简单的一张图可以简单明了的理解 并行和并发</p>
+
+<p><img src="/assets/blog/concurrency_parallel_process_etc/concurrency_parallel_different.png" alt="concurrency_parallel_different.png" /></p>
+
+<p>直观来讲，并发是两个等待队列中的人同时去竞争一台咖啡机。现实中可能是两队人轮流交替使用、也可能是争抢使用——这就是竞争。</p>
+
+<p>而并行是每个队列拥有自己的咖啡机，两个队列之间并没有竞争的关系，队列中的某个排队者只需等待队列前面的人使用完咖啡机，然后再轮到自己使用咖啡机。</p>
+
+<p>可以这样理解：
+并发是一个处理器同时处理多个任务，而并行多个处理器或者是多核的处理器同时处理多个不同的任务。前者是逻辑上的同时发生（simultaneous），而后者是物理上的同时发生。</p>
+
+<h1 id="二进程">二、进程</h1>
+
+<p>进程（英语：process），是指计算机中已运行的程序。进程曾经是分时系统的基本运作单位。</p>
+
+<p>它包括一些具体内容比如 独立的内存、系统中独立的PID等。</p>
+
+<p>在时分复用系统中，操作系统在不同的进程之间进行上下文切换，来达到 “并发”的效果。</p>
+
+<p>我们只需要简单的知道，他是一个基本单位，它的切换在操作系统之中，并且他的上下文切换相当的占用时间、和占据内存。</p>
+
+<p>Ruby的一些框架是通过 进程+fork的方式工作的，比如 Sidekiq。以fork进程工作的会存在一切缺点：</p>
+
+<ul>
+  <li>切换上下文时间相对较长</li>
+  <li>上下文的内存相对较大</li>
+  <li>fork的子进程，当父进程死掉，会成为僵尸进程，等待系统回收（占用内存）</li>
+</ul>
+
+<h1 id="三线程">三、线程</h1>
+
+<p>线程（英语：thread）是操作系统能够进行运算调度的最小单位。大部分情况下，它被包含在进程之中，是进程中的实际运作单位。一条线程指的是进程中一个单一顺序的控制流，一个进程中可以并发多个线程，每条线程并行执行不同的任务。</p>
+
+<p>然后操作系统也会在进程之中，调度内部的线程，假设是多个线程，会在其中切换不同线程执行。</p>
+
+<p>相对进程，线程弥补了进程切换的一切问题</p>
+
+<h2 id="31-多线程的意义">3.1 多线程的意义</h2>
+
+<p>多线程的优点</p>
+
+<ul>
+  <li>共享内存</li>
+  <li>切换上下文时间段</li>
+  <li>占用内存少</li>
+  <li>父进程关闭，子进程自动关闭</li>
+  <li>任务分片</li>
+</ul>
+
+<p>多线程的意义和操作系统的时间切片其实是相当的。
+如果没有多线程，我们的程序会是如何？</p>
+
+<p>以小汽车移动举例子，如下两个颜色的小汽车，A、B，如果我们想移动他们，只能顺序移动。</p>
+
+<p><img src="/assets/blog/concurrency_parallel_process_etc/single_thread.gif" alt="single_thread.png" /></p>
+
+<p>如果是支持多线程程序，A、B 可以同时移动。比如一些游戏的坦克大战多个坦克运动；比如你可以在一个程序中既能聊天还能播放音乐比如浏览器等等。</p>
+
+<p><img src="/assets/blog/concurrency_parallel_process_etc/multi_thread.gif" alt="multi_thread.png" /></p>
+
+<h2 id="32-线程存在的问题">3.2 线程存在的问题</h2>
+
+<ul>
+  <li>竞争带来的复杂问题，涉及到锁</li>
+</ul>
+
+<p>就像前面，并行并发 提到的咖啡机模型，多个线程，他们在使用CPU会产生竞争问题，分配给谁？一般是交给操作系统来调度。但是当他们去访问同一个内存读写的时候，由于无法保证顺序，常常会出现问题——也就是线程不安全。</p>
+
+<p>举个Ruby的例子</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">a</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="n">threads</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">10</span><span class="p">).</span><span class="nf">map</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+  <span class="no">Thread</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">a</span>
+    <span class="nb">sleep</span><span class="p">(</span><span class="nb">rand</span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">c</span> <span class="o">+=</span> <span class="mi">10</span>
+    <span class="nb">sleep</span><span class="p">(</span><span class="nb">rand</span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">c</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">threads</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span> <span class="n">t</span><span class="p">.</span><span class="nf">join</span> <span class="p">}</span>
+
+<span class="nb">puts</span> <span class="n">a</span>
+</code></pre></div></div>
+<p>这段代码要实现的功能很简单，只是把变量a累加10次，每次加10，并且开了10个线程去完成这个任务。正常情况下我们期望的值是a == 100，然而事实却是</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="o">&gt;</span> <span class="n">ruby</span> <span class="n">a</span><span class="p">.</span><span class="nf">rb</span>
+<span class="mi">10</span>
+
+<span class="o">&gt;</span> <span class="n">ruby</span> <span class="n">a</span><span class="p">.</span><span class="nf">rb</span>
+<span class="mi">10</span>
+
+<span class="o">&gt;</span> <span class="n">ruby</span> <span class="n">a</span><span class="p">.</span><span class="nf">rb</span>
+<span class="mi">30</span>
+
+<span class="o">&gt;</span> <span class="n">ruby</span> <span class="n">a</span><span class="p">.</span><span class="nf">rb</span>
+<span class="mi">20</span>
+</code></pre></div></div>
+
+<p>出现这种情况的原因是，当我们的操作执行到一半的时候其他线程介入了，导致了数据混乱。这里为了突出问题，我们采用了sleep方法来把控制权让给其他线程，而在现实中，线程间的上下文切换是由操作系统来调度，我们很难分析出它的具体行为。</p>
+
+<p>现实中为了解决问题，我们需要加锁</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">a</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">mutex</span> <span class="o">=</span> <span class="no">Mutex</span><span class="p">.</span><span class="nf">new</span>
+
+<span class="n">threads</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">10</span><span class="p">).</span><span class="nf">map</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+  <span class="no">Thread</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+    <span class="c1"># 加锁</span>
+    <span class="n">mutex</span><span class="p">.</span><span class="nf">synchronize</span> <span class="k">do</span>
+      <span class="n">c</span> <span class="o">=</span> <span class="n">a</span>
+      <span class="nb">sleep</span><span class="p">(</span><span class="nb">rand</span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">1</span><span class="p">))</span>
+      <span class="n">c</span> <span class="o">+=</span> <span class="mi">10</span>
+      <span class="nb">sleep</span><span class="p">(</span><span class="nb">rand</span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">1</span><span class="p">))</span>
+      <span class="n">a</span> <span class="o">=</span> <span class="n">c</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">threads</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span> <span class="n">t</span><span class="p">.</span><span class="nf">join</span> <span class="p">}</span>
+
+<span class="nb">puts</span> <span class="n">a</span>
+</code></pre></div></div>
+<p>这样可以保证结果</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> <span class="n">ruby</span> <span class="n">a</span><span class="p">.</span><span class="nf">rb</span>
+<span class="mi">100</span>
+
+<span class="o">&gt;</span> <span class="n">ruby</span> <span class="n">a</span><span class="p">.</span><span class="nf">rb</span>
+<span class="mi">100</span>
+</code></pre></div></div>
+
+<h1 id="四gil">四、GIL</h1>
+
+<p>在Python、Ruby中都存在一个东西叫做 GIL（全局解析器锁)。</p>
+
+<p>GIL起到什么作用呢，以Ruby的MRI解释器为例，存在GIL的MRI只能够实现并发，并无法充分利用CPU的多核特征，实现并行任务，进而减少程序运行时间。</p>
+
+<p>在MRI里面线程只有在拿到GIL锁的时候才能够运行，即便我们创建了多个线程，本质上也就只有一个线程实例能够拿到GIL，如此看来某一时刻便只能有一个线程在运行。</p>
+
+<p>可以考虑下面这样的场景：</p>
+
+<blockquote>
+  <p>老师给小蓝安排了除草任务，小蓝为了加快速度呼唤了好友小张，然而除草任务需要有锄头才能进行。为此，即便有好友相助但锄头却只有一把所以两个人无法同时完成除草的任务，只有拿到锄头使用权的一方才能够进行除草。这把锄头就像是解析器中的GIL，把小张跟小蓝想象成被创建的两个线程，当两个人的工作效率一样的时候，受限于锄头这个约束并无法同时进行除草任务，只能够交替使用锄头，本质上并不会减少工作时间，反而会在换人的时候（上下文切换）耗费掉一定的时间。</p>
+</blockquote>
+
+<p>在一些场景下创建更多的线程并不能真正地减少程序的运行时间，反而有可能会随着进程数量的增加而增加切换上下文的开销，从而导致程序变得更慢。</p>
+
+<h1 id="五协程">五、协程</h1>
+
+<p>线程是由操作系统来控制切换的。而系统的切换是一种通用的策略，在一些场景下会没必要的浪费时间。</p>
+
+<p>协程 就是一种让程序员去手动切换，这个过程就像 线程之间 可以互相协作 来完成任务，避免不必要的切换。具体如何切换、交给谁，这个根据实际的任务，程序员来判断。</p>
+
+<p>比如 小明做 语文、数学、英语三节课。系统调度采用的是通用策略，他可能的选择是在三个任务之间均衡。
+系统不停地在切换，实际上这种切换浪费了大量的时间。
+<img src="/assets/blog/concurrency_parallel_process_etc/system_control.gif" alt="system_control.png" /></p>
+
+<p>我们现实中会这样做，因为这样是更优的选择。这样就减少了无意义的切换提高了效率。
+<img src="/assets/blog/concurrency_parallel_process_etc/fiber_control.gif" alt="fiber_control.png" /></p>
+
+<p>比如IO，当我们遇到IO的时候，有几种情况：</p>
+
+<ol>
+  <li>
+    <p>单线程就只能等待IO完成再继续。</p>
+  </li>
+  <li>
+    <p>系统无差别调度，工作线程和IO线程之间切换。</p>
+  </li>
+  <li>
+    <p>协程手动调度，遇到IO之后，直接转移控制权给其他代码。 这样可以有目标的去编写非阻塞、吞吐量大的程序。</p>
+  </li>
+</ol>
+
+<h1 id="六解放gil充分利用多核">六、解放GIL充分利用多核</h1>
+
+<p>以Ruby为例，想要去除 4个人干活 共用一个锄头的 GIL的尴尬事情。可以选择使用去除GIL的解释器。
+除了GIL的实现，其中包括Rubinius 以及 jruby他们的底层分别用的是C++以及Java实现的，除了去除GIL锁之外，他们还做了其他方面的优化。某些场景下他们都有着比MRI更好的性能。</p>
+
+<p>这就需要你的程序里面避免出现竞争条件。</p>
+
+<p>一些好的例子是 比如Python的Flask框架，他使用对不同线程ID建立起一个map保存request、response上下文巧妙地实现了线程隔离，在处理web的这块可以做到线程安全。</p>
+
+<p>还有一些专门解决多线程的模型</p>
+
+<h2 id="61-actor模型-ractor合成词ruby-actor并发模型">6.1 Actor模型 Ractor（合成词Ruby Actor）并发模型</h2>
+
+<ul>
+  <li><a href="https://ruby-china.org/topics/40583">Ractor 下多线程 Ruby 程序指南 </a></li>
+</ul>
+
+<p>Ractor 像 Go、Erlang的并发模型看齐</p>
+
+<h3 id="具体的实现">具体的实现</h3>
+
+<ul>
+  <li>
+    <p><a href="https://github.com/ruby-concurrency/concurrent-ruby">concurrent-ruby</a></p>
+  </li>
+  <li>
+    <p><a href="https://github.com/celluloid/celluloid">celluloid</a></p>
+  </li>
+</ul>
+
+<h2 id="62-guilds-并发模型">6.2 Guilds 并发模型</h2>
+
+<ul>
+  <li><a href="https://ruby-china.org/topics/31348"> Ruby 3 Guilds 并发模型</a></li>
+</ul>
+
+<h2 id="63-事件驱动模型">6.3 事件驱动模型</h2>
+
+<p>事件驱动这是一个像JavaScript的原理的一个实现，使用了单线程eventloop的方式进行工作，可以进行大量的IO，而不需要担心线程问题。</p>
+<h3 id="具体实现">具体实现</h3>
+
+<ul>
+  <li><a href="https://github.com/eventmachine/eventmachine">EventMachine</a></li>
+</ul>
+
+<h2 id="64-进程fork-让操作系统完成调度">6.4 进程+fork, 让操作系统完成调度</h2>
+
+<p>这是一种补充，这种方案扎根于Unix、Linux操作系统。
+可以充分利用多核新。可以通过 标准库 实现。但是会比 上述线程方案要重。因为进程的内存是隔离的所以不会竞争。</p>
+
+<p>原理可以参考</p>
+
+<ul>
+  <li><a href="https://book.douban.com/subject/24298701/">理解Unix进程</a></li>
+</ul>
+
+<h3 id="具体实现-1">具体实现</h3>
+
+<p>大名鼎鼎的 unicorn</p>
+
+<ul>
+  <li><a href="https://github.com/defunkt/unicorn">unicorn</a></li>
+</ul>
+
+<p>puma也使用了这个模型。但是puma同样也拥有多线程</p>
+
+<ul>
+  <li><a href="https://github.com/puma/puma">puma</a></li>
+</ul>
+
+<h2 id="参考">参考</h2>
+
+<p>并发并行部分</p>
+
+<ul>
+  <li><a href="https://github.com/forhappy/Cplusplus-Concurrency-In-Practice/blob/master/zh/chapter1-Introduction/1.1%20What%20is%20concurrency.md">《1.1 什么是并发》</a></li>
+</ul>
+
+<p>进程部分</p>
+
+<ul>
+  <li><a href="https://zh.wikipedia.org/wiki/%E8%A1%8C%E7%A8%8B">进程wiki</a></li>
+</ul>
+
+<p>线程部分</p>
+
+<ul>
+  <li><a href="https://zh.wikipedia.org/wiki/%E7%BA%BF%E7%A8%8B">线程wiki</a></li>
+  <li><a href="https://www.beansmile.com/blog/posts/thread-talk-by-lan">谈谈ruby的线程</a></li>
+</ul>
+
+<p>GIL部分</p>
+
+<ul>
+  <li><a href="https://ruby-china.org/topics/28415">无人知晓的 GIL</a></li>
+  <li><a href="www.jstorimer.com/blogs/workingwithcode/8085491-nobody-understands-the-gil">nobody-understands-the-gil</a></li>
+</ul>
+
+<p>协程部分</p>
+
+<ul>
+  <li><a href="https://www.beansmile.com/blog/posts/thread-talk-by-lan">谈谈ruby的线程</a></li>
+</ul>
+
+<h2 id="其他">其他</h2>
+
+<ul>
+  <li>
+    <p>Ruby Puma 允许在每个进程中使用多线程, 每个进程都有各自的线程池. 大部分时候不会遇到上面说的竞争问题, 因为每个 HTTP 请求都是在不同的线程处理.</p>
+  </li>
+  <li>
+    <p>Python的Flask设计巧妙在于使用一个map做到了线程隔离，每个线程都有独立的request、response上下文也可以做到巧妙地不同现场处理。</p>
+  </li>
+  <li>
+    <p>Python的Tornado 使用了协程来写出非阻塞的吞吐量更高的web server。</p>
+  </li>
+  <li>
+    <p>Ruby中去除GIL的解释器：除了GIL的实现，其中包括Rubinius 以及 jruby他们的底层分别用的是C++以及Java实现的，除了去除GIL锁之外，他们还做了其他方面的优化。某些场景下他们都有着比MRI更好的性能。</p>
+  </li>
+</ul>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E7%AC%94%E8%AE%B0/2021/10/13/并行并发进程线程协程GIL概念简明解释';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

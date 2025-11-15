@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>组建局域网01_搭建DNS服务器给设备专属域名</title>
+  <meta name="description" content="背景：在家庭局域网中，我们有若干个设备连接在同一台路由其中。路由器和下属设备形成了一个小型局域网。我们可以在局域网中通过ip互相访问。这是一般情况。目标我希望可以给局域网中的设备专门的域名。方法完成这个目标其实有很多方法。1. 路由器功能比较新的路由器也许有更改hosts的功能。小米路由器之前是有的。现在没了。我...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E5%88%86%E4%BA%AB%E4%B8%8E%E5%88%9B%E9%80%A0/2021/11/23/%E7%BB%84%E5%BB%BA%E5%B1%80%E5%9F%9F%E7%BD%9101_%E6%90%AD%E5%BB%BADNS%E6%9C%8D%E5%8A%A1%E5%99%A8.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">组建局域网01_搭建DNS服务器给设备专属域名</h1>
+    <p class="artilce_meta"><time datetime="2021-11-23T23:11:37+08:00" itemprop="datePublished">Nov 23, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="背景">背景：</h1>
+
+<p>在家庭局域网中，我们有若干个设备连接在同一台路由其中。路由器和下属设备形成了一个小型局域网。</p>
+
+<p>我们可以在局域网中通过ip互相访问。这是一般情况。</p>
+
+<h1 id="目标">目标</h1>
+
+<p>我希望可以给局域网中的设备专门的域名。</p>
+
+<h1 id="方法">方法</h1>
+
+<p>完成这个目标其实有很多方法。</p>
+
+<h2 id="1-路由器功能">1. 路由器功能</h2>
+
+<p>比较新的路由器也许有更改hosts的功能。小米路由器之前是有的。现在没了。</p>
+
+<p>我要重点介绍的就是第二个方法</p>
+
+<h2 id="2-dnsmasq">2. Dnsmasq</h2>
+
+<p><a href="https://wiki.archlinux.org/title/Dnsmasq_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)">Dnsmasq</a> 提供 DNS 缓存和 DHCP 服务功能。作为域名解析服务器(DNS)，dnsmasq可以通过缓存 DNS 请求来提高对访问过的网址的连接速度。作为DHCP 服务器，dnsmasq 可以用于为局域网电脑分配内网ip地址和提供路由。DNS和DHCP两个功能可以同时或分别单独实现。dnsmasq轻量且易配置，适用于个人用户或少于50台主机的网络。此外它还自带了一个 PXE 服务器。</p>
+
+<p>更详尽的功能可以查看Dnsmasq的wiki。</p>
+
+<h2 id="dnsmasq具体操作">Dnsmasq具体操作</h2>
+
+<h3 id="1-安装dnsmasq">1. 安装Dnsmasq</h3>
+
+<p>各大发行版都有自己的安装方式，以Ubuntu为例</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo apt install dnsmasq
+</code></pre></div></div>
+
+<h3 id="2-配置dnsmasq">2. 配置dnsmasq</h3>
+
+<p>先备份原始的 <code class="language-plaintext highlighter-rouge">dnsmasq.conf</code> 养成好习惯</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo cp /etc/dnsmasq.conf /etc/dnsmasq.conf.bak
+</code></pre></div></div>
+
+<p>编辑<code class="language-plaintext highlighter-rouge">/etc/dnsmasq.conf</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo vim /etc/dnsmasq.conf
+</code></pre></div></div>
+<p>文件最下方新增</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># /etc/dnsmasq.conf
+resolv-file=/etc/resolv.dnsmasq.conf
+strict-order
+listen-address=127.0.0.1
+listen-address=192.168.31.223
+</code></pre></div></div>
+<p>dnsmasq.conf 默认有很多设置，我们分别解读下我们设置的。</p>
+
+<p>第一行，<code class="language-plaintext highlighter-rouge">resolv-file...</code> 主要是指向另一个文件 我们这里指向的是自定义<code class="language-plaintext highlighter-rouge">/etc/resolv.dnsmasq.conf</code>,如果这里不指定会自动生成一个默认的 <code class="language-plaintext highlighter-rouge">resolv</code> 配置，会导致解析问题。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#文件 /etc/resolv.dnsmasq.conf
+
+# google的CDN
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+
+# 运营商的114
+nameserver 114.114.114.114
+
+# 阿里的
+nameserver 223.5.5.5
+
+# 腾讯的
+nameserver 119.29.29.29
+
+</code></pre></div></div>
+
+<p>这里主要配置了一些DNS服务器，记住一定要配置。否则不论是本机还是未来在局域网中被指向都无法解析域名。</p>
+
+<p>第二行</p>
+
+<p><code class="language-plaintext highlighter-rouge">strict-order</code> 是指按照制定顺序解析DNS</p>
+
+<p>第三行、第四行分别是监听本机、局域网中本地地址（作为局域网中服务器）。</p>
+
+<h3 id="3-启动dnsmasq服务">3. 启动dnsmasq服务</h3>
+
+<p>这里使用systemd的方式</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 启动服务
+sudo systemctl start dnsmasq  
+
+# 查看服务状态
+sudo systemctl status dnsmasq
+
+</code></pre></div></div>
+<p>以本机为例，输出如下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜  ~ sudo systemctl status dnsmasq    
+● dnsmasq.service - dnsmasq - A lightweight DHCP and caching DNS server
+   Loaded: loaded (/lib/systemd/system/dnsmasq.service; enabled; vendor preset: enabled)
+   Active: active (running) since Wed 2021-11-24 23:41:46 CST; 3s ago
+  Process: 2075 ExecStartPre=/usr/sbin/dnsmasq --test (code=exited, status=0/SUCCESS)
+  Process: 2076 ExecStart=/etc/init.d/dnsmasq systemd-exec (code=exited, status=0/SUCCESS)
+  Process: 2085 ExecStartPost=/etc/init.d/dnsmasq systemd-start-resolvconf (code=exited, status=0/SUCCESS)
+ Main PID: 2084 (dnsmasq)
+    Tasks: 1 (limit: 4915)
+   CGroup: /system.slice/dnsmasq.service
+           └─2084 /usr/sbin/dnsmasq -x /run/dnsmasq/dnsmasq.pid -u dnsmasq -r /run/dnsmasq/resolv.conf -7 /etc/dnsmasq.d,.dpkg-dist,.dpkg-old,.dpkg-new --local-service --trust-anchor=.,20326,8,2,e06d44b80b8f1d39a95c0b0d7c65d08458e880409bbc6834571
+
+11月 24 23:41:46 mark-pi400 dnsmasq[2084]: compile time options: IPv6 GNU-getopt DBus i18n IDN DHCP DHCPv6 no-Lua TFTP conntrack ipset auth DNSSEC loop-detect inotify dumpfile
+11月 24 23:41:46 mark-pi400 dnsmasq[2084]: reading /etc/resolv.dnsmasq.conf
+11月 24 23:41:46 mark-pi400 dnsmasq[2084]: using nameserver 8.8.8.8#53
+11月 24 23:41:46 mark-pi400 dnsmasq[2084]: using nameserver 8.8.4.4#53
+11月 24 23:41:46 mark-pi400 dnsmasq[2084]: using nameserver 114.114.114.114#53
+11月 24 23:41:46 mark-pi400 dnsmasq[2084]: using nameserver 223.5.5.5#53
+11月 24 23:41:46 mark-pi400 dnsmasq[2084]: using nameserver 119.29.29.29#53
+11月 24 23:41:46 mark-pi400 dnsmasq[2084]: read /etc/hosts - 10 addresses
+11月 24 23:41:46 mark-pi400 dnsmasq[2085]: Too few arguments.
+11月 24 23:41:46 mark-pi400 systemd[1]: Started dnsmasq - A lightweight DHCP and caching DNS server.
+
+
+</code></pre></div></div>
+
+<p>systemd的展示非常友好，可以看到成功了解析了我们设置的 DNS server并且也解析了 <code class="language-plaintext highlighter-rouge">/etc/hosts</code></p>
+
+<p>我们可以在 hosts文件中定义一些局域网的静态IP和我们想要赋予的域名，这样子可以在局域网通过域名访问设备</p>
+
+<p>让我们开始编辑hosts</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo vim /etc/hosts
+</code></pre></div></div>
+
+<p>比如我把 29地址  命名为  my-linux-server.home</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>127.0.0.1	localhost
+::1		localhost ip6-localhost ip6-loopback
+ff02::1		ip6-allnodes
+ff02::2		ip6-allrouters
+
+# custom LAN dns
+192.168.31.29 my-linux-server.home
+
+</code></pre></div></div>
+
+<p>然后我们重启下 dnsmasq 服务</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 重启服务
+sudo systemctl restart dnsmasq 
+
+
+# 如果我们希望每次开启也启动服务
+sudo systemctl enable dnsmasq 
+
+# 顺带提议下关闭
+# 关闭开启启动服务
+sudo systemctl disable dnsmasq 
+
+# 关闭服务
+sudo systemctl stop dnsmasq 
+
+</code></pre></div></div>
+
+<h1 id="设置你的路由器">设置你的路由器</h1>
+
+<p>我们已经设置好一个DNS服务器</p>
+
+<p>接下来，进入你的路由器管理界面，使用你的设置，把你路由器的DNS服务器指向刚才机器在局域网的静态IP。</p>
+
+<p>也可以配置你的电脑的DNS指向这个地址。</p>
+
+<p>一个建议是，保留原始的DNS主机地址比如我这里</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>192.168.1.1
+
+192.168.31.223
+</code></pre></div></div>
+<p>第一个是我的原始路由器的DNS地址</p>
+
+<p>第二个是我设置的地址，这样子可以作为补充。</p>
+
+<p><img src="/assets/blog/lan_build_dns_server/dns_ip_setting.png" alt="dns_ip_setting" /></p>
+
+<h2 id="tip">Tip</h2>
+
+<ol>
+  <li>如果你dnsmasq设置没有继承 路由器主机的 DNS服务，可以设置第二个DNS服务器为路由器主机</li>
+</ol>
+
+<p>这样保证了原来的状态。</p>
+
+<h1 id="小结">小结</h1>
+
+<p>假设我们前面设置DNS的机器是A。我们通过路由器设置了DNS服务器指向A。</p>
+
+<p>我们可以通过修改A的hosts文件和重启dnsmasq服务，让整个局域网读取我们的配置，完成一个ip和域名的映射。这样我们可以在局域网内使用域名命名设备然后访问。</p>
+
+<h1 id="检验">检验</h1>
+
+<p>我们可以ping下设备域名</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ping my-linux-server.home
+
+</code></pre></div></div>
+
+<p>也可以安装</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> sudo apt install dnsutils
+</code></pre></div></div>
+<p>之后使用</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dig my-linux-server.home
+</code></pre></div></div>
+<p>来查看DNS解析情况</p>
+
+<h1 id="补充说明">补充说明</h1>
+
+<ol>
+  <li>缓存</li>
+</ol>
+
+<p>A做好设置，局域网内部 B电脑 ping不到定义的主机怎么办？ 可能是DNS缓存。
+参考如下：</p>
+
+<p>https://ubuntututorials.org/flush-dns-cache-ubuntu-20-04/</p>
+
+<p>基本上等待一会就生效了。</p>
+
+<ol>
+  <li>net-tools</li>
+</ol>
+
+<p>包含  ifconfig 可以查看ip</p>
+
+<ol>
+  <li>dnsutils</li>
+</ol>
+
+<p>包含 dig 可以查看dns情况</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E5%88%86%E4%BA%AB%E4%B8%8E%E5%88%9B%E9%80%A0/2021/11/23/组建局域网01_搭建DNS服务器';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

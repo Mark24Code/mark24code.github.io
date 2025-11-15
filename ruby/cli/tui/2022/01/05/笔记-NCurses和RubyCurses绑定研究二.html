@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>笔记:NCurses和RubyCurses绑定研究二</title>
+  <meta name="description" content="思考：重复代码和编程技巧朴素代码里表达的重复性，充满复制粘贴、以及他必须要在这时候出现。各种复制。这种复制性，是合理的，是必然存在的。他摆在这个位置，他完成了，那么他就是必然的，应该的。我们只能用代码技巧、用循环，把所谓的拙劣的、重复的代码，替代成引用、替代成循环生成。编程技巧的目标就是 KISS 旨在去除重复，...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/cli/tui/2022/01/05/%E7%AC%94%E8%AE%B0-NCurses%E5%92%8CRubyCurses%E7%BB%91%E5%AE%9A%E7%A0%94%E7%A9%B6%E4%BA%8C.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">笔记:NCurses和RubyCurses绑定研究二</h1>
+    <p class="artilce_meta"><time datetime="2022-01-05T12:57:59+08:00" itemprop="datePublished">Jan 5, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h2 id="思考重复代码和编程技巧">思考：重复代码和编程技巧</h2>
+
+<p>朴素代码里表达的重复性，充满复制粘贴、以及他必须要在这时候出现。各种复制。
+这种复制性，是合理的，是必然存在的。他摆在这个位置，他完成了，那么他就是必然的，应该的。</p>
+
+<p>我们只能用代码技巧、用循环，把所谓的拙劣的、重复的代码，替代成引用、替代成循环生成。</p>
+
+<p>编程技巧的目标就是 KISS 旨在去除重复，合归一处容易修改，尽量解耦减少影响。无他而已。</p>
+
+<h2 id="tui-中-输入会带来阻塞么">TUI 中 输入会带来阻塞么？</h2>
+
+<p>我之前自己尝试过写命令行，当时是自己使用puts完成的。</p>
+
+<p>那么问题来了，当时的问题在于程序中，  gets 会阻塞程序自身。那么这个问题在 Curses中解决了么？</p>
+
+<p>至少到目前的例子中其实并没有。</p>
+
+<p>目前的例子中，界面永远是先于 gets 这种操作进行的。并且我们知道  Curses中 getch操作会调用 refresh。</p>
+
+<p>所以目前看来 Curses的程序工作流程是：</p>
+
+<p>1.初始化屏幕
+2.在内存中新建对象（window）
+3.我们修改对象
+4.发送绘制命令，把内存中对象，渲染到屏幕上
+5.等待用户输入交互（4如果没有，5这步会代劳发送绘制）</p>
+
+<p>所以整个还是阻塞的。</p>
+
+<p>这对于我之前理解的更新在于，他在前面存在了数据结构就是内存对象。并且渲染到页面。他做到了这个操作。</p>
+
+<h4 id="重要">重要</h4>
+
+<p>但是如果我想动态更新页面内容，我不得不在用户输入的那边，放一个外循环（或者吧整个界面绘制放入循环中）。
+不断地等待检查用户的 getch 输入。</p>
+
+<p>然后又不可避免的在各种用户输入下，进行对界面元素的 重绘、重排版。</p>
+
+<p>在视觉上，编排界面甚至是读写对象，出现了至少2次 —— 一次最外层初始化、一次是在循环中。</p>
+
+<p>重复的事情，我们可以通过循环、封装成一个对象，来减少书写的代码。</p>
+
+<p>但是它依然是简陋的——他是循环+不断更新。</p>
+
+<p>当然我们也知道了一些额外信息，就是 Curses可以做到修改了才更新。我们针对对象使用refresh可以减少算力浪费。</p>
+
+<p>但是我们自己的程序，将会在一个外循环里，分割出计算时间。</p>
+
+<h4 id="至少两次谈谈逻辑守恒我发明一个词">至少两次，谈谈逻辑守恒（我发明一个词）</h4>
+
+<p>渲染一个内容，但是这个内容可以被数据驱动改变。那么必然至少有2次调用。
+我们换4个方式去做这个：</p>
+
+<p>1.硬写代码，那么就把绘制代码，放在头一次，改变处写一次。</p>
+
+<p>2.循环代替渲染，外部初始化一次，内部循环处写一次。这样还可以更新N次。但是书写还是需要2次。</p>
+
+<p>3.把绘制代码，用函数封装。 两次写的地方，均可以用一句话比如  drawComponent 代替。 但是 drawComponent 还是需要出现2次。</p>
+
+<p>4.如果我们创建了自动绘制的数据结构，而绘制工作，可以和一个声明式接口相关，比如 React中的 setState。调用了，就会向框架内部发送一个更新的指令。最外侧循环接收到了任务会开始重新渲染。那么只需要在 初始化、和更新处调用2次 setState。依然需要2次。</p>
+
+<p>不论形式如何演变，但是 至少2次。这是不会变的。我们只能把一种形式，变成另一种形式。可以用循环、可以用封装、可以自建数据结构……  但是逻辑性不会消失。</p>
+
+<p>代码依然保持着自我的逻辑性存在着。不会被消灭 —— 逻辑守恒。 程序的本质不灭，只是形式在变化。</p>
+
+<h4 id="屏幕循环维持">屏幕、循环维持</h4>
+
+<p>屏幕的展示，我理解其实是不需要循环维持的。类似于51单片机的电灯。我们把需要展示的内容，放入显存，通电，显存里面有 010101010，自然根据显示器的电路来点亮等。
+只要供电存在。这部分是不需要额外算力的。（当然这是理想模型。这个模型的特点在于，我们不需要关心屏幕）。</p>
+
+<p>程序需要关心的是，一旦发生变化，生成新的内容，写入 Buffer，当组装好了数据，调用一次 refresh这种开关，把 Buffer内容写入到 显存。</p>
+
+<p>而程序交互，无非来自于 外部的IO（包括用户输入、网络接口….) 你只能等待。</p>
+
+<p>所以 while循环，它是重复。他在外循环里，即表示内部的内容重复几遍。当他内部内容是 getch 这种，那就意味着持续等待用户输入。</p>
+
+<p>一旦用户输入，就开始出发 对应的调用，然后写入Buffer….</p>
+
+<p>是否可以说，交互性的东西一定是在等待输入的，一定是阻塞的。</p>
+
+<p>只不过，心理建设上，这种等待，不是卡在程序中间阻塞后面所有程序。而是所有初始化程序执行完，该渲染的渲染，在最后一步阻塞，等待交互。一旦用户输入进入一轮新的循环。</p>
+
+<p>交互产生分支，分支逻辑处理完毕，有空闲了，继续等待。</p>
+
+<p>关于是否会错过交互？ 这个问题</p>
+
+<p>一定会有的。从Vim的卡顿、Emacs的卡顿，哪怕是App、Web网页。其实都一样。他们必须在一个周期里完成任务。
+所以React自己完成了调度，他保持了每个周期里，一定有一段可以响应用户的时间。</p>
+
+<p>人类的行为是慢速的，所以才能和这套东西配合起来。人类点击的行为时间远大于处理分配的间隔时间。那么他就仿佛每一刻都在等待我们操作。</p>
+
+<p>但是如果我们的程序执行慢速到超过了某个间隔时间。用户的操作将会被忽略掉。这就是我们日常看到的一些卡顿问题所在。</p>
+
+<p>如果处理期间，不断地发出指令。他就会被忽略掉。
+这里有很多改进的门道。也许可以用队列缓存。也可以计算密集的交给 工作线程处理，我们依然要让程序有时间响应用户操作。</p>
+
+<h3 id="我们自己的程序其实不存在并行除非引入线程进程">我们自己的程序其实不存在并行，除非引入线程、进程</h3>
+
+<p>上面隐藏有一个疑惑就是，我们自己能否制造出多个并行的程序。来减少卡顿、阻塞。</p>
+
+<p>那么我们就需要构建一个循环，在加入一个队列。队列允许压栈放入任务，不同的任务可以依次、交叉进入队列执行。执行完切换上下文。我们需要设置循环彼此等待……</p>
+
+<p>等等，如果我们每个程序都这样做。是不是有点太浪费时间了。而现实中，我们的程序往往就是单线逻辑。所以我的一个猜想或者想法是。</p>
+
+<p>1.我们自己的程序在系统视角是顺序执行的。</p>
+
+<p>2.如果我们希望自己的程序（多个）可以并行。</p>
+
+<p>我们可以自己构建调度系统。但是其实大可不必，操作系统里面就带了调度系统。更简单思路是—— 借用系统的调度系统（这其实是一个公共需求）。</p>
+
+<p>然后一旦使用线程、进程。相当于我们脚本里面这段的程序，他在时间序列上、执行的从属上会和主线程并列，共用时间。</p>
+
+<p>在系统的大循环里，做到了平级。大家的程序都在系统的大循环里，某个队列里等着。进入交叉执行——时分复用看起来就像并行任务。</p>
+
+<p>3.有价值的意义</p>
+
+<p>对于执行任务，顺序执行 ABC，就可以了。</p>
+
+<p>对于交互程序，A代表交互，BC代表工作任务，我们实际上需要执行的是  ABCABCABC….  而如果 ABC是固定顺序，BC时间过程会影响交互。</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>利用线程，我们就可以理解为   A</td>
+      <td>B</td>
+      <td>C 三个并行。交给操作系统调度。A永远可以交互，只是在等待 B、C结果的到来。</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>实际时间肯定加长因为存在系统调度时间，但是 A 程序永远可以在一个单位时间内轮询你、响应你。这就是最大的意义。</p>
+
+<p>而A的内部可以实现一个简单的队列，接受命令。然后交给工作线程，A只要等待结果展示。这个闭环的交互，是可用的。这是意义。</p>
+
+<p>所以要引入线程、进程这个东西。</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>然后我理解，他是把我们的顺序任务，丢入一个大循环里共享时间分片。提高了同步处理的效率（A</td>
+      <td>B</td>
+      <td>C轮着执行，各自推进，都有进度。而不是 A-B-C 顺序等待）。</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 id="疑问">疑问？</h4>
+
+<p>如果我想做更多的任务，我想界面非阻塞的自动刷新。那么我应该如何做呢？</p>
+
+<p>1.目前线程是我能想到的。</p>
+
+<p>主线程负责循环等待交互，和每次刷新界面。我们可以创建 worker线程，他负责在背后的计算，两个线程之间，通过队列通信。</p>
+
+<p>主线程、工作线程，他们在时间序列上是并行的，然后被操作系统的外循环控制 —— 相当于时间分片，并且彼此交叉执行了。</p>
+
+<p>2.还有新的方式么？</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/cli/tui/2022/01/05/笔记:NCurses和RubyCurses绑定研究二';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

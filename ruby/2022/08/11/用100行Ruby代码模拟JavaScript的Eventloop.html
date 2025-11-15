@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>用100行Ruby代码模拟JavaScript的Eventloop</title>
+  <meta name="description" content="前言大家好，我是Mark24  代码仓库: Mark24Code/rb_simulate_eventloop背景我们都知道 JavaScript 是单线程的。今天看到一个有趣的帖子 www.v2ex.com/t/871848，主要是争论JavaScript的优缺点。我看到这个评论觉得很有意思：@qrobot:.....">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/2022/08/11/%E7%94%A8100%E8%A1%8CRuby%E4%BB%A3%E7%A0%81%E6%A8%A1%E6%8B%9FJavaScript%E7%9A%84Eventloop.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">用100行Ruby代码模拟JavaScript的Eventloop</h1>
+    <p class="artilce_meta"><time datetime="2022-08-11T18:57:42+08:00" itemprop="datePublished">Aug 11, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h2 id="前言">前言</h2>
+
+<p>大家好，我是Mark24</p>
+
+<ul>
+  <li>代码仓库: <a href="https://github.com/Mark24Code/rb_simulate_eventloop">Mark24Code/rb_simulate_eventloop</a></li>
+</ul>
+
+<h2 id="背景">背景</h2>
+
+<p>我们都知道 JavaScript 是单线程的。</p>
+
+<p>今天看到一个有趣的<a href="https://www.v2ex.com/t/871848#reply95">帖子 www.v2ex.com/t/871848</a>，主要是争论JavaScript的优缺点。我看到这个评论觉得很有意思：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@qrobot:
+
+....省略....
+
+
+多线程下会消耗以下资源
+
+1. 切换页表全局目录
+2. 切换内核态堆栈
+3. 切换硬件上下文（进程恢复前，必须装入寄存器的数据统称为硬件上下文）
+ip(instruction pointer)：指向当前执行指令的下一条指令
+bp(base pointer): 用于存放执行中的函数对应的栈帧的栈底地址
+sp(stack poinger): 用于存放执行中的函数对应的栈帧的栈顶地址
+cr3:页目录基址寄存器，保存页目录表的物理地址
+......
+
+4. 刷新 TLB
+5. 系统调度器的代码执行
+
+....省略.....
+
+</code></pre></div></div>
+
+<p>这位同学列举了多线程切换的时候发生了什么。
+这样给了一种很直观的感受，就是多线程切换的时候发生了很多事情，实际上会比单线程（只需要切换函数上下文）要消耗点更多的资源。</p>
+
+<p>实际上凡是交互的软件，最终都是 单线程模型 + 事件驱动辅助。</p>
+
+<p>从熟悉的浏览器、游戏、应用程序……都是如此。</p>
+
+<p>也有多线程实现的。这里<a href="https://news.ycombinator.com/item?id=10490627">Multithreaded toolkits: A failed dream? (2004) </a> 有很多讨论。</p>
+
+<p>实际上单线程模型是最后的胜出者。</p>
+
+<p>JavaScript 内部单线程处理任务，主要是有一个 EventLoop 单线程的循环实现。</p>
+
+<p>我们可以通过 JavaScript 的表现，反推实现一下 EventLoop。</p>
+
+<h1 id="eventloop-实现">EventLoop 实现</h1>
+
+<h3 id="javascript-的行为">JavaScript 的行为</h3>
+
+<p>我们知道 <code class="language-plaintext highlighter-rouge">setTimeout</code> 在 JavaScript 中用来推迟任务。实际上自从 Promise 出现之后，渐渐有两个概念出现在大家的视野里。</p>
+
+<ul>
+  <li>Macrotask(宏任务）</li>
+  <li>Microtask （微任务）</li>
+</ul>
+
+<p>setTimeout属于宏任务，而 promise的then回调属于微任务。</p>
+
+<p>还有一个就是 JavaScript 在第一次同步执行代码的时候，是宏任务。</p>
+
+<p>EventLoop的表现是，除了第一次执行结束之后，如果有更高优先级的 微任务总是先执行微任务，然后再执行宏任务。</p>
+
+<p>setTimeout 是一个定时器，很特别的是他在会在计时器线程工作，运行时间之后，回调函数会被插入到 宏任务中执行。计时器线程其实不是 JavaScript虚拟的一部分，他是浏览器的部分。</p>
+
+<h3 id="ruby-模拟">Ruby 模拟</h3>
+
+<p>JavaScript 是单线程的。 Ruby是支持多线程的。我们可以用 Ruby 模拟一个 单线程的核心，和单独的计时器线程，这都是很轻松的事情。</p>
+
+<p>其实我们听到了这个行为 —— 花1分钟大概能想到，EventLoop 的工作模型</p>
+
+<ul>
+  <li>首先他是一个主循环，这样才能所谓的单线程</li>
+  <li>其次，既然有两种任务，应该是两种队列</li>
+  <li>再者，如果第一次同步代码是宏任务，多半可以代码任务也丢到队列里</li>
+</ul>
+
+<p>我们可以用数组当做 队列。但是 由于存在时间线程，还得用 Thread#Queue 有保障一点。</p>
+
+<p>大概的模型可以画出来，想这个样:</p>
+
+<h3 id="eventloop-model">Eventloop Model</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>（start)
+   |
+  init (e.g create TimerThread )
+   |
+  sync task (e.g read &amp; run code) 
+   |                                        
+   |
+ ------------------&gt;
+|                  |                                    -------------
+|               macro_task  ---  add timer task --&gt;    | TimerThread |
+|   (Eventloop)    |       &lt;--  insertjob result ---    -------------
+|                  |
+|               micro_task
+|                  |
+|                  |
+ &lt;-----------------   
+   |
+   |
+  (end)
+
+</code></pre></div></div>
+
+<ul>
+  <li>完整的代码仓库 <a href="https://github.com/Mark24Code/rb_simulate_eventloop">Mark24Code/rb_simulate_eventloop</a></li>
+</ul>
+
+<p>然后我们大概用100行不到就可以实现如下:</p>
+
+<h4 id="需要说明的是">需要说明的是:</h4>
+
+<p>1) settimeout 不要用每一个新的线程来模拟，因为一旦多线程，涉及到抢占式回调，其实返回的时间不确定。你的结果是不稳定的。
+我们需要单独实现一个计时器线程。</p>
+
+<p>2) 我们通过行为封装，把两边函数写法对照，这样可以复制</p>
+
+<p>运行看结果</p>
+
+<p><img src="/assets/blog/rb_event_loop/sample_result.png" alt="sample_result.png" /></p>
+
+<h2 id="具体实现">具体实现</h2>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># https://github.com/Mark24Code/rb_simulate_eventloop</span>
+<span class="nb">require</span> <span class="s1">'thread'</span>
+
+<span class="k">class</span> <span class="nc">EventLoop</span>
+  
+  <span class="nb">attr_accessor</span> <span class="ss">:macro_queue</span><span class="p">,</span> <span class="ss">:micro_queue</span>
+  <span class="k">def</span> <span class="nf">initialize</span>
+    <span class="vi">@running</span> <span class="o">=</span> <span class="kp">true</span>
+    
+    <span class="vi">@macro_queue</span> <span class="o">=</span> <span class="no">Queue</span><span class="p">.</span><span class="nf">new</span>
+    <span class="vi">@micro_queue</span> <span class="o">=</span> <span class="no">Queue</span><span class="p">.</span><span class="nf">new</span>
+
+    <span class="vi">@time_thr_task_queue</span> <span class="o">=</span> <span class="no">Queue</span><span class="p">.</span><span class="nf">new</span>
+
+    <span class="vi">@timer</span> <span class="o">=</span> <span class="no">Timer</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="vi">@time_thr_task_queue</span><span class="p">,</span> <span class="vi">@macro_queue</span><span class="p">)</span>
+
+    <span class="c1"># 计时线程，是一个同步队列</span>
+    <span class="c1"># 会把定时任务结果塞回宏队列</span>
+    <span class="vi">@timer_thx</span> <span class="o">=</span> <span class="no">Thread</span><span class="p">.</span><span class="nf">new</span> <span class="k">do</span>
+      <span class="vi">@timer</span><span class="p">.</span><span class="nf">run</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+
+  <span class="k">def</span> <span class="nf">before_loop_sync_tasks</span>
+    <span class="c1"># do sth setting</span>
+    <span class="vi">@first_task</span><span class="p">.</span><span class="nf">call</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">task</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="c1"># 这里放置第一次同步任务</span>
+    <span class="c1"># </span>
+    <span class="c1"># 外部书写的代码，模拟读取js</span>
+    <span class="c1"># 提供内部的api</span>
+    <span class="vi">@first_task</span> <span class="o">=</span> <span class="o">-&gt;</span> <span class="p">()</span> <span class="p">{</span> <span class="nb">instance_eval</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span> <span class="p">}</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">after_loop</span>
+    <span class="nb">puts</span> <span class="s2">"[after_loop] eventloop is quit :D"</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">macro_queue_works</span>
+    <span class="k">while</span> <span class="o">!</span><span class="vi">@macro_queue</span><span class="p">.</span><span class="nf">empty?</span>
+      <span class="n">job</span> <span class="o">=</span> <span class="vi">@macro_queue</span><span class="p">.</span><span class="nf">shift</span>
+      <span class="n">job</span><span class="p">.</span><span class="nf">call</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">micro_queue_works</span>
+    <span class="k">while</span> <span class="o">!</span><span class="vi">@micro_queue</span><span class="p">.</span><span class="nf">empty?</span>
+      <span class="n">job</span> <span class="o">=</span> <span class="vi">@micro_queue</span><span class="p">.</span><span class="nf">shift</span>
+      <span class="n">job</span><span class="p">.</span><span class="nf">call</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">start</span>
+    <span class="k">begin</span>
+      <span class="n">before_loop_sync_tasks</span>
+
+      <span class="k">while</span> <span class="vi">@running</span>
+
+        <span class="n">macro_queue_works</span>
+
+        <span class="n">micro_queue_works</span>
+
+        <span class="c1"># avoid CPU 100%</span>
+        <span class="nb">sleep</span> <span class="mf">0.1</span>
+      <span class="k">end</span>
+    <span class="k">ensure</span>
+      <span class="n">after_loop</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># dsl public api</span>
+  <span class="c1"># inner api</span>
+  <span class="k">def</span> <span class="nf">macro_task</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="vi">@macro_queue</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">micro_task</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="vi">@micro_queue</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">settimeout</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="c1"># 模拟定时器线程</span>
+    <span class="k">if</span> <span class="n">time</span> <span class="o">==</span> <span class="mi">0</span>
+      <span class="n">time</span> <span class="o">=</span> <span class="mf">0.1</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 方案1: 用独立分散的线程模拟存在问题</span>
+    <span class="c1"># 抢占的返回顺序不是固定的</span>
+    <span class="c1"># t = Thread.new do</span>
+    <span class="c1">#   sleep time</span>
+    <span class="c1">#   @micro_queue.push(block)</span>
+    <span class="c1"># end</span>
+    <span class="c1">## !!! 这里一定不能阻塞，一旦阻塞就不是单线程模型</span>
+    <span class="c1">## 有外循环控制不会结束</span>
+    <span class="c1"># t.join</span>
+
+    <span class="c1"># 方案2: 时间线程也需要单独模拟</span>
+    <span class="c1"># 建立一个时间任务</span>
+    <span class="vi">@time_thr_task_queue</span><span class="p">.</span><span class="nf">push</span><span class="p">({</span>
+      <span class="ss">sleep_time: </span><span class="no">Time</span><span class="p">.</span><span class="nf">now</span><span class="p">.</span><span class="nf">to_i</span> <span class="o">+</span> <span class="n">time</span><span class="p">,</span>
+      <span class="ss">job: </span><span class="o">-&gt;</span> <span class="p">()</span> <span class="p">{</span> <span class="vi">@micro_queue</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="n">block</span><span class="p">)</span> <span class="p">}</span>
+    <span class="p">})</span>
+
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Timer</span>
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">task_queue</span><span class="p">,</span> <span class="n">macro_queue</span><span class="p">)</span>
+    <span class="vi">@task_queue</span> <span class="o">=</span> <span class="n">task_queue</span>
+    <span class="vi">@macro_queue</span> <span class="o">=</span> <span class="n">macro_queue</span>
+  <span class="k">end</span>
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">task</span> <span class="o">=</span> <span class="vi">@task_queue</span><span class="p">.</span><span class="nf">shift</span><span class="p">)</span>
+      <span class="n">sleep_time</span> <span class="o">=</span> <span class="n">task</span><span class="p">[</span><span class="ss">:sleep_time</span><span class="p">]</span>
+      <span class="k">if</span> <span class="n">sleep_time</span> <span class="o">&gt;=</span> <span class="no">Time</span><span class="p">.</span><span class="nf">now</span><span class="p">.</span><span class="nf">to_i</span>
+        <span class="vi">@macro_queue</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="n">task</span><span class="p">[</span><span class="ss">:job</span><span class="p">])</span>
+      <span class="k">else</span>
+        <span class="vi">@task_queue</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<h1 id="总结">总结</h1>
+
+<p>选择单线程的原因是因为</p>
+
+<ul>
+  <li>结果运行的更快</li>
+  <li>无上下文负担</li>
+  <li>任务队列清晰而又简单</li>
+  <li>非IO密级任务，可以跑满CPU</li>
+</ul>
+
+<p>Nginx、Redis 内部也实现了单线程模型，来应对大量的请求，提高并发。</p>
+
+<p>现在我们大概知道了，浏览器、应用、app、图形界面、游戏……</p>
+
+<p>他们的背后大概是什么样子。 破除神秘感 +1 :D</p>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/2022/08/11/用100行Ruby代码模拟JavaScript的Eventloop';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

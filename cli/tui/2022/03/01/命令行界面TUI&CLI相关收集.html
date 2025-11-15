@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>命令行界面TUI&CLI相关收集</title>
+  <meta name="description" content="不成熟的思考像Vim、Emacs这种，必须依赖组合键或者模式去工作。工作的复杂度落实在按键组合的维度。有一些程序比如 tig 他的交互围绕着简单的按键，这跟他的工作模式单一有关，不需要处理复杂交互。像编辑器需要不断的填充功能，所以在键盘映射上尤其混乱。这个角度 从命令行 过渡到 图形界面，其实是必然的，因为不论是...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/cli/tui/2022/03/01/%E5%91%BD%E4%BB%A4%E8%A1%8C%E7%95%8C%E9%9D%A2TUI&CLI%E7%9B%B8%E5%85%B3%E6%94%B6%E9%9B%86.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">命令行界面TUI&CLI相关收集</h1>
+    <p class="artilce_meta"><time datetime="2022-03-01T14:27:09+08:00" itemprop="datePublished">Mar 1, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="不成熟的思考">不成熟的思考</h1>
+
+<p>像Vim、Emacs这种，必须依赖组合键或者模式去工作。工作的复杂度落实在按键组合的维度。</p>
+
+<p>有一些程序比如 tig 他的交互围绕着简单的按键，这跟他的工作模式单一有关，不需要处理复杂交互。像编辑器需要不断的填充功能，所以在键盘映射上尤其混乱。</p>
+
+<p>这个角度 从命令行 过渡到 图形界面，其实是必然的，因为不论是哪种模式的按键没有真正带来效率的提升。鼠标确实是一个更伟大的发明。</p>
+
+<p>而有了GUI的软件之后，命令行的角色，可能也更加明确，适合模式单一、即用即抛、开发、生产环境中固定场景的工具。</p>
+
+<p>命令的设计其实和图形界面非常相似，但是多媒体展示部分只能以文字为主。这只对这种特征的程序利好。</p>
+
+<p>因此命令行程序的现状除了 Emacs、Vim 之外，都保持在一个非常小众、小型，依赖于 lib 编写的情况。不再有大规模像网站一样的复杂 TUI 应用。</p>
+
+<p>我做一个不恰当的比喻，这就像游戏开发。我们依然可以命令行绘制像素点方式编写游戏，自己绘制游戏引擎。但是一旦出现了解决复杂问题的游戏引擎 —— 真正的效率断崖 就被制造出来了。人们再刻意通过刀耕火种的方式构建复杂程序，实际上是在时间上自杀。</p>
+
+<h1 id="自制">自制</h1>
+
+<p>有段时间对命令程序比较感兴趣，研究了一些做了记录。</p>
+
+<ul>
+  <li><a href="/cli/tui/2022/03/01/%E5%A6%82%E4%BD%95%E5%81%9A%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%BC%96%E8%BE%91%E5%99%A8.html">如何做个命令编辑器</a></li>
+  <li><a href="/ruby/curses/cli/tui/2022/02/27/Curses%E9%9D%9E%E9%98%BB%E5%A1%9E%E8%BE%93%E5%85%A5%E6%8E%A2%E7%B4%A2.html">Curses非阻塞输入探索</a></li>
+  <li><a href="/ruby/cli/tui/2022/01/01/%E7%AC%94%E8%AE%B0-NCurses%E5%92%8CRubyCurses%E7%BB%91%E5%AE%9A%E7%A0%94%E7%A9%B6.html">笔记-NCurses和RubyCurses绑定研究</a></li>
+  <li><a href="/ruby/cli/tui/2022/01/05/%E7%AC%94%E8%AE%B0-NCurses%E5%92%8CRubyCurses%E7%BB%91%E5%AE%9A%E7%A0%94%E7%A9%B6%E4%BA%8C.html">笔记-NCurses和RubyCurses绑定研究二</a></li>
+</ul>
+
+<hr />
+<h1 id="tui-相关的一些凌乱的参考">TUI 相关的一些凌乱的参考</h1>
+
+<p>在 <a href="https://github.com/maerch/ruby-drawille">https://github.com/maerch/ruby-drawille</a> 部分的example有一个例子可以打印小乌龟路径。结果依然是一个椭圆。命令行这个方面就算是换成unicode点阵输出图案，依然是失真的。这个角度我比较放弃了。</p>
+
+<p>一上午在看从编辑器从命令行到<a href="https://www.scintilla.org/">scintilla</a>成为众多现代编辑器的底层。这个难题一直在解决之中。</p>
+
+<p>从目前来看，TUI 也不适合做复杂的交互，即使是 Tig 这样的程序，我个人也不会真正的用它提交代码，只能单游标输入，并且受限于命令行界面确实是非常简陋。但是适合简单的程序。比如脚手架，或者 repl 用于纯数据展示。
+这也是符合目前使用的。</p>
+
+<p>我之前有个计划就是把 MVVM 的思想带到 命令行里，这样可以构建复杂的程序。但是我想了想，浏览器这种复杂的软件，开发过程中的debug需要完善的报错机制帮助debug才得以进行下去。使用命令行，在开发的过程中刀耕火种，这也会是压死自己的稻草了。</p>
+
+<h2 id="命令行绘制lib">命令行绘制lib</h2>
+<ul>
+  <li><a href="">库 ncurses</a>
+    <ul>
+      <li><a href="https://www.youtube.com/playlist?list=PL2U2TQ__OrQ8jTf0_noNKtHMuYlyxQl4v">教程Good: ncurses视频教程</a></li>
+    </ul>
+  </li>
+  <li><a href="https://www.rubydoc.info/gems/curses">库 Ruby curses(对ncurses等统一接口的兼容层)</a>
+    <ul>
+      <li><a href="https://www.2n.pl/blog/basics-of-curses-library-in-ruby-make-awesome-terminal-apps">教程Good: basics-of-curses-library-in-ruby-make-awesome-terminal-apps</a></li>
+      <li><a href="https://stac47.github.io/ruby/curses/tutorial/2014/01/21/ruby-and-curses-tutorial.html">教程Good: ruby-and-curses-tutorial</a></li>
+    </ul>
+  </li>
+  <li><a href="https://arthursonzogni.github.io/FTXUI/">库 C++ FTXUI</a>
+    <h2 id="打印表格">打印表格</h2>
+  </li>
+  <li><a href="https://github.com/cldwalker/hirb">库 https://github.com/cldwalker/hirb</a></li>
+</ul>
+
+<h2 id="控制颜色">控制颜色</h2>
+
+<ul>
+  <li><a href="https://stackoverflow.com/questions/1489183/how-can-i-use-ruby-to-colorize-the-text-output-to-a-terminal">how-can-i-use-ruby-to-colorize-the-text-output-to-a-terminal</a></li>
+</ul>
+
+<h2 id="控制字符">控制字符</h2>
+
+<ul>
+  <li><a href="https://student.cs.uwaterloo.ca/~cs452/terminal.html">https://student.cs.uwaterloo.ca/~cs452/terminal.html</a>
+    <h2 id="命令行绘制像素">命令行绘制像素</h2>
+  </li>
+  <li><a href="https://github.com/asciimoo/drawille">库 drawille</a></li>
+</ul>
+
+<h3 id="other-implementations--similar-projects">Other implementations / similar projects</h3>
+
+<ul>
+  <li><a href="https://github.com/null93/drawille">https://github.com/null93/drawille</a> (Java)</li>
+  <li><a href="https://github.com/madbence/node-drawille">https://github.com/madbence/node-drawille</a> (nodejs)</li>
+  <li><a href="https://github.com/exrook/drawille-go">https://github.com/exrook/drawille-go</a> (go)</li>
+  <li><a href="https://github.com/maerch/ruby-drawille">https://github.com/maerch/ruby-drawille</a> (ruby)</li>
+  <li><a href="https://github.com/sunetos/TextPlots.jl">https://github.com/sunetos/TextPlots.jl</a> (julia)</li>
+  <li><a href="https://github.com/mkremins/drawille-clj">https://github.com/mkremins/drawille-clj</a> (clojure)</li>
+  <li><a href="https://github.com/mydzor/bash-drawille">https://github.com/mydzor/bash-drawille</a> (bash)</li>
+  <li><a href="https://github.com/hoelzro/term-drawille">https://github.com/hoelzro/term-drawille</a> (perl 5)</li>
+  <li><a href="https://github.com/whatthejeff/php-drawille">https://github.com/whatthejeff/php-drawille</a> (PHP)</li>
+  <li><a href="https://github.com/yamadapc/haskell-drawille">https://github.com/yamadapc/haskell-drawille</a> (haskell)</li>
+  <li><a href="https://github.com/P1start/drawille-rs">https://github.com/P1start/drawille-rs</a> (rust)</li>
+  <li><a href="https://github.com/liam-middlebrook/drawille-sharp">https://github.com/liam-middlebrook/drawille-sharp</a> (C#)</li>
+  <li><a href="https://github.com/asciimoo/lua-drawille">https://github.com/asciimoo/lua-drawille</a> (Lua)</li>
+  <li><a href="https://github.com/l-a-i-n/drawille-plusplus">https://github.com/l-a-i-n/drawille-plusplus</a> (CPP)</li>
+  <li><a href="https://github.com/massn/elixir-drawille">https://github.com/massn/elixir-drawille</a> (elixir)</li>
+  <li><a href="https://github.com/sshbio/drawille">https://github.com/sshbio/drawille</a> (emacs lisp)</li>
+  <li><a href="https://gist.github.com/sshbio/cb0073a0e8c50a681288c8bff74d9c4b">https://gist.github.com/sshbio/###</a> (awk, images only)</li>
+  <li><a href="https://github.com/Huulivoide/libdrawille">https://github.com/Huulivoide/libdrawille</a> (c)</li>
+  <li><a href="https://github.com/PMunch/drawille-nim">https://github.com/PMunch/drawille-nim</a> (nim)</li>
+</ul>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/cli/tui/2022/03/01/命令行界面TUI&CLI相关收集';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

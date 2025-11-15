@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>不再困扰如何选择Linux发行版</title>
+  <meta name="description" content="一、前言Linux 发行版众多选择他们一直天秤座的噩梦 —— 选择困难症。最近收拾了下老电脑，有感而发，觉得可以记下来。也踩了一些坑。虽然这问题不必纠结，但是最后 —— 你总得用一个吧？ 于是问题又回来了。二、选择 Debian 派系我个人思考的原则是 —— 选择合适的。我要通过下面举例子不断的重申我选择的原则。...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E5%88%86%E4%BA%AB/2022/12/20/%E4%B8%8D%E5%86%8D%E5%9B%B0%E6%89%B0%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9Linux%E5%8F%91%E8%A1%8C%E7%89%88.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">不再困扰如何选择Linux发行版</h1>
+    <p class="artilce_meta"><time datetime="2022-12-20T18:37:17+08:00" itemprop="datePublished">Dec 20, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="一前言">一、前言</h1>
+
+<p>Linux 发行版众多选择他们一直天秤座的噩梦 —— 选择困难症。
+最近收拾了下老电脑，有感而发，觉得可以记下来。也踩了一些坑。</p>
+
+<p>虽然这问题不必纠结，但是最后 —— 你总得用一个吧？ 于是问题又回来了。</p>
+
+<h1 id="二选择-debian-派系">二、选择 Debian 派系</h1>
+
+<p>我个人思考的原则是 —— 选择合适的。</p>
+
+<p>我要通过下面举例子不断的重申我选择的原则。</p>
+
+<h3 id="linux发行版本的情况说明">Linux发行版本的情况说明</h3>
+
+<p>Linux 的发行版主要有两个派系，Debian、Redhat。</p>
+
+<ul>
+  <li>Debian 是纯社区驱动。无商业许可证负担。有 Debian 发行版</li>
+  <li>Redhat 是一家商业公司，通常有对应的商业服务。有 Redhat 商业付费发行版（一般穷人接触不到），有源代码构建的 CentOS（已经下架），开源社区版本有 Fedora</li>
+</ul>
+
+<p>当然还有当年黄金时代黑客们另起炉灶的 Arch 派系以及延伸分支。他的特色是每日滚动更新。
+前两者一般是有明确的节奏更新，更适合日常使用。（我的观点，系统是用来用的，不是来宣兵夺主的）。</p>
+
+<p>Redhat 有自己的商业付费计划，而且十分昂贵。商业公司运维可能会偏向于他，因为觉得稳定可靠，实在不行可以付费来购买服务。</p>
+
+<p>Debian 相比于 Redhat 使用起来非常便捷，尤其是安装软件部分。非常自动化。实际上是非常简单又好的发行版。
+我个人接触的最多的就是 Debian。所以我的目标只在 Debian里面选择。</p>
+
+<h3 id="debian-的生态">Debian 的生态</h3>
+
+<p>Debian 使用友好，纯社区驱动，无法律许可证问题。所以 Debian 一方面是个人爱好者喜欢的发行版，另一方面也是很多研究使用的基础系统。</p>
+
+<p>在 PC 上，有 Debian Linux，有基于 Debian 的 Ubuntu Linux，有基于 Ubuntu 的 N 个衍生分支。
+在 SOC 上，Debian 也被大量的部署。比如树莓派。</p>
+
+<p>Debian 的官网上支持各种架构，X86、AMD64、ARM……</p>
+
+<p>比如在最近时髦的 M1 ARM 架构的 苹果电脑，运行虚拟机可以使用 Debian 的 ARM 发行版。</p>
+
+<p>总之 Debian 是一个不可多得的高质量的社区发行版。</p>
+
+<p>我选择 Debian 作为一个系统级别的操作接口。后面的选择都会基于 Debian 派系讨论。</p>
+
+<h1 id="三原则--选择原因">三、原则 &amp; 选择原因</h1>
+
+<h2 id="1原则">1.原则</h2>
+
+<blockquote>
+  <p>系统是拿来用的。</p>
+</blockquote>
+
+<p>这句原则有两个内涵，拿来用，所以分层去考虑，是给人用，还是给机器用？</p>
+
+<p>给人用的：软件的一切目标围绕着以人为本 —— 主要体现在 个人桌面系统</p>
+
+<ul>
+  <li>稳定可靠</li>
+  <li>交互合理</li>
+  <li>视觉优美</li>
+  <li>功能人性化</li>
+  <li>方便配置，高度可用</li>
+  <li>资源可以有一定程度的牺牲（桌面）</li>
+</ul>
+
+<p>给机器用的：可以少点人性 —— 主要体现在 服务器系统</p>
+
+<ul>
+  <li>稳定可靠</li>
+  <li>占内存小</li>
+  <li>速度快</li>
+  <li>资源使用效率高</li>
+</ul>
+
+<h2 id="2一些选择匹配">2.一些选择匹配</h2>
+
+<p>一些常见机器的策略。</p>
+
+<h3 id="21-linux-mint-cinnamonubuntu">2.1. Linux Mint Cinnamon/Ubuntu</h3>
+
+<p>当个人桌面使用、也可以做服务器。</p>
+
+<p>适用机器类型：</p>
+
+<ul>
+  <li>Intel PC 新的或者旧的</li>
+  <li>AMD PC 新的或者旧的</li>
+</ul>
+
+<p>原因：</p>
+
+<p>Ubuntu 和制造厂商都有商业合作。有丰富的驱动适配。</p>
+
+<p>选择优先级： Linux Mint &gt; Ubuntu &gt; Ubuntu 其他衍生版</p>
+
+<p>最好的选择版本：</p>
+
+<p>Linux Mint Cinnamon：
+使用舒适，移除 Ubuntu 中过度商业部分软件，对人机交互细节打磨的很好。UI 风格统一的很好。对4K屏幕 hidpi 适配。
+是一个舒适的衍生版。</p>
+
+<p>Mint 目前不支持 ARM。</p>
+
+<h3 id="22-debian--cinnamon">2.2 Debian + Cinnamon</h3>
+
+<p>当个人桌面使用、也可以做服务器。</p>
+
+<p>适用机器：</p>
+
+<ul>
+  <li>旧机器，5～10年前 PC</li>
+  <li>旧 ARM PC</li>
+  <li>虚拟机</li>
+</ul>
+
+<p>选择 Cinnamon 主要是尽可能的围绕着 “人” 的效率考虑。</p>
+
+<p>Cinnamon 更人性化。视觉、功能比较一致性，质量高。Debian + Cinnamon 虽然没有 Linux Mint Cinnamon 打磨的那么好。
+但是可以使用。</p>
+
+<p>ARM 的计算机选择这里是因为不是所有的发行版都提供 ARM 的构建。</p>
+
+<h3 id="23-debian--xfce">2.3 Debian + XFCE</h3>
+
+<p>适用机器：</p>
+
+<ul>
+  <li>ARM 手机模拟机</li>
+  <li>虚拟机</li>
+  <li>移植系统</li>
+  <li>SOC 卡片电脑</li>
+  <li>Hacker Linux 设备</li>
+</ul>
+
+<p>轻量级 桌面 XFCE 他的最大特点就是可以无处不在，所以一些手机模拟器模拟 Linux，为了方便操作总会出现 XFCE 身影。</p>
+
+<p>XFCE 属于可以用，但是别指望长期使用。虽然占用资源小，也说明本身功能很有限。比如对高分辨率支持就很有限。</p>
+
+<h3 id="24-debian">2.4 Debian</h3>
+
+<p>适用机器：</p>
+
+<ul>
+  <li>纯服务器</li>
+</ul>
+
+<h1 id="四桌面发行版比较">四、桌面发行版比较</h1>
+
+<p><code class="language-plaintext highlighter-rouge">人性化 &lt;-- MacOS/Windows &gt; Linux Mint Cinnamon &gt; GNOME &gt; XFCE &gt; LXDE &gt; 纯服务器命令行    --&gt; 机器</code></p>
+
+<ul>
+  <li>Mint Cinnamon：Mint 下的 Cinnamon 打磨的最好，细节最好。</li>
+  <li>Cinnamon：单独安装的 Cinnamon 属于可以长期共事。往往是和其他 GNOME 软件并存的状态。</li>
+  <li>GNOME：先进，但是很慢。我不喜欢。</li>
+  <li>XFCE：速度快、占用资源小。但是功能少。甚至视觉不一致，比较粗糙。优点在于方便移植安装，无负担。</li>
+  <li>LXDE：同上，视觉更简陋。</li>
+</ul>
+
+<h1 id="五踩坑">五、踩坑</h1>
+
+<p>1.启动盘  <code class="language-plaintext highlighter-rouge">Errno5</code> 错误。</p>
+
+<p>一般都是启动盘没有按照官网提示制作的问题。
+不同发行版在各自的官网下有推荐制作引导盘的提示。一般跨越制作引导盘会有一些意外报错。</p>
+
+<p>比如：</p>
+
+<ul>
+  <li>Debian 11.5 可以用 Rufus</li>
+  <li>Ubuntu 22.04 衍生可以用 Rufus</li>
+  <li>Linux Mint 21 用  BalenaEtcher</li>
+  <li>Raspbian 用 RaspiImager</li>
+</ul>
+
+<p>选择错了往往是总会遇到安装问题的原因。</p>
+
+<h1 id="最后">最后</h1>
+
+<p>终于在自己的能力范围内找到了觉得最合适的。拔掉了心头的一根刺。就是那种无法控制，一切未知的感觉。</p>
+
+<p>现在终于可以在任何设备上和自己判断最佳的发行版一起工作了。而这种选择最终的形态就像是通过 Debian 大一统了所有设备，同时在不同层次的硬件上选择合适的图形软件共事。</p>
+
+<p>个人计算机到服务器，小型机到大型机，卡片机到游戏机hack，虚拟机到手机模拟Linux， 商用云服务器 ……
+任何机器都可以一体化的互通有无。移植 Linux 便可以回收算力。部署我准备好的软件。</p>
+
+<p>这是我想找到的最终目的。而且不受商业束缚。</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E5%88%86%E4%BA%AB/2022/12/20/不再困扰如何选择Linux发行版';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

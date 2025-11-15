@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>emacs第N次尝试的笔记</title>
+  <meta name="description" content="键位说明键盘布局一般的PC键盘Ctrl   Win  Alt一般的Mac键盘Ctrl  Option  CommandPC和Mac的关系往往是  PC中的 Ctrl 对应的功能，在Mac中的Command对应PC键盘连接在Mac上，Win键就是 Command键盘映射关系情景：Mac链接Filco键盘左布局 Ct...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/emacs/2021/07/15/emacs%E7%AC%ACN%E6%AC%A1%E5%B0%9D%E8%AF%95%E7%9A%84%E7%AC%94%E8%AE%B0.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">emacs第N次尝试的笔记</h1>
+    <p class="artilce_meta"><time datetime="2021-07-15T11:31:48+08:00" itemprop="datePublished">Jul 15, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="键位说明">键位说明</h1>
+
+<h2 id="键盘布局">键盘布局</h2>
+
+<p>一般的PC键盘</p>
+
+<p>Ctrl   Win  Alt</p>
+
+<p>一般的Mac键盘</p>
+
+<p>Ctrl  Option  Command</p>
+
+<p>PC和Mac的关系往往是  PC中的 Ctrl 对应的功能，在Mac中的Command对应</p>
+
+<p>PC键盘连接在Mac上，Win键就是 Command</p>
+
+<h2 id="键盘映射关系">键盘映射关系</h2>
+
+<p>情景：Mac链接Filco键盘左布局 Ctrl   Win  Alt
+C（Ctrl）
+M (Meta 对应 Alt)</p>
+
+<p>情景：Mac键盘 Ctrl Option  Command
+C（Ctrl）
+M (Meta 对应 Option)</p>
+
+<p>以下按照Emacs  以 C和M的形式描述记录。</p>
+
+<h1 id="一快捷键">一、快捷键</h1>
+
+<p>用空行分割，上面是我觉得常用的。下面是不常用的。
+理论上只要记忆常用的。</p>
+
+<h2 id="1-移动">1 移动</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>快捷键</th>
+      <th>作用</th>
+      <th>等效</th>
+      <th>备注</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C-v</td>
+      <td>向下移动20%</td>
+      <td>PageDown</td>
+      <td>屏幕滚动</td>
+    </tr>
+    <tr>
+      <td>M-v</td>
+      <td>向上移动20%</td>
+      <td>PageUp</td>
+      <td>屏幕滚动</td>
+    </tr>
+    <tr>
+      <td>C-p/n</td>
+      <td>光标上下行移动</td>
+      <td>方向上下</td>
+      <td>光标移动y方向</td>
+    </tr>
+    <tr>
+      <td>C-b/f</td>
+      <td>光标上左右移动</td>
+      <td>方向左右</td>
+      <td>光标移动x方向</td>
+    </tr>
+    <tr>
+      <td>M-b/f</td>
+      <td>以单词为单位左右移动</td>
+      <td> </td>
+      <td>单词移动x方向；</td>
+    </tr>
+    <tr>
+      <td>C-a/e</td>
+      <td>行首尾移动</td>
+      <td> </td>
+      <td>行移动</td>
+    </tr>
+    <tr>
+      <td>M-a/e</td>
+      <td>段落首尾移动</td>
+      <td> </td>
+      <td>段落移动</td>
+    </tr>
+    <tr>
+      <td>M-&lt;/&gt;</td>
+      <td>文件首尾</td>
+      <td> </td>
+      <td>需要shift辅助</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>辅助记忆：</p>
+
+<p>1) 替代品</p>
+
+<p>78键盘辅助键盘可以替代一半。</p>
+
+<p>C 偏向于光标为单位的控制</p>
+
+<p>M 偏向于文本，以及段落整体的控制</p>
+
+<blockquote>
+  <p>C是Control是基础级别控制，M是再进一级的控制</p>
+</blockquote>
+
+<p>2）含义</p>
+
+<p>p/n 分别是 previous, next</p>
+
+<p>a/e 分别是 ahead, end</p>
+
+<p>b/f 分别是 back, forward</p>
+
+<p>评价：</p>
+
+<p>其实这部分操作没啥用在实践中。</p>
+
+<p>写程序的特点可能是</p>
+
+<p>1）屏幕滚动
+2) 行的首尾移动
+3) 单词的移动。 其中单词的移动配合单词的删除和粘贴。最常用
+4) 函数的或者闭合标签的移动
+5) 文件头尾移动</p>
+
+<h2 id="2-重复">2 重复</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>快捷键</th>
+      <th>作用</th>
+      <th>等效</th>
+      <th>备注</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C-u n 命令</td>
+      <td>重复 n 次 命令</td>
+      <td> </td>
+      <td>输入多个*比较有用</td>
+    </tr>
+  </tbody>
+</table>
+
+<blockquote>
+  <p>命令可以是字符输入行为，也可以是C-&lt;&gt;等操作</p>
+</blockquote>
+
+<p>辅助记忆：</p>
+<ul>
+  <li>u 可以理解为 union 结合使用</li>
+</ul>
+
+<h2 id="3-编辑器行为">3 编辑器行为</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>快捷键</th>
+      <th>作用</th>
+      <th>等效</th>
+      <th>备注</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C-g</td>
+      <td>取消正在编辑</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>ESC ESC ESC</td>
+      <td>可以退出递归编辑状态, 这条命令也可以用来关掉多余的window 或者离开minibuffer 区域</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C-x-c</td>
+      <td>退出Emacs</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C-z</td>
+      <td>保留Emacs</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>%emacs</td>
+      <td>恢复emacs</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>辅助记忆</p>
+
+<ul>
+  <li>g 可以理解为 gap表示打断中断</li>
+  <li>C-x是功能前缀x代表未知可能，我推测其实是他的位置最舒适，不远也不近刚刚好。</li>
+  <li>c 就是Linux里面 Ctrl-C 就是推出，理解为 close好了</li>
+  <li>z 也是Linux里面休眠使用的理解为睡觉好了</li>
+</ul>
+
+<h2 id="4-编辑文本">4 编辑文本</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>快捷键</th>
+      <th>作用</th>
+      <th>等效</th>
+      <th>备注</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C-/</td>
+      <td>撤销</td>
+      <td>C-x u</td>
+      <td>undo C-/是一个alias命令本质是 C-x u</td>
+    </tr>
+    <tr>
+      <td>键盘输入</td>
+      <td>输入字符</td>
+      <td> </td>
+      <td>字符输入</td>
+    </tr>
+    <tr>
+      <td>Delete或者C-d</td>
+      <td>删除上一个/下一个字符</td>
+      <td> </td>
+      <td>字符删除</td>
+    </tr>
+    <tr>
+      <td>M-delete/d</td>
+      <td>剪切光标向前一个单词/向后一个单词</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C-k</td>
+      <td>剪切光标后这一行</td>
+      <td> </td>
+      <td>按一次去掉内容，第二次会去掉换行符。 C-u 2 C-k则会删除2行</td>
+    </tr>
+    <tr>
+      <td>C-a C-k</td>
+      <td>删除一行，不带删除换行符</td>
+      <td> </td>
+      <td>再一次C-k是移除这一行</td>
+    </tr>
+    <tr>
+      <td>M-k</td>
+      <td>剪切从光标后这一句</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C-@</td>
+      <td>高亮选中部分</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C/M-w</td>
+      <td>剪切/复制 选中部分</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C-y</td>
+      <td>粘贴</td>
+      <td> </td>
+      <td>Yanking 多次的C-k会被一起粘贴，且可以粘贴多次</td>
+    </tr>
+    <tr>
+      <td>M-y</td>
+      <td>粘贴内容变为上次剪切的</td>
+      <td>给复数可以逆向滚动</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<blockquote>
+  <p>备注 
+C-a C-k 可以按住 C 输入 a k
+以句为单位其实都不太实用。往往干掉好多连续的代码。以行为单位更实用。尤其是我们并不是英语为主，也不编辑英文。中文的段落都是连续在一起，没有空格分开。中文的句和英文的句不同。</p>
+</blockquote>
+
+<p>辅助记忆:</p>
+
+<ul>
+  <li>k 可以记忆成 kill 就像一条横线一样划掉光标后面所有的内容</li>
+  <li>w 是 wrapper 选中部分</li>
+</ul>
+
+<h2 id="5-搜索">5 搜索</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>快捷键</th>
+      <th>作用</th>
+      <th>等效</th>
+      <th>备注</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C-s/r</td>
+      <td>向下/向上查找</td>
+      <td> </td>
+      <td>在 M-p/n 可以翻查搜索的历史记录</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>辅助记忆:</p>
+
+<ul>
+  <li>s: search 可以理解正常向下搜索</li>
+  <li>r: return-search 理解为回头向上查找</li>
+</ul>
+
+<p>C-s 搜索时候，输入文字进行搜索高亮</p>
+
+<p>回车，推出搜索模式</p>
+
+<p>在搜索模式中</p>
+
+<p>C-s/r 是向下/上到高亮单词</p>
+
+<h2 id="6-文件">6 文件</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>快捷键</th>
+      <th>作用</th>
+      <th>等效</th>
+      <th>备注</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C-x-f</td>
+      <td>打开/新建文档</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C-x-s</td>
+      <td>保存文件</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C-x-w</td>
+      <td>另存为</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>辅助记忆:</p>
+
+<ul>
+  <li>f: file</li>
+  <li>s: save</li>
+  <li>w: write as ….</li>
+</ul>
+
+<h2 id="7-窗口">7 窗口</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>快捷键</th>
+      <th>作用</th>
+      <th>等效</th>
+      <th>备注</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C-x 0</td>
+      <td>杀死当前窗口</td>
+      <td> </td>
+      <td>不是 C-x C-0而是 C-x后，再输入 0</td>
+    </tr>
+    <tr>
+      <td>C-x 1</td>
+      <td>仅保留当前窗口</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C-x 2</td>
+      <td>当前窗口上下分裂</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C-x 3</td>
+      <td>当前窗口左右分裂</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C-x o</td>
+      <td>切换窗口</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C-M-v（三键连按） 或者 Esc C-v（要一次一次按）</td>
+      <td>第二窗口翻页</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C-x 4 C-f</td>
+      <td>新窗口打开文件</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="8-buffer">8 Buffer</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>快捷键</th>
+      <th>作用</th>
+      <th>等效</th>
+      <th>备注</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C-x-b</td>
+      <td>列出所有buffer</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C-x b</td>
+      <td>当前窗口切换到另一个buff</td>
+      <td> </td>
+      <td>默认最近</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="9-帮助">9 帮助</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>快捷键</th>
+      <th>作用</th>
+      <th>等效</th>
+      <th>备注</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C-h f</td>
+      <td>查看帮助</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C-h k 命令</td>
+      <td>查看 命令 帮助</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h1 id="参考">参考</h1>
+
+<ul>
+  <li><a href="https://qiutedyuan.github.io/blog/2019/06/12/Emacs%E5%B8%B8%E7%94%A8%E5%BF%AB%E6%8D%B7%E9%94%AE%E4%B8%80%E8%A7%88/">Emacs常用快捷键一览</a></li>
+</ul>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/emacs/2021/07/15/emacs第N次尝试的笔记';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

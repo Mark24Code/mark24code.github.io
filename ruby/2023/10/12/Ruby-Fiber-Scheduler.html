@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>【翻译】Ruby Fiber Scheduler</title>
+  <meta name="description" content="  原文作者：Bruno Sutic  原文链接: 《Ruby Fiber Scheduler》  原文时间：2022年2月25日  原文讨论：Hacker News 讨论  译者：Mark24  译者 Email：mark.zhangyoung@gmail.com  译文链接：https://mark24cod...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/2023/10/12/Ruby-Fiber-Scheduler.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">【翻译】Ruby Fiber Scheduler</h1>
+    <p class="artilce_meta"><time datetime="2023-10-12T12:58:37+08:00" itemprop="datePublished">Oct 12, 2023</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <ul>
+  <li>原文作者：<a href="https://brunosutic.com/">Bruno Sutic</a></li>
+  <li>原文链接: <a href="https://brunosutic.com/blog/ruby-fiber-scheduler">《Ruby Fiber Scheduler》</a></li>
+  <li>原文时间：2022年2月25日</li>
+  <li>原文讨论：<a href="https://news.ycombinator.com/item?id=30488227">Hacker News 讨论</a></li>
+  <li>译者：<a href="https://github.com/Mark24Code">Mark24</a></li>
+  <li>译者 Email：mark.zhangyoung@gmail.com</li>
+  <li>译文链接：https://mark24code.github.io/ruby/2023/10/12/Ruby-Fiber-Scheduler.html</li>
+</ul>
+
+<p>Fiber Scheduler(纤程调度器)在 Ruby 中实现异步编程。该功能是 Ruby 3.0 的一大增强功能，并且也是优秀的 async gem 的核心组件之一。
+最棒的一点是，你并不需要一个完整的框架就能开始！<strong>只需使用一对内置的 Ruby 方法，就能独立地实现纤程调度器并享受到异步编程的好处。</strong></p>
+
+<p>纤程调度器主要包括两部分：</p>
+
+<ul>
+  <li>
+    <p>Fiber Scheduler interface（纤程调度器接口）
+这是一套内置于编程语言中的阻塞操作钩子。钩子实现被委托给 <code class="language-plaintext highlighter-rouge">Fiber.scheduler</code> 对象。</p>
+  </li>
+  <li>
+    <p>Fiber Scheduler implementation（纤程调度器的实现）
+实现了异步行为。这是一个需要程序员显式设置的对象，因为 Ruby不提供默认的 Fiber Scheduler（纤程调度器）实现。</p>
+  </li>
+</ul>
+
+<p>非常感谢 Samuel Williams！他是 Ruby 的核心开发者，设计并实现了纤程调度器这一功能并整合到了语言中。</p>
+
+<h2 id="fiber-scheduler-interface纤程调度器接口">Fiber Scheduler interface（纤程调度器接口）</h2>
+
+<p>Fiber Scheduler（纤程调度器）接口是一套阻塞操作的钩子，它允许在阻塞操作发生时插入异步行为。它像是带有反转的回调：当异步回调被执行时，主阻塞方法不会运行。
+这些钩子在 <a href="https://docs.ruby-lang.org/en/3.1/Fiber/SchedulerInterface.html">Fiber::SchedulerInterface</a> 类中有文档记录。这个 Ruby 功能背后的一些主要思想包括：</p>
+
+<ul>
+  <li>钩子是低层级的。这导致了少量的钩子，每个钩子处理许多高层级方法的行为。例如，<code class="language-plaintext highlighter-rouge">#address_resolve</code> 钩子负责处理大约 20 个方法。</li>
+  <li>钩子只在 <code class="language-plaintext highlighter-rouge">Fiber.scheduler</code> 对象设置后才会工作，钩子的实现被委托给该对象。</li>
+  <li>钩子的行为应该是异步的。</li>
+</ul>
+
+<h3 id="hook-implementation-钩子实现">Hook implementation (钩子实现)</h3>
+
+<p>让我们看一个示例，显示如何实现 <code class="language-plaintext highlighter-rouge">Kernel#sleep</code> 钩子。在实践中，所有的钩子都是用 C 语言编写的，但为了清晰起见，这里使用了 Ruby 伪代码。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">module</span> <span class="nn">Kernel</span>
+  <span class="k">def</span> <span class="nf">sleep</span><span class="p">(</span><span class="n">duration</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+    <span class="k">if</span> <span class="no">Fiber</span><span class="p">.</span><span class="nf">scheduler</span>
+      <span class="no">Fiber</span><span class="p">.</span><span class="nf">scheduler</span><span class="p">.</span><span class="nf">kernel_sleep</span><span class="p">(</span><span class="n">duration</span><span class="p">)</span>
+    <span class="k">else</span>
+      <span class="n">synchronous_sleep</span><span class="p">(</span><span class="n">duration</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>以上代码的阅读方式如下：</p>
+
+<ul>
+  <li>如果设置了 <code class="language-plaintext highlighter-rouge">Fiber.scheduler</code> 对象 - 运行其 <code class="language-plaintext highlighter-rouge">#kernel_sleep</code> 方法。<code class="language-plaintext highlighter-rouge">#kernel_sleep</code> 应该异步运行 <code class="language-plaintext highlighter-rouge">sleep</code>。</li>
+  <li>否则，执行常规的 <code class="language-plaintext highlighter-rouge">synchronous_sleep</code>，它会阻塞当前线程直到 <code class="language-plaintext highlighter-rouge">sleep</code> 完成。</li>
+</ul>
+
+<p>其他的钩子的工作方式也类似。</p>
+
+<h3 id="blocking-operations阻塞操作">Blocking operations（阻塞操作）</h3>
+
+<p>已经多次提到了”Blocking operations（阻塞操作）”这个概念，但它到底是什么意思呢？<strong>阻塞操作是指任何Ruby进程（更具体地说：当前线程）最终会等待的操作。</strong>一个更具描述性的名称是“waiting operations（等待操作）”。
+一些例子如下：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">sleep</code> 方法。</li>
+  <li>I/O操作如 <code class="language-plaintext highlighter-rouge">URI.open("https://brunosutic.com")</code>。</li>
+  <li>系统命令，例如 <code class="language-plaintext highlighter-rouge">curl https://www.ruby-lang.org</code>。</li>
+  <li>通过 <code class="language-plaintext highlighter-rouge">Thread#join</code> 等待线程结束。</li>
+</ul>
+
+<p>作为一个反例，以下代码片段需要一段时间才能完成，但不包含阻塞操作：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">fibonacci</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">n</span> <span class="k">if</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">].</span><span class="nf">include?</span> <span class="n">n</span>
+
+  <span class="n">fibonacci</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">fibonacci</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="n">fibonacci</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>获取 <code class="language-plaintext highlighter-rouge">fibonacci(100)</code> 的结果需要等待很长时间，但只有程序员在等待！整个时间 Ruby 解释器都在工作，后台进行计算。一个简单的斐波那契实现并不包含阻塞操作。</p>
+
+<p>发展对阻塞操作是什么（和不是什么）的直觉是值得的，<strong>因为异步编程的整个目标就是同时等待多个阻塞操作</strong>。</p>
+
+<h2 id="fiber-scheduler-implementation纤程调度器实现">Fiber Scheduler implementation（纤程调度器实现）</h2>
+
+<p>纤程调度器实现是 Fiber Scheduler 功能的第二大部分。</p>
+
+<p>如果你想在 Ruby 中启用异步行为，你需要为当前线程设置一个 <code class="language-plaintext highlighter-rouge">Fiber Scheduler</code> 对象。这是通过 <code class="language-plaintext highlighter-rouge">Fiber.set_scheduler(scheduler)</code> 方法完成的。实现通常是一个定义了所有 <code class="language-plaintext highlighter-rouge">Fiber::SchedulerInterface</code> 方法的类。</p>
+
+<p><strong>Ruby 不提供默认的 <code class="language-plaintext highlighter-rouge">Fiber Scheduler</code> 类，也没有可以用于此目的的对象</strong>。这看起来不寻常，但实际上不将 <code class="language-plaintext highlighter-rouge">Fiber Scheduler</code> 实现包含在语言中是一个好的长期决定。最好将这种相对快速演变的关注点留在 Ruby 核心之外。
+从头开始编写 <code class="language-plaintext highlighter-rouge">Fiber Scheduler</code> 类是一项复杂的任务，所以最好使用现有的解决方案。实现的列表，它们的主要区别和推荐可以在 <a href="https://github.com/bruno-/fiber_scheduler_list">Fiber Scheduler List</a> 项目中找到。</p>
+
+<h3 id="举个例子">举个例子</h3>
+
+<p>让我们来看看仅使用 <code class="language-plaintext highlighter-rouge">Fiber Scheduler</code> 可以做什么。
+所有示例都使用 Ruby 3.1 和来自 <a href="https://github.com/bruno-/fiber_scheduler">fiber_scheduler</a> gem 的 <code class="language-plaintext highlighter-rouge">FiberScheduler</code> 类，这个 gem 由我维护。这个 gem 对于示例来说不是一个硬性依赖项，因为如果将以下代码片段中的 <code class="language-plaintext highlighter-rouge">FiberScheduler</code> 替换为另一个 <code class="language-plaintext highlighter-rouge">Fiber Scheduler</code> 类，每个代码片段仍然应该可以工作。</p>
+
+<h4 id="基本示例">基本示例</h4>
+
+<p>这里有一个简单的示例：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s2">"fiber_scheduler"</span>
+<span class="nb">require</span> <span class="s2">"open-uri"</span>
+
+<span class="no">Fiber</span><span class="p">.</span><span class="nf">set_scheduler</span><span class="p">(</span><span class="no">FiberScheduler</span><span class="p">.</span><span class="nf">new</span><span class="p">)</span>
+
+<span class="no">Fiber</span><span class="p">.</span><span class="nf">schedule</span> <span class="k">do</span>
+  <span class="no">URI</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s2">"https://httpbin.org/delay/2"</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="no">Fiber</span><span class="p">.</span><span class="nf">schedule</span> <span class="k">do</span>
+  <span class="no">URI</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s2">"https://httpbin.org/delay/2"</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>上面的代码创建了两个纤程，每个纤程都进行一次 HTTP 请求。这些请求并行运行，整个程序在 2 秒内完成。</p>
+
+<ul>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">Fiber.set_scheduler(FiberScheduler.new)</code>
+在当前线程中设置一个 <code class="language-plaintext highlighter-rouge">Fiber Scheduler</code>，这使得 <code class="language-plaintext highlighter-rouge">Fiber.schedule</code> 方法可以工作，且 fiber 可以异步行为。</p>
+  </li>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">Fiber.schedule { ... }</code>
+这是一个内置的 Ruby 方法，用于启动新的异步 fiber。</p>
+  </li>
+</ul>
+
+<p><strong>这个示例仅使用了标准的 Ruby 方法 - <code class="language-plaintext highlighter-rouge">Fiber.set_scheduler</code> 和 <code class="language-plaintext highlighter-rouge">Fiber.schedule</code> 自 Ruby 3.0 版本以来就一直可用。</strong></p>
+
+<h4 id="高级例子">高级例子</h4>
+
+<p>我们来看看运行多种不同操作是什么样子的：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s2">"fiber_scheduler"</span>
+<span class="nb">require</span> <span class="s2">"httparty"</span>
+<span class="nb">require</span> <span class="s2">"open-uri"</span>
+<span class="nb">require</span> <span class="s2">"redis"</span>
+<span class="nb">require</span> <span class="s2">"sequel"</span>
+
+<span class="no">DB</span> <span class="o">=</span> <span class="no">Sequel</span><span class="p">.</span><span class="nf">postgres</span>
+<span class="no">Sequel</span><span class="p">.</span><span class="nf">extension</span><span class="p">(</span><span class="ss">:fiber_concurrency</span><span class="p">)</span>
+
+<span class="no">Fiber</span><span class="p">.</span><span class="nf">set_scheduler</span><span class="p">(</span><span class="no">FiberScheduler</span><span class="p">.</span><span class="nf">new</span><span class="p">)</span>
+
+<span class="no">Fiber</span><span class="p">.</span><span class="nf">schedule</span> <span class="k">do</span>
+  <span class="no">URI</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s2">"https://httpbin.org/delay/2"</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="no">Fiber</span><span class="p">.</span><span class="nf">schedule</span> <span class="k">do</span>
+  <span class="c1"># Use any HTTP library</span>
+  <span class="no">HTTParty</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="s2">"https://httpbin.org/delay/2"</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="no">Fiber</span><span class="p">.</span><span class="nf">schedule</span> <span class="k">do</span>
+  <span class="c1"># Works with any TCP protocol library</span>
+  <span class="no">Redis</span><span class="p">.</span><span class="nf">new</span><span class="p">.</span><span class="nf">blpop</span><span class="p">(</span><span class="s2">"abc123"</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="no">Fiber</span><span class="p">.</span><span class="nf">schedule</span> <span class="k">do</span>
+  <span class="c1"># Make database queries</span>
+  <span class="no">DB</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span><span class="s2">"SELECT pg_sleep(2)"</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="no">Fiber</span><span class="p">.</span><span class="nf">schedule</span> <span class="k">do</span>
+  <span class="nb">sleep</span> <span class="mi">2</span>
+<span class="k">end</span>
+
+<span class="no">Fiber</span><span class="p">.</span><span class="nf">schedule</span> <span class="k">do</span>
+  <span class="c1"># Run system commands</span>
+  <span class="sb">`sleep 2`</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>如果我们顺序运行这个程序，它大约需要12秒才能完成。但是由于这些操作是并行运行的，所以总的运行时间仅仅超过2秒。
+你并不仅限于发起 HTTP 请求。<strong>任何内置在 Ruby 中或由外部 gem 实现的阻塞操作都可以工作！</strong></p>
+
+<h4 id="扩展示例">扩展示例</h4>
+
+<p>这是一个简单的，显然是人为刻意的示例，同时运行一万个操作。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s2">"fiber_scheduler"</span>
+
+<span class="no">Fiber</span><span class="p">.</span><span class="nf">set_scheduler</span><span class="p">(</span><span class="no">FiberScheduler</span><span class="p">.</span><span class="nf">new</span><span class="p">)</span>
+
+<span class="mi">10_000</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span>
+  <span class="no">Fiber</span><span class="p">.</span><span class="nf">schedule</span> <span class="k">do</span>
+    <span class="nb">sleep</span> <span class="mi">2</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>上述代码的完成时间略超过2秒。</p>
+
+<p>由于其低开销，<code class="language-plaintext highlighter-rouge">sleep</code> 方法被选择用于扩展示例。如果我们使用网络请求，由于需要建立数千个连接并进行 SSL 握手等，执行时间将会更长。</p>
+
+<p>异步编程的主要优势之一是能够同时等待许多阻塞操作。<strong>阻塞操作数量的增加将增加这种优势。幸运的是，运行大量协程(fibers)非常简单。</strong></p>
+
+<h2 id="结论">结论</h2>
+
+<p><strong>Ruby只需要一个纤程调度器（Fiber Scheduler）和一些内置方法就可以异步工作 - 不需要任何框架！</strong></p>
+
+<p>使其工作很容易。选择一个纤程调度器（Fiber Scheduler）实现，然后使用以下这些方法：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Fiber.set_scheduler(scheduler)</code>为当前线程设置一个纤程调度器（Fiber Scheduler），使阻塞操作能够异步执行。</li>
+  <li><code class="language-plaintext highlighter-rouge">Fiber.schedule { ... }</code> 启动一个新的纤程，该纤程与其他纤程并发运行。</li>
+</ul>
+
+<p>一旦你开始运行，<strong>你可以通过将它包装在一个 <code class="language-plaintext highlighter-rouge">Fiber.schedule</code> 块中来使任何代码异步化</strong>。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">Fiber</span><span class="p">.</span><span class="nf">schedule</span> <span class="k">do</span>
+  <span class="no">SynchronousCode</span><span class="p">.</span><span class="nf">run</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>整个库可以轻松地使用这种方法转换为异步，而且往往不需要比这里展示的更多努力。</p>
+
+<p><strong>异步编程的重大好处是并行化阻塞/等待操作以减少程序运行时间。</strong>这通常意味着在单个CPU上运行更多的操作，或者更好地，在你的Web服务器上处理更多的请求。</p>
+
+<p>祝你使用纤程调度器（Fiber Scheduler）愉快！</p>
+
+<p>Happy hacking with Fiber Scheduler!</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/2023/10/12/Ruby Fiber Scheduler';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

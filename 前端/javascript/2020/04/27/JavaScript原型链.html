@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>JavaScript原型链</title>
+  <meta name="description" content="JS如何实现继承？继承： 继承就是一个对象可以访问另外一个对象中的属性和方法。比如对象A 有run方法 A.run ；如果B继承了A，那么B可以 B.run,就仿佛B自带这个方法一样。不同语言实现继承的方式是不同的，其中最典型的两种：      基于类的设计        基于原型的设计  C++、Java、C#...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E5%89%8D%E7%AB%AF/javascript/2020/04/27/JavaScript%E5%8E%9F%E5%9E%8B%E9%93%BE.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">JavaScript原型链</h1>
+    <p class="artilce_meta"><time datetime="2020-04-27T11:32:58+08:00" itemprop="datePublished">Apr 27, 2020</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="js如何实现继承">JS如何实现继承？</h1>
+
+<p>继承： 继承就是一个对象可以访问另外一个对象中的属性和方法。</p>
+
+<p>比如对象A 有run方法 A.run ；如果B继承了A，那么B可以 B.run,就仿佛B自带这个方法一样。</p>
+
+<p>不同语言实现继承的方式是不同的，其中最典型的两种：</p>
+
+<ul>
+  <li>
+    <p>基于类的设计</p>
+  </li>
+  <li>
+    <p>基于原型的设计</p>
+  </li>
+</ul>
+
+<p>C++、Java、C#这些语言都是基于经典的类设计的设计模式，这在模式最大的特点就是提供了非此复杂的规则，并且提供了非常多的关键字比如 class、protected、private、interface等。</p>
+
+<p>使用基于类的继承，如果业务复杂需要维护非常复杂的继承关系。</p>
+
+<p>而JS的继承方式和其他的语言有很大差别，JS本身不提供一个class实现。(ES6提供的class是一个语法糖)。JS的继承和class没有一点关系。</p>
+
+<p>JS仅仅在对象中引入了一个原型的属性就实现了语言继承机制，省去了很多复杂。</p>
+
+<h1 id="原型继承如何实现">原型继承如何实现</h1>
+
+<p>比如有对象 A、B、C; 他们拥有如下属性</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>A { color, __proto__}
+B { name, __proto__}
+C { type, __proto__}
+
+</code></pre></div></div>
+<p>C可以直接访问自己的属性是无疑的，访问B对象呢？
+JS的每个对象都包含了一个隐藏属性 <code class="language-plaintext highlighter-rouge">__proto__</code> ，我们就把隐藏的属性 <code class="language-plaintext highlighter-rouge">__proto__</code> 称之为 该对象的原型（prototype), <code class="language-plaintext highlighter-rouge">__proto__</code> 指向内存中另外一个对象，我们把 <code class="language-plaintext highlighter-rouge">__proto__</code> 指向的对象称为该对象的原型对象，那么该对象就可以直接访问其原型对象的方法或者属性。</p>
+
+<p>比如 让C对象的原型指向B对象</p>
+
+<p><img src="https://i.loli.net/2021/01/27/pdkzPMrtUFBAXHc.png" alt="prototype_abc01.png" /></p>
+
+<p>对象C访问B中的属性name时，JS引擎会先从对象C中查找，但是没有查找到，接下来JS引擎继续在原型对象B中查找，因为B中包含name属性，那么JS引擎就直接返回B中name属性，虽然C和B是两个不同的对象，但是使用的时候，B的属性看上去就像是C属性意义。</p>
+
+<p>同样的方式，B也是一个对象，也有自己的 <code class="language-plaintext highlighter-rouge">__proto__</code> 比如他属性指向内存中的另一个对象A。</p>
+
+<p><code class="language-plaintext highlighter-rouge">C.name</code>、<code class="language-plaintext highlighter-rouge">C.color</code>给人的感觉是C本身的属性，但是实际上这些属性都是位于原型对象上，我们把这种查找属性的路径称为 “原型链”，他像一个链条一样，将几个原型对象连接了起来。</p>
+
+<h3 id="不要搞混原型链作用域链">不要搞混：原型链、作用域链</h3>
+
+<ul>
+  <li>
+    <p>作用域链：沿着函数的作用域一级一级来查找变量</p>
+  </li>
+  <li>
+    <p>原型链：沿着对象的原型一级一级来查找属性</p>
+  </li>
+</ul>
+
+<blockquote>
+  <p>继承就是一个对象可以访问另外一个对象中的属性和方法，在JS中，我们可以通过原型和原型链的方式来实现了继承特性。</p>
+</blockquote>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> var animal = {
+     type: "Default",
+     color: "Default",
+     getInfo: function() {
+         return `Type is:${this.type},color is ${this.color}`
+     }
+ }
+
+ var dog = {
+     type: "Dog",
+     color: "Black"
+ }
+</code></pre></div></div>
+
+<p>这段代码中dog如果想要继承animal：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dog.__proto__ = animal
+</code></pre></div></div>
+
+<p>设置后可以使用  <code class="language-plaintext highlighter-rouge">dog.getInfo()</code></p>
+
+<p>但是<code class="language-plaintext highlighter-rouge">__proto__</code> 本质上是隐藏属性，实际项目中，不应该直接访问或者修改。主要原因：</p>
+
+<ol>
+  <li>
+    <p>这是隐藏属性，并不是标准定义</p>
+  </li>
+  <li>
+    <p>使用这个属性会造成严重的性能问题</p>
+  </li>
+</ol>
+
+<p>这只是方便理解概念。</p>
+
+<p>如何应该正确的设置原型对象？
+应该区使用构造函数。</p>
+
+<h1 id="构造函数是怎么创建对象的">构造函数是怎么创建对象的？</h1>
+
+<p>函数内部，通过 this 设置属性，再结合关键字 new 就可以创建对象。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>function DogFactory(type,color) {
+    this.type = type;
+    this.color = color;
+}
+
+var dog = new DogFactory("Dog","Black")
+</code></pre></div></div>
+
+<p>这几句在V8引擎里行为可以模拟为：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">dog</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="nx">dog</span><span class="p">.</span><span class="nx">__proto__</span> <span class="o">=</span> <span class="nx">DogFactory</span><span class="p">.</span><span class="nx">prototype</span><span class="p">;</span>
+
+<span class="nx">DogFactory</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="nx">dog</span><span class="p">.</span><span class="dl">'</span><span class="s1">Dog</span><span class="dl">'</span><span class="p">,</span><span class="dl">'</span><span class="s1">black</span><span class="dl">'</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<h1 id="构造函数怎么实现继承">构造函数怎么实现继承</h1>
+
+<p>一个函数其实有几个隐藏属性，比如 <code class="language-plaintext highlighter-rouge">code</code>，<code class="language-plaintext highlighter-rouge">name</code>,还有 <code class="language-plaintext highlighter-rouge">prototype</code>。每个函数对象都有一个公开的 <code class="language-plaintext highlighter-rouge">prototype</code>属性，当你将这个函数作为构造函数来创建一个新的对象的时候，新创建对象的原型对象就指向了该函数的<code class="language-plaintext highlighter-rouge">prototype</code>属性。</p>
+
+<p>如果你只是正常调用该函数，那么<code class="language-plaintext highlighter-rouge">prototype</code>属性将不起作用。</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nf">DogFactory</span><span class="p">(</span><span class="nx">type</span><span class="p">,</span><span class="nx">color</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="nx">type</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">color</span> <span class="o">=</span> <span class="nx">color</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">dog1</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">DogFactory</span><span class="p">(</span><span class="dl">'</span><span class="s1">Dog</span><span class="dl">'</span><span class="p">,</span><span class="dl">'</span><span class="s1">Black</span><span class="dl">'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">dog2</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">DogFactory</span><span class="p">(</span><span class="dl">'</span><span class="s1">Dog</span><span class="dl">'</span><span class="p">,</span><span class="dl">'</span><span class="s1">Black</span><span class="dl">'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">dog3</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">DogFactory</span><span class="p">(</span><span class="dl">'</span><span class="s1">Dog</span><span class="dl">'</span><span class="p">,</span><span class="dl">'</span><span class="s1">Black</span><span class="dl">'</span><span class="p">);</span>
+</code></pre></div></div>
+<p><img src="https://i.loli.net/2021/01/27/yXYWLKH4wVjnDP7.png" alt="prototype_extend.png" /></p>
+
+<p>代码中，三个dog对象的原型对象都指向了 prototype。</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nf">DogFactory</span><span class="p">(</span><span class="nx">type</span><span class="p">,</span><span class="nx">color</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="nx">type</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">color</span> <span class="o">=</span> <span class="nx">color</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// 新增继承属性</span>
+<span class="nx">DogFactory</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">constant_temperature</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+
+<span class="kd">var</span> <span class="nx">dog1</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">DogFactory</span><span class="p">(</span><span class="dl">'</span><span class="s1">Dog</span><span class="dl">'</span><span class="p">,</span><span class="dl">'</span><span class="s1">Black</span><span class="dl">'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">dog2</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">DogFactory</span><span class="p">(</span><span class="dl">'</span><span class="s1">Dog</span><span class="dl">'</span><span class="p">,</span><span class="dl">'</span><span class="s1">Black</span><span class="dl">'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">dog3</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">DogFactory</span><span class="p">(</span><span class="dl">'</span><span class="s1">Dog</span><span class="dl">'</span><span class="p">,</span><span class="dl">'</span><span class="s1">Black</span><span class="dl">'</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>在<code class="language-plaintext highlighter-rouge">DogFactory.prototype</code>中添加属性，就会被继承。这就是继承正确方式。</p>
+
+<h1 id="总结">总结</h1>
+
+<ol>
+  <li>
+    <p>构造函数，使用this绑定属性</p>
+  </li>
+  <li>
+    <p>构造函数本质上是生成一个对象，再 通过 call调用执行，绑定对象属性</p>
+  </li>
+  <li>
+    <p>函数一旦被用作构造函数，隐藏属性 prototype对象发挥作用，这是一个储存变量、方法的对象</p>
+  </li>
+  <li>
+    <p>新建的实例对象的 <code class="language-plaintext highlighter-rouge">__proto__</code> 指向 <code class="language-plaintext highlighter-rouge">构造函数.prototype</code></p>
+  </li>
+</ol>
+
+<p>这样实现了继承。</p>
+
+<p>示意图</p>
+
+<p><img src="https://i.loli.net/2021/01/27/NZBL2XS1axUOQcw.png" alt="原型图示.png" /></p>
+
+<p>（图：最小原型结构示意图）</p>
+
+<h1 id="一段关于new的历史">一段关于new的历史</h1>
+
+<p>JavaScript的名字来源于蹭JavaScript的热度。在语法层上，加入了Java中的new。</p>
+
+<h1 id="原型链各种示意图">原型链各种示意图</h1>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 可以根据log打印出真实的对应关系</span>
+<span class="kd">function</span> <span class="nf">Person</span><span class="p">()</span> <span class="p">{</span>
+  
+<span class="p">}</span>
+
+<span class="nx">p</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Person</span><span class="p">()</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">__proto__</span><span class="o">===</span> <span class="nx">Person</span><span class="p">.</span><span class="nx">prototype</span><span class="p">)</span><span class="c1">// true</span>
+<span class="nx">console</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">__proto__</span><span class="p">.</span><span class="nx">__proto__</span><span class="o">===</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">prototype</span><span class="p">)</span> <span class="c1">// true</span>
+<span class="nx">console</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">__proto__</span><span class="p">.</span><span class="nx">__proto__</span><span class="p">.</span><span class="nx">__proto__</span><span class="o">===</span> <span class="kc">null</span><span class="p">)</span> <span class="c1">// true</span>
+</code></pre></div></div>
+
+<p><img src="https://i.loli.net/2021/01/27/vryZQSe9ULgF3Rl.png" alt="prototype.png" /></p>
+
+<p><img src="https://i.loli.net/2021/01/27/CONLrokyUeGYKw8.png" alt="prototype_stack_heap.png" /></p>
+
+<p><img src="https://i.loli.net/2021/01/27/JiMdACYso1WHzQZ.jpg" alt="prototype_links_overview.jpeg" /></p>
+
+<p>我又整理了一份</p>
+
+<p><img src="https://i.loli.net/2021/01/27/hqmBl2e3JNoL9Mg.png" alt="原型链关系_1_.png" /></p>
+
+<h1 id="instanceof的原理">instanceof的原理</h1>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="o">&gt;</span> <span class="kd">function</span> <span class="nf">Animal</span><span class="p">(){}</span>
+<span class="kc">undefined</span>
+<span class="o">&gt;</span> 
+<span class="o">&gt;</span> <span class="nx">cat</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Animal</span><span class="p">()</span>
+<span class="nx">Animal</span> <span class="p">{}</span>
+<span class="o">&gt;</span> 
+<span class="o">&gt;</span> <span class="nx">cat</span> <span class="k">instanceof</span> <span class="nx">Animal</span>
+<span class="kc">true</span>
+<span class="o">&gt;</span> 
+
+</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">instanceof</code>的原理就是</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cat.__proto__ === Animal.prototype
+</code></pre></div></div>
+
+<p>看对实例对象<code class="language-plaintext highlighter-rouge">__proto__</code>和目标构造函数的<code class="language-plaintext highlighter-rouge">prototype</code>指向是否一致。</p>
+
+<p>由于存在 原型对象，只要是一个对象就有 <code class="language-plaintext highlighter-rouge">__proto__</code>属性，所以可以写成递归的模式，顺着原型链比较，只要比较正确就认为是：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 通过判断对象的原型链上是否存在prototype</span>
+
+<span class="kd">function</span> <span class="nf">myInstanceof</span><span class="p">(</span><span class="nx">left</span><span class="p">,</span><span class="nx">right</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// 获得类型的原型</span>
+  <span class="kd">let</span> <span class="nx">prototype</span> <span class="o">=</span> <span class="nx">right</span><span class="p">.</span><span class="nx">prototype</span><span class="p">;</span>
+  <span class="c1">// 获得对象的原型</span>
+  <span class="nx">left</span> <span class="o">=</span> <span class="nx">left</span><span class="p">.</span><span class="nx">__proto__</span><span class="p">;</span>
+  <span class="c1">// 判断对象的类型是否等于类型的原型</span>
+  <span class="k">while </span><span class="p">(</span><span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="nx">left</span> <span class="o">===</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="kc">false</span><span class="p">}</span> <span class="c1">// null是因为最末端的就是null</span>
+    <span class="k">if </span><span class="p">(</span><span class="nx">prototype</span> <span class="o">===</span> <span class="nx">left</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="kc">true</span> <span class="p">}</span>
+    <span class="nx">left</span> <span class="o">=</span> <span class="nx">left</span><span class="p">.</span><span class="nx">__proto__</span><span class="p">;</span>
+
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h1 id="参考">参考</h1>
+
+<ul>
+  <li>
+    <p><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Inheritance_and_the_prototype_chain">MDN继承与原型链</a></p>
+  </li>
+  <li>
+    <p><a href="https://github.com/mqyqingfeng/Blog/issues/2">JavaScript深入之从原型到原型链</a></p>
+  </li>
+</ul>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E5%89%8D%E7%AB%AF/javascript/2020/04/27/JavaScript原型链';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

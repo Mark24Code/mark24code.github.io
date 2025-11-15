@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>2022年快速搭建Samba服务器</title>
+  <meta name="description" content="一、背景在 Debian 上搭建 Samba 服务器但是可能很多人都会失败，比如我查了好久。samba &gt; 4.11 之后，默认去掉了 v1 协议的支持，需要手动加上。国内一般的老设备都是只支持 v1。 这就是为什么，他可以搭建起来，日志也不报错，但是永远无法访问。二、安装步骤1.安装 sambasudo ...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/linux/samba/2022/03/23/2022%E5%B9%B4%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BASamba.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">2022年快速搭建Samba服务器</h1>
+    <p class="artilce_meta"><time datetime="2022-03-23T12:46:17+08:00" itemprop="datePublished">Mar 23, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="一背景">一、背景</h1>
+
+<p>在 Debian 上搭建 Samba 服务器</p>
+
+<p>但是可能很多人都会失败，比如我查了好久。</p>
+
+<p>samba &gt; 4.11 之后，默认去掉了 v1 协议的支持，需要手动加上。</p>
+
+<p>国内一般的老设备都是只支持 v1。 这就是为什么，他可以搭建起来，日志也不报错，但是永远无法访问。</p>
+
+<h1 id="二安装步骤">二、安装步骤</h1>
+
+<h3 id="1安装-samba">1.安装 samba</h3>
+
+<p><code class="language-plaintext highlighter-rouge">sudo apt install samba</code></p>
+
+<h3 id="2备份配置">2.备份配置</h3>
+
+<p><code class="language-plaintext highlighter-rouge">cd /etc/samba</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">sudo cp smb.conf  smb.conf.bak</code></p>
+
+<h3 id="3修改配置">3.修改配置</h3>
+
+<p><code class="language-plaintext highlighter-rouge">valid users = admin</code></p>
+
+<p>这个用户必须是系统中存在的用户</p>
+
+<p>查看版本 samba &gt; 4.11 需要在 Global 加上</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>client min protocol = NT1
+server min protocol = NT1
+</code></pre></div></div>
+
+<p>因为 4.11 之后去掉了对 samba v1 协议默认的支持。这里一般要手动加上。主要是来针对一些老设备的支持，比如家庭中安卓投影仪。</p>
+
+<p>最后是这样</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[global]
+   ; ....省略其他
+   client min protocol = NT1
+   server min protocol = NT1
+
+[public]
+   comment = public storage
+   path = &lt;/path/to/your/dictory&gt;
+   valid users = &lt;你的账号&gt;
+   read only = no
+   create mask = 0777
+   directory mask = 0777
+   guest ok = yes
+   browseable = yes
+</code></pre></div></div>
+
+<blockquote>
+  <p>PS: 小米电视、安卓投影仪只支持 smb v1 协议</p>
+</blockquote>
+
+<h3 id="4给设定用户的samba密码">4.给设定用户的samba密码</h3>
+
+<p>-a 可以顺便帮助传创建</p>
+
+<p><code class="language-plaintext highlighter-rouge">sudo smbpasswd -a &lt;你的本机账号&gt;</code></p>
+
+<h3 id="5重启samba服务">5.重启samba服务</h3>
+
+<p><code class="language-plaintext highlighter-rouge">sudo systemctl restart smbd</code></p>
+
+<p>想要开机启动</p>
+
+<p><code class="language-plaintext highlighter-rouge">sudo systemctl enable smbd</code></p>
+
+<h3 id="6打开防火墙">6.打开防火墙</h3>
+
+<p>如果安装了防火墙，别忘了打开</p>
+
+<p><code class="language-plaintext highlighter-rouge">sudo ufw allow samba</code></p>
+
+<p>应该可以访问到了</p>
+
+<h3 id="7补充">7.补充</h3>
+
+<p>验证是否工作</p>
+
+<p>7.1 别乌龙到，自己访问自己验证</p>
+
+<p>发现samba自己打不开自己</p>
+
+<p>7.2 日志</p>
+
+<p>主配置文件在 <code class="language-plaintext highlighter-rouge">/etc/samba/smb.conf</code></p>
+
+<p>其中记录了日志的地址，可以查看</p>
+
+<p><code class="language-plaintext highlighter-rouge">sudo tail -f  &lt;xxx.log&gt;</code></p>
+
+<p>7.3 固定设备IP地址</p>
+
+<p>让低端设备可以找到，并且命名。在路由器中，DHCP 赋予设备静态IP地址，和备注名。在其他的设备中可以被展示。比如当贝。在当贝中会消失。</p>
+
+<h1 id="总结排查方法">总结排查方法</h1>
+
+<p>1.搜索引擎搜索</p>
+
+<p>只针对表象的搜索，有时候纯粹在浪费时间。这是一种方法，但是希望有针对性。</p>
+
+<p>2.回归系统和程序本身</p>
+
+<p>查到软件的配置，配置中查看日志的地址，然后查看日志</p>
+
+<p><code class="language-plaintext highlighter-rouge">tail -f  &lt;xxx.log&gt;</code></p>
+
+<p>3.对比分析</p>
+
+<p>通过对比来进行分析。</p>
+
+<p>一切正常却没有响应。可能：</p>
+
+<p>3.1 兼容性 breaking change</p>
+
+<p>往这个方向去搜索</p>
+
+<p>3.2 不同设备表现不同，比如我之前部署过一个。</p>
+
+<p>他们最大不同在于路由器设定静态IP。</p>
+
+<p>逻辑层面上，往上找差异性。</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/linux/samba/2022/03/23/2022年快速搭建Samba';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

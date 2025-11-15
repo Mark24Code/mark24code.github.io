@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Ruby环境搭建asdf+ruby+gem+bundler+源替换</title>
+  <meta name="description" content="适用于新手搭建Ruby环境step1 asdfasdf 的功能类似 rvm， 但是更高级点，严格意义上说 asdf 继承了所有语言的 *vm 管理。我喜欢一劳永逸。开始吧详细可以访问官网 https://asdf-vm.com我下面列举我要做做的事情，大家根据自己的实际情况来。1.1 安装 asdf安装就是 cl...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/2021/12/24/Ruby%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BAasdf+ruby+gem+bundler+%E6%BA%90%E6%9B%BF%E6%8D%A2.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">Ruby环境搭建asdf+ruby+gem+bundler+源替换</h1>
+    <p class="artilce_meta"><time datetime="2021-12-24T13:02:27+08:00" itemprop="datePublished">Dec 24, 2021</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <p>适用于新手搭建Ruby环境</p>
+
+<h1 id="step1-asdf">step1 asdf</h1>
+
+<p>asdf 的功能类似 rvm， 但是更高级点，严格意义上说 asdf 继承了所有语言的 *vm 管理。我喜欢一劳永逸。</p>
+
+<p>开始吧</p>
+
+<p>详细可以访问官网 <a href="https://asdf-vm.com">https://asdf-vm.com</a></p>
+
+<p>我下面列举我要做做的事情，大家根据自己的实际情况来。</p>
+
+<h2 id="11-安装-asdf">1.1 安装 asdf</h2>
+
+<p>安装就是 clone</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.8.1
+</code></pre></div></div>
+
+<h2 id="12-启用-asdf">1.2 启用 asdf</h2>
+
+<p>把下句添加到你的 .zshrc</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>. $HOME/.asdf/asdf.sh
+</code></pre></div></div>
+
+<p>bash同理，其他的 shell参考 asdf 官网</p>
+
+<h1 id="step2-通过asdf安装-ruby">step2 (通过asdf）安装 Ruby</h1>
+
+<p>这种形式安装的Ruby不需要Root权限，且可以安装多个版本每个版本彼此隔离，非常爽。</p>
+
+<p>详细可以参考 <a href="https://github.com/asdf-vm/asdf-ruby">asdf-ruby plugin</a></p>
+
+<p>基本逻辑是  asdf 是管理 vm的框架，我们要在基础上安装 asdf-ruby 插件，然后通过 这个插件安装我们想要的ruby。</p>
+
+<p>下面我只列举用到的</p>
+
+<p>安装插件</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>asdf plugin add ruby https://github.com/asdf-vm/asdf-ruby.git
+</code></pre></div></div>
+
+<h2 id="21-安装必要的依赖">2.1 安装必要的依赖</h2>
+
+<p>编译式安装，所以你可以自由的安装在你的 Mac、树莓派、X86, 系统上 Arch、Debian、CentOS、FreeBSD……</p>
+
+<p><a href="https://github.com/rbenv/ruby-build/wiki#suggested-build-environment">ruby-build/wiki#suggested-build-environment</a></p>
+
+<p>根据下列命名，在你的系统中安装对应的依赖，没找到,查看下上面文档完整的。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># optional, but recommended:</span>
+<span class="n">brew</span> <span class="n">install</span> <span class="n">openssl</span> <span class="nb">readline</span>
+
+<span class="c1"># use Homebrew OpenSSL (note: will not work for ruby &lt; 2.4)</span>
+<span class="n">export</span> <span class="no">RUBY_CONFIGURE_OPTS</span><span class="o">=</span><span class="s2">"--with-openssl-dir=$(brew --prefix openssl@1.1)"</span>
+<span class="n">rbenv</span> <span class="n">install</span> <span class="mf">2.6</span><span class="o">.</span><span class="mi">5</span>
+
+<span class="c1"># Depending on your version of Ubuntu/Debian/Mint, libgdbm6 won't be available.</span>
+<span class="c1"># In that case, try an earlier version such as libgdbm5.</span>
+<span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">autoconf</span> <span class="n">bison</span> <span class="n">build</span><span class="o">-</span><span class="n">essential</span> <span class="n">libssl</span><span class="o">-</span><span class="n">dev</span> <span class="n">libyaml</span><span class="o">-</span><span class="n">dev</span> <span class="n">libreadline6</span><span class="o">-</span><span class="n">dev</span> <span class="n">zlib1g</span><span class="o">-</span><span class="n">dev</span> <span class="n">libncurses5</span><span class="o">-</span><span class="n">dev</span> <span class="n">libffi</span><span class="o">-</span><span class="n">dev</span> <span class="n">libgdbm6</span> <span class="n">libgdbm</span><span class="o">-</span><span class="n">dev</span> <span class="n">libdb</span><span class="o">-</span><span class="n">dev</span>
+
+<span class="n">yum</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">gcc</span><span class="o">-</span><span class="mi">6</span> <span class="n">bzip2</span> <span class="n">openssl</span><span class="o">-</span><span class="n">devel</span> <span class="n">libyaml</span><span class="o">-</span><span class="n">devel</span> <span class="n">libffi</span><span class="o">-</span><span class="n">devel</span> <span class="nb">readline</span><span class="o">-</span><span class="n">devel</span> <span class="n">zlib</span><span class="o">-</span><span class="n">devel</span> <span class="n">gdbm</span><span class="o">-</span><span class="n">devel</span> <span class="n">ncurses</span><span class="o">-</span><span class="n">devel</span>
+
+<span class="n">dnf</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">gcc</span> <span class="n">make</span> <span class="n">bzip2</span> <span class="n">openssl</span><span class="o">-</span><span class="n">devel</span> <span class="n">libyaml</span><span class="o">-</span><span class="n">devel</span> <span class="n">libffi</span><span class="o">-</span><span class="n">devel</span> <span class="nb">readline</span><span class="o">-</span><span class="n">devel</span> <span class="n">zlib</span><span class="o">-</span><span class="n">devel</span> <span class="n">gdbm</span><span class="o">-</span><span class="n">devel</span> <span class="n">ncurses</span><span class="o">-</span><span class="n">devel</span>
+
+<span class="n">zypper</span> <span class="k">in</span> <span class="n">gcc</span> <span class="n">bzip2</span> <span class="n">libopenssl</span><span class="o">-</span><span class="n">devel</span> <span class="n">libyaml</span><span class="o">-</span><span class="n">devel</span> <span class="n">libffi</span><span class="o">-</span><span class="n">devel</span> <span class="nb">readline</span><span class="o">-</span><span class="n">devel</span> <span class="n">zlib</span><span class="o">-</span><span class="n">devel</span> <span class="n">gdbm</span><span class="o">-</span><span class="n">devel</span> <span class="n">ncurses</span><span class="o">-</span><span class="n">devel</span>
+
+<span class="c1"># Possibly you'll also need devel_basis (build-essential on Debian)</span>
+<span class="n">zypper</span> <span class="n">install</span> <span class="o">-</span><span class="n">t</span> <span class="n">pattern</span> <span class="n">devel_basis</span>
+</code></pre></div></div>
+
+<h2 id="22-正式安装-ruby">2.2 正式安装 Ruby</h2>
+
+<h3 id="221-fetch--列出所有ruby版本">2.2.1 fetch &amp; 列出所有Ruby版本</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>asdf list all ruby
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>.....
+2.7.0-preview2
+2.7.0-preview3
+2.7.0-rc1
+2.7.0-rc2
+2.7.0
+2.7.1
+2.7.2
+2.7.3
+2.7.4
+3.0.0-dev
+3.0.0-preview1
+3.0.0-preview2
+3.0.0-rc1
+3.0.0
+3.0.1
+3.0.2
+3.1.0-dev
+artichoke-dev
+jruby-dev
+jruby-1.5.6
+jruby-1.6.3
+jruby-1.6.4
+....
+</code></pre></div></div>
+
+<p>挑选感兴趣的版本，比如我们对 3.0.2 感兴趣</p>
+
+<h3 id="安装指定版本">安装指定版本</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>asdf install ruby 3.0.2
+</code></pre></div></div>
+
+<p>自动进入 下载源码，编译，安装</p>
+
+<p>结束了就安装完毕</p>
+
+<h3 id="指定你的ruby为全局">指定你的Ruby为全局</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>asdf global ruby 3.0.2
+</code></pre></div></div>
+
+<p>可以设置你的 ruby为系统级别 默认Ruby</p>
+
+<p>打开新的终端，可以 输入 <code class="language-plaintext highlighter-rouge">ruby -v</code> 确认下是否安装成功了</p>
+
+<p>到这里安装Ruby的过程愉快的结束。</p>
+
+<p>asdf 的工作只需要做一遍。之后直接  安装指定版本，就好了。</p>
+
+<p>asdf 还支持 local 关键字，局部设置优先级高的解释器，更多参考 asdf</p>
+
+<h1 id="step3-gem">step3 gem</h1>
+
+<p>gem 在 ruby 里面是一个标准的打包格式 用来打包 ruby的 库。</p>
+
+<p>下载 gem 默认是 <a href="https://rubygems.org/">https://rubygems.org/</a></p>
+
+<p>可以搜索。</p>
+
+<p>这个类似 Python的Pypi、Nodejs的NPM，但是实际上 Gem在他们之前，完成度非常高且非常先进。</p>
+
+<h2 id="31-国情网络问题替换中文源">3.1 国情网络问题，替换中文源</h2>
+
+<p><a href="https://gems.ruby-china.com/">https://gems.ruby-china.com/</a></p>
+
+<p>是官方镜像站点。</p>
+
+<p>这里建议 使用 中文源，提高速度</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>请尽可能用比较新的 RubyGems 版本，建议 2.6.x 以上。
+
+$ gem update --system # 这里请翻墙一下
+$ gem -v
+2.6.3
+
+$ gem sources --add https://gems.ruby-china.com/ --remove https://rubygems.org/
+$ gem sources -l
+https://gems.ruby-china.com
+# 确保只有 gems.ruby-china.com
+</code></pre></div></div>
+
+<h2 id="32-隐藏问题--找不到命令">3.2 隐藏问题 – 找不到命令</h2>
+
+<p>当我们通过 gem 安装的工具，比如 step4 要提到的 bundler、或者著名框架 rails 他们的命令本身都可以被当成可执行命令执行</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 你其实没看错，执行的时候 叫 bundle
+bundle install 
+
+
+rails new my-project
+
+</code></pre></div></div>
+
+<p>如果我已经安装了，但是终端提示并没有找到命令怎么办？</p>
+
+<p>执行下面命令，刷新 Ruby 安装路径的 path。新打开一个终端重新执行你需要的命令</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>asdf reshim ruby
+</code></pre></div></div>
+
+<h1 id="step4--bundler">step4  Bundler</h1>
+
+<p><a href="https://bundler.io/">https://bundler.io/</a> 是一款建立在 Gem 机制之上，并且可以批量安装 gem 的方便工具。</p>
+
+<p>一般项目中，我们会用 Bundler 帮我们管理。</p>
+
+<p>这个作用类似于 JavaScript 里面的 NPM 和 package.json 发挥的作用。</p>
+
+<p>我们在设置好 step3 的 gem 的时候，首先，让我们全局安装下 Bundler</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gem install bundler
+</code></pre></div></div>
+
+<p>然后我们后续的日常使用，都可以借助 bundler提高效率。更多 bundler 的指导可以参考 bundler 官网。</p>
+
+<h2 id="41-给bundler替换源">4.1 给bundler替换源</h2>
+
+<p>执行下这句，以后 bundler 的命令，我们也不用关心源了。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 你没看到，他在工作的时候，叫  bundle
+bundle config mirror.https://rubygems.org https://gems.ruby-china.com
+</code></pre></div></div>
+
+<h1 id="总结">总结</h1>
+
+<p>走到这步，你拥有了一个可以完全使用的开发环境</p>
+
+<h1 id="其他">其他</h1>
+
+<h2 id="dockerfile-参考">Dockerfile 参考</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>FROM ruby:2.7.4-alpine3.14
+
+RUN apk add --update --no-cache \
+  build-base \
+  postgresql-dev \
+  tzdata
+
+RUN gem sources --add https://gems.ruby-china.com/ --remove https://rubygems.org/
+RUN gem install bundler 
+RUN bundle config mirror.https://rubygems.org https://gems.ruby-china.com
+
+
+WORKDIR /app
+
+RUN gem install bundler 
+RUN bundle config set --local path 'vendor/bundle'
+
+# Install gems
+ADD Gemfile* /app/
+
+RUN bundle install
+
+COPY . .
+
+# use APP_ENV
+CMD bundle exec rake server:run
+
+EXPOSE 3000
+
+</code></pre></div></div>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/2021/12/24/Ruby环境搭建asdf+ruby+gem+bundler+源替换';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

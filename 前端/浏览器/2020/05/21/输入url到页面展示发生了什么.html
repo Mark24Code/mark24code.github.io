@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>输入url到页面展示发生了什么</title>
+  <meta name="description" content="过程梳理图输入url到页面展示完整流程示意图从图中可以看出，整个过程需要各个进程之间的配合：      浏览器进程主要负责用户交互，子进程管理和文件存储等功能        网络进程是面向渲染进程和浏览器进程等提供网络下载功能        渲染进程的主要职责是把从网络下载的HTML、JavaScript、CSS...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/%E5%89%8D%E7%AB%AF/%E6%B5%8F%E8%A7%88%E5%99%A8/2020/05/21/%E8%BE%93%E5%85%A5url%E5%88%B0%E9%A1%B5%E9%9D%A2%E5%B1%95%E7%A4%BA%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">输入url到页面展示发生了什么</h1>
+    <p class="artilce_meta"><time datetime="2020-05-21T14:17:25+08:00" itemprop="datePublished">May 21, 2020</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="过程梳理图">过程梳理图</h1>
+
+<p><img src="/assets/blog/from_url_to_webpage/web_progress.png" alt="web_progress" /></p>
+
+<p>输入url到页面展示完整流程示意图</p>
+
+<p>从图中可以看出，整个过程需要各个进程之间的配合：</p>
+
+<ul>
+  <li>
+    <p>浏览器进程主要负责用户交互，子进程管理和文件存储等功能</p>
+  </li>
+  <li>
+    <p>网络进程是面向渲染进程和浏览器进程等提供网络下载功能</p>
+  </li>
+  <li>
+    <p>渲染进程的主要职责是把从网络下载的HTML、JavaScript、CSS、图片等资源解析为可以显示和交互的页面。</p>
+  </li>
+</ul>
+
+<blockquote>
+  <p>因为渲染进程的所有内容都是通过网络获取的，所以存在被而已攻击的可能，所以运行在渲染进程中的代码不被信任。这就是Chrome会让渲染进程运行在安全沙盒里面的原因。</p>
+</blockquote>
+
+<h1 id="过程描述">过程描述</h1>
+
+<p>首先，浏览器进程接收到用户输入url请求，浏览器便将url转发给网络进程。</p>
+
+<p>然后在网络进程中发起真正的url请求。</p>
+
+<p>接着网络进程收了响应头数据，便解析响应头数据，并将数据转发给浏览器进程。</p>
+
+<p>浏览器进程接收到网络进程的响应头数据之后，发送“提交导航（CommitNavigation）”消息到渲染进程。</p>
+
+<p>渲染进程收到“提交导航”的消息后，便开始准备接收HTML数据，接受数据的方式是直接和网络进程建立数据管道。</p>
+
+<p>最后渲染进程回向浏览器“确认提交”，这是告诉浏览器进程“已经准备好接受和解析页面数据了”。</p>
+
+<p>浏览器进程接收到渲染进程“提交文档”的消息后，便开始移除旧文档，然后更新浏览器进程中的页面状态。</p>
+
+<p>这其中，从用户发出URL请求到页面开始解析的这个过程，就叫做“导航”。</p>
+
+<h1 id="详细阶段分析">详细阶段分析</h1>
+
+<h2 id="1用户输入">1.用户输入</h2>
+
+<p>用户在地址栏中输入一个关键字，地址栏会判断是搜索内容还是请求的url。</p>
+
+<p>是搜索内容会合成搜索的url。如果是符合url规则的比如 baidu.com会合成为完整的url 比如 https://www.baidu.com</p>
+
+<p>当用户输入关键字回车的时候，这意味着当前页面要被新的页面替换了，但是在这个继续之前，浏览器给当前页面一次执行 beforeunload事件的机会。这个允许在页面推出之前做一些数据清理操作。</p>
+
+<h2 id="2url请求过程">2.URL请求过程</h2>
+
+<p>接下来便进入页面资源请求过程，浏览器会进入进程通信（IPC),把url请求发送至网络进程。网络进程收到url后，会在这里发起真正的请求。</p>
+
+<p>首先，网络进程会查找本地缓存是否缓存了该资源。如果有缓存则直接返回资源给浏览器进程。如果没有那么直接进入网络请求。</p>
+
+<p>第一步是进行DNS解析，以获取域名的服务器IP地址如果请求时HTTPS还需要建立TLS连接。</p>
+
+<p>接下来就是利用IP地址和服务器建立TCP连接，连接建立之后，浏览器会构建请求行、请求头，并把和该域名相关的Cookie等数据附加到请求头中，然后向服务器发送构建的请求信息。</p>
+
+<p>服务器接收到请求的清晰后，会根据请求信息生成响应数据（包裹响应行，响应头，响应体等），并发给网络进程。等网络进程接收了响应行和响应头之后，就开始解析响应头内容。
+（为了⽅便讲述，下⾯我将服务器返回的响应头和响应⾏统称为响应头。）</p>
+
+<h3 id="1重定向">（1）重定向</h3>
+
+<p>在接受到服务器返回的响应头后，网络进程开始解析响应头，如果发现返回的状态码是301或者302，说明服务器需要浏览器重定向到其他URL。这时网络进程会从响应头的Location字段里面读取重定向的地址，然后再发起新的HTTP或者HTTPS请求，一切又重头开始。</p>
+
+<p>让响应行是200，那么表示浏览器可以继续处理该请求</p>
+
+<h3 id="2响应数据类型处理">（2）响应数据类型处理</h3>
+
+<p>url请求的数据类型，有时候是一个下载类型，有时候是正常的html页面，那么浏览器如何区分他们呢?</p>
+
+<p><code class="language-plaintext highlighter-rouge">Content-Type</code> 是http头中一个非常重要的字段，他告诉浏览器服务器返回的响应体数据是什么类型，然后浏览器会根据Content-Type的值决定如何显示响应体的内容。</p>
+
+<p>如果<code class="language-plaintext highlighter-rouge">Content—Type</code> 是 <code class="language-plaintext highlighter-rouge">application/octet-stream</code> 数据是字节流类型，通常浏览器会按照下载类型来处理。</p>
+
+<h2 id="3准备渲染进程">3.准备渲染进程</h2>
+
+<p>默认的情况下Chrome会为每个页面分配一个渲染进程，也就是是说，每开一个新页面就会分配创建一个新的渲染进程。也有一些例外，会共用一个。</p>
+
+<h3 id="何时会共用一个渲染进程呢">何时会共用一个渲染进程呢？</h3>
+
+<p>同一站点（Same-site)</p>
+
+<p>根域名、协议相同，还包含了该根域名下面的所有子域名和不同端口</p>
+
+<p>比如</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://github.com
+
+https://www.github.com
+
+https://www.github.com:8080
+
+</code></pre></div></div>
+
+<p>他们都属于同一个站点。</p>
+
+<p>Chrome的策略就是每个标签对应一个渲染进程，但是如果从一个页面打开另一个新页面，而新页面和当前页面属于同一个站点的话，那么新页面就会复用父页面的渲染进程。官方称之为“process-per-site-instance”策略。</p>
+
+<h2 id="4-提交文档">4. 提交文档</h2>
+
+<p>所谓提交文档就是浏览器把网络接收到HTML数据提交给渲染进程，具体流程是这样：</p>
+
+<p>首先浏览器进程接收到网络进程的响应头数据之后，便向渲染进程发起“提交文档”消息；</p>
+
+<p>渲染进程收到“提交文档”消息后，会和网络进程建立起传输数据的“管道”；</p>
+
+<p>等文档传输完成之后，渲染进程会返回“确认提交”的消息给浏览器进程；</p>
+
+<p>浏览器再收到“确认提交”的消息后，会更新浏览器界面状态，包括安全状态、地址栏的URL、前进后退的历史状态并更新WEB页面。</p>
+
+<p>这也解释了，为什么浏览器输入地址栏后，之前的页面没有马上消失，而是加载一会才会更新。</p>
+
+<p>到这里一个完整的导航流程就走完了，之后就要进入渲染进程。</p>
+
+<h2 id="5渲染阶段">5.渲染阶段</h2>
+
+<p>一旦文档被提交，渲染进程便开始解析和子资源加载了，这个过程可以单独介绍。<a href="/%E5%89%8D%E7%AB%AF/%E6%B5%8F%E8%A7%88%E5%99%A8/2021/02/21/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B.html">-&gt; 浏览器渲染流程</a></p>
+
+<p>一旦页面生成完成，渲染进程就会发送一个消息给浏览器，浏览器接到消息后，会停止标签图标上的加载动画。</p>
+
+<p>至此一个页面就生成了。</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/%E5%89%8D%E7%AB%AF/%E6%B5%8F%E8%A7%88%E5%99%A8/2020/05/21/输入url到页面展示发生了什么';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

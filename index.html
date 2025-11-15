@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Mark24</title>
+  <meta name="description" content="记录灵感、技术、思考">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <div class="home">
+  <div class="post-list">
+
+    
+
+    <article class="post_card post">
+      <header class="post_header">
+        <h2 class="post_title"><a href="/ruby/2025/02/08/%E4%B8%BA%E4%BB%80%E4%B9%88%E6%AF%8F%E4%B8%AA%E4%BA%BA%E9%83%BD%E8%AE%A8%E5%8E%8C-fork(2).html">为什么每个人都讨厌 fork(2) ？</a></h2>
+        <time class="post_date">08 February 2025, Saturday</time>
+      </header>
+      <div class="post_excerpt">
+        <p>
+          
+          
+  作者：Jean Boussier
+  译者：Mark24
+  原文: why-does-everyone-hate-fork
+
+
+我想写一篇关于 Pitchfork 的文章，解释它的起源、为什么它会是现在这个样子，以及我对其未来的看法。但在达到这一点之前，我认为我需要解释一些事情，fork 被认为是一种过时的旧物，甚至可以说是“恶魔的创造”。然而，在 Ruby 生态系统中，它却无处不在。
+
+请注意，如果您有一些系统编程经验，您在这里可能学不到太多。
+
+如果您曾经部署过 Ruby 应用...
+           
+          <!-- <a class="read-more" href="/ruby/2025/02/08/%E4%B8%BA%E4%BB%80%E4%B9%88%E6%AF%8F%E4%B8%AA%E4%BA%BA%E9%83%BD%E8%AE%A8%E5%8E%8C-fork(2).html"></a> -->
+        </p> 
+      </div>
+      <footer class="post_meta">
+
+
+        
+        
+        <!-- 
+        <a href="/category/Ruby">
+          <data data-icon="ei-tag"></data>
+          Ruby</a>
+         -->
+       
+
+        
+        <!-- 
+        <span class="author_meta">
+          <img src="/assets/img/Mark24.jpg"></img>
+          <span>Mark24</span>
+        </span>
+         -->
+       
+
+        <p class="readmore">
+          <a href="/ruby/2025/02/08/%E4%B8%BA%E4%BB%80%E4%B9%88%E6%AF%8F%E4%B8%AA%E4%BA%BA%E9%83%BD%E8%AE%A8%E5%8E%8C-fork(2).html"><data data-icon="ei-arrow-right"></data>Read this article  </a>
+        </p>
+      </footer>
+      <hr/>
+    </article>
+    
+
+    <article class="post_card post">
+      <header class="post_header">
+        <h2 class="post_title"><a href="/ruby/2025/02/08/%E6%89%80%E4%BB%A5-%E4%BD%A0%E6%83%B3%E7%A7%BB%E9%99%A4-GVL.html">所以，你想移除 GVL？</a></h2>
+        <time class="post_date">08 February 2025, Saturday</time>
+      </header>
+      <div class="post_excerpt">
+        <p>
+          
+          
+  作者：Jean Boussier
+  译者：Mark24
+  原文: so-you-want-to-remove-the-gvl
+
+
+我想写一篇关于 Pitchfork 的文章，解释它的起源、为什么它会是这个样子，以及我对其未来的看法。但在达到这一点之前，我认为我需要分享我对一些事情的思维模型，在这个例子中，是 Ruby 的 GVL。
+
+长期以来，人们常说 Rails 应用程序主要是 I/O 密集型，因此 Ruby 的 GVL （全局解释器锁）并不是什么大问题，这也影响了 Ruby ...
+           
+          <!-- <a class="read-more" href="/ruby/2025/02/08/%E6%89%80%E4%BB%A5-%E4%BD%A0%E6%83%B3%E7%A7%BB%E9%99%A4-GVL.html"></a> -->
+        </p> 
+      </div>
+      <footer class="post_meta">
+
+
+        
+        
+        <!-- 
+        <a href="/category/Ruby">
+          <data data-icon="ei-tag"></data>
+          Ruby</a>
+         -->
+       
+
+        
+        <!-- 
+        <span class="author_meta">
+          <img src="/assets/img/Mark24.jpg"></img>
+          <span>Mark24</span>
+        </span>
+         -->
+       
+
+        <p class="readmore">
+          <a href="/ruby/2025/02/08/%E6%89%80%E4%BB%A5-%E4%BD%A0%E6%83%B3%E7%A7%BB%E9%99%A4-GVL.html"><data data-icon="ei-arrow-right"></data>Read this article  </a>
+        </p>
+      </footer>
+      <hr/>
+    </article>
+    
+
+    <article class="post_card post">
+      <header class="post_header">
+        <h2 class="post_title"><a href="/ruby/2025/02/07/Ruby-%E7%9A%84-%E7%BA%BF%E7%A8%8B%E7%AB%9E%E4%BA%89-%E5%B0%B1%E6%98%AF-GVL-%E6%8E%92%E9%98%9F.html">Ruby 的“线程竞争”就是 GVL 排队</a></h2>
+        <time class="post_date">07 February 2025, Friday</time>
+      </header>
+      <div class="post_excerpt">
+        <p>
+          
+          
+  作者：Ben Sheldon
+  译者：Mark24
+  原文: 博客地址
+
+
+最近 Jean Boussier 发布了很多精彩的帖子：
+
+  《应用程序形状（application shapes）》
+  《监控GVL（instrumenting the GVL (Global VM Lock)）》
+  以及 《关于移除 GVL 的想法（thoughts on removing the GVL）》。
+
+
+它们都是值得一读的！
+
+长期以来，我一直误解了“线程竞争”这个词语。作为 Goo...
+           
+          <!-- <a class="read-more" href="/ruby/2025/02/07/Ruby-%E7%9A%84-%E7%BA%BF%E7%A8%8B%E7%AB%9E%E4%BA%89-%E5%B0%B1%E6%98%AF-GVL-%E6%8E%92%E9%98%9F.html"></a> -->
+        </p> 
+      </div>
+      <footer class="post_meta">
+
+
+        
+        
+        <!-- 
+        <a href="/category/Ruby">
+          <data data-icon="ei-tag"></data>
+          Ruby</a>
+         -->
+       
+
+        
+        <!-- 
+        <span class="author_meta">
+          <img src="/assets/img/Mark24.jpg"></img>
+          <span>Mark24</span>
+        </span>
+         -->
+       
+
+        <p class="readmore">
+          <a href="/ruby/2025/02/07/Ruby-%E7%9A%84-%E7%BA%BF%E7%A8%8B%E7%AB%9E%E4%BA%89-%E5%B0%B1%E6%98%AF-GVL-%E6%8E%92%E9%98%9F.html"><data data-icon="ei-arrow-right"></data>Read this article  </a>
+        </p>
+      </footer>
+      <hr/>
+    </article>
+    
+
+    <article class="post_card post">
+      <header class="post_header">
+        <h2 class="post_title"><a href="/macos/2024/12/25/brew%E5%88%A0%E9%99%A4%E6%89%80%E6%9C%89%E5%AE%89%E8%A3%85%E5%8C%85.html">brew删除所有安装包</a></h2>
+        <time class="post_date">25 December 2024, Wednesday</time>
+      </header>
+      <div class="post_excerpt">
+        <p>
+          
+          brew删除所有安装包
+
+brew remove --force $(brew list --formula) --ignore-dependencies
+
+           
+          <!-- <a class="read-more" href="/macos/2024/12/25/brew%E5%88%A0%E9%99%A4%E6%89%80%E6%9C%89%E5%AE%89%E8%A3%85%E5%8C%85.html"></a> -->
+        </p> 
+      </div>
+      <footer class="post_meta">
+
+
+        
+        
+        <!-- 
+        <a href="/category/MacOS">
+          <data data-icon="ei-tag"></data>
+          MacOS</a>
+         -->
+       
+
+        
+        <!-- 
+        <span class="author_meta">
+          <img src="/assets/img/Mark24.jpg"></img>
+          <span>Mark24</span>
+        </span>
+         -->
+       
+
+        <p class="readmore">
+          <a href="/macos/2024/12/25/brew%E5%88%A0%E9%99%A4%E6%89%80%E6%9C%89%E5%AE%89%E8%A3%85%E5%8C%85.html"><data data-icon="ei-arrow-right"></data>Read this article  </a>
+        </p>
+      </footer>
+      <hr/>
+    </article>
+    
+
+    <article class="post_card post">
+      <header class="post_header">
+        <h2 class="post_title"><a href="/ubuntu/linux/amd/2024/07/28/ubuntu%E5%AE%89%E8%A3%85AMD%E9%A9%B1%E5%8A%A8.html">ubuntu安装AMD驱动</a></h2>
+        <time class="post_date">28 July 2024, Sunday</time>
+      </header>
+      <div class="post_excerpt">
+        <p>
+          
+          Ubuntu 24.04 / LinuxMint22 安装 AMD 驱动
+
+前沿
+
+跨大版本升级，如果发现桌面黑掉、播放器无法播放视频，可能是 GPU 驱动失效。
+
+下面看下 Linux 下如何重新安装 AMD 驱动。
+
+适合 Ubuntu系。
+
+参考来源
+
+AMD 驱动的文档: https://amdgpu-install.readthedocs.io/en/latest/install-installing.html#uninstalling-the-amdgpu-stack
+
+所有驱...
+           
+          <!-- <a class="read-more" href="/ubuntu/linux/amd/2024/07/28/ubuntu%E5%AE%89%E8%A3%85AMD%E9%A9%B1%E5%8A%A8.html"></a> -->
+        </p> 
+      </div>
+      <footer class="post_meta">
+
+
+        
+        
+        <!-- 
+        <a href="/category/Ubuntu">
+          <data data-icon="ei-tag"></data>
+          Ubuntu</a>
+        
+        <a href="/category/Linux">
+          <data data-icon="ei-tag"></data>
+          Linux</a>
+        
+        <a href="/category/AMD">
+          <data data-icon="ei-tag"></data>
+          AMD</a>
+         -->
+       
+
+        
+        <!-- 
+        <span class="author_meta">
+          <img src="/assets/img/Mark24.jpg"></img>
+          <span>Mark24</span>
+        </span>
+         -->
+       
+
+        <p class="readmore">
+          <a href="/ubuntu/linux/amd/2024/07/28/ubuntu%E5%AE%89%E8%A3%85AMD%E9%A9%B1%E5%8A%A8.html"><data data-icon="ei-arrow-right"></data>Read this article  </a>
+        </p>
+      </footer>
+      <hr/>
+    </article>
+    
+
+    <article class="post_card post">
+      <header class="post_header">
+        <h2 class="post_title"><a href="/ruby/2024/06/28/MRuby-Devkit-%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84%E8%84%9A%E6%89%8B%E6%9E%B6-%E5%B8%AE%E5%8A%A9%E4%BD%A0%E5%83%8F-Go-%E4%B8%80%E6%A0%B7%E6%8A%8A-Ruby-%E7%BC%96%E8%AF%91%E6%88%90%E5%8F%AF%E6%89%A7%E8%A1%8C%E4%BA%8C%E8%BF%9B%E5%88%B6.html">MRuby Devkit 一个简单的脚手架，帮助你像 Go 一样把 Ruby 编译成可执行二进制</a></h2>
+        <time class="post_date">28 June 2024, Friday</time>
+      </header>
+      <div class="post_excerpt">
+        <p>
+          
+          MRuby Devkit
+
+MRuby Devkit 是一个开箱即用的脚手架。 基于 MRuby 将你的 Ruby 代码打包成 二进制可执行文件。
+
+方便开发类似于 Golang 的二进制可执行文件。
+
+
+  —— 灵感来自于 Golang 可以编译为二进制可执行文件的迷人特性。
+
+
+一、使用约定
+
+前置运行环境
+
+MacOS、Linux
+
+
+  GCC/Clang
+  Make
+  Git
+  Ruby3
+    
+      Rake 安装 gem install rake
+    
+...
+           
+          <!-- <a class="read-more" href="/ruby/2024/06/28/MRuby-Devkit-%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84%E8%84%9A%E6%89%8B%E6%9E%B6-%E5%B8%AE%E5%8A%A9%E4%BD%A0%E5%83%8F-Go-%E4%B8%80%E6%A0%B7%E6%8A%8A-Ruby-%E7%BC%96%E8%AF%91%E6%88%90%E5%8F%AF%E6%89%A7%E8%A1%8C%E4%BA%8C%E8%BF%9B%E5%88%B6.html"></a> -->
+        </p> 
+      </div>
+      <footer class="post_meta">
+
+
+        
+        
+        <!-- 
+        <a href="/category/Ruby">
+          <data data-icon="ei-tag"></data>
+          Ruby</a>
+         -->
+       
+
+        
+        <!-- 
+        <span class="author_meta">
+          <img src="/assets/img/Mark24.jpg"></img>
+          <span>Mark24</span>
+        </span>
+         -->
+       
+
+        <p class="readmore">
+          <a href="/ruby/2024/06/28/MRuby-Devkit-%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84%E8%84%9A%E6%89%8B%E6%9E%B6-%E5%B8%AE%E5%8A%A9%E4%BD%A0%E5%83%8F-Go-%E4%B8%80%E6%A0%B7%E6%8A%8A-Ruby-%E7%BC%96%E8%AF%91%E6%88%90%E5%8F%AF%E6%89%A7%E8%A1%8C%E4%BA%8C%E8%BF%9B%E5%88%B6.html"><data data-icon="ei-arrow-right"></data>Read this article  </a>
+        </p>
+      </footer>
+      <hr/>
+    </article>
+    
+
+    <article class="post_card post">
+      <header class="post_header">
+        <h2 class="post_title"><a href="/ruby/2024/06/06/%E8%B8%A2%E9%A6%86%E6%8C%91%E6%88%98MRubyvsGolang%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94.html">踢馆挑战 Ruby(MRuby) vs Golang 性能对比</a></h2>
+        <time class="post_date">06 June 2024, Thursday</time>
+      </header>
+      <div class="post_excerpt">
+        <p>
+          
+          前言
+
+大家好我是 Mark24。
+
+今天主要是想聊下一个有趣的发现，MRuby 和 Golang 的巅峰对决。
+
+简单介绍下今天的主角，挑战者 MRuby 是 遵循 Ruby ISO 语法规范的一个实现。M 是 ”embed（嵌入）”的“m”，同时也是 minimalistic（极简的）的“m”，是作者重新设计的一个 Ruby 解释器。
+
+MRuby 是把 Ruby 的开发体验带到嵌入式世界。为了兼容嵌入式的各种苛刻要求。MRuby 的实现相比于 CRuby 添加了大量的改进。
+
+
+  ...
+           
+          <!-- <a class="read-more" href="/ruby/2024/06/06/%E8%B8%A2%E9%A6%86%E6%8C%91%E6%88%98MRubyvsGolang%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94.html"></a> -->
+        </p> 
+      </div>
+      <footer class="post_meta">
+
+
+        
+        
+        <!-- 
+        <a href="/category/Ruby">
+          <data data-icon="ei-tag"></data>
+          Ruby</a>
+         -->
+       
+
+        
+        <!-- 
+        <span class="author_meta">
+          <img src="/assets/img/Mark24.jpg"></img>
+          <span>Mark24</span>
+        </span>
+         -->
+       
+
+        <p class="readmore">
+          <a href="/ruby/2024/06/06/%E8%B8%A2%E9%A6%86%E6%8C%91%E6%88%98MRubyvsGolang%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94.html"><data data-icon="ei-arrow-right"></data>Read this article  </a>
+        </p>
+      </footer>
+      <hr/>
+    </article>
+    
+
+    <article class="post_card post">
+      <header class="post_header">
+        <h2 class="post_title"><a href="/%E7%A8%8B%E5%BA%8F%E6%80%9D%E8%80%83/2024/05/29/%E9%80%89%E6%8B%A9%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80%E7%9A%84%E6%80%9D%E8%80%83.html">选择编程语言的思考</a></h2>
+        <time class="post_date">29 May 2024, Wednesday</time>
+      </header>
+      <div class="post_excerpt">
+        <p>
+          
+          选择编程语言的思考
+
+语言是个工具。理论上他们是等价的，实际上选错了，你到达不了目标。
+
+到底是坐拖拉机去拉萨，还是做高铁去。体验非常不同。
+
+一、本质上资源决定语言选择
+
+编程语言其实是分层的。如何理解这句话？首先编程语言的抽象程度不同，底层、高级负责的事情不同。灵活程度不同，决定了个人还是多人合作。使用的场景不同，比如嵌入式，Web 开发，游戏开发。总之每种语言特点是不同的。
+
+你有多少人、多少时间、多少资源，平台，还有你要做什么。决定了你要选择何种编程语言。
+
+语言是一种朴素的工具，...
+           
+          <!-- <a class="read-more" href="/%E7%A8%8B%E5%BA%8F%E6%80%9D%E8%80%83/2024/05/29/%E9%80%89%E6%8B%A9%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80%E7%9A%84%E6%80%9D%E8%80%83.html"></a> -->
+        </p> 
+      </div>
+      <footer class="post_meta">
+
+
+        
+        
+        <!-- 
+        <a href="/category/程序思考">
+          <data data-icon="ei-tag"></data>
+          程序思考</a>
+         -->
+       
+
+        
+        <!-- 
+        <span class="author_meta">
+          <img src="/assets/img/Mark24.jpg"></img>
+          <span>Mark24</span>
+        </span>
+         -->
+       
+
+        <p class="readmore">
+          <a href="/%E7%A8%8B%E5%BA%8F%E6%80%9D%E8%80%83/2024/05/29/%E9%80%89%E6%8B%A9%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80%E7%9A%84%E6%80%9D%E8%80%83.html"><data data-icon="ei-arrow-right"></data>Read this article  </a>
+        </p>
+      </footer>
+      <hr/>
+    </article>
+    
+
+    <article class="post_card post">
+      <header class="post_header">
+        <h2 class="post_title"><a href="/ruby/2024/05/29/Ruby%E6%89%93%E5%8C%85%E6%8A%80%E6%9C%AF%E4%B9%8B%E6%97%85.html">Ruby打包技术之旅</a></h2>
+        <time class="post_date">29 May 2024, Wednesday</time>
+      </header>
+      <div class="post_excerpt">
+        <p>
+          
+          2025.11.15 追加
+
+homebrew 打包 portable ruby 的思路
+
+将所有依赖 全部静态化重构最后打包出静态 ruby，并且还可以安装 gem
+
+https://github.com/spinel-coop/rv-ruby/releases
+
+
+
+追加：
+
+2025 迎来了新的方案：
+
+https://github.com/tamatebako/tebako
+
+通过各种 hack 完全可以把 ruby 打包成独立的二进制执行文件。
+
+
+
+结论：
+
+似乎找到了 2 个...
+           
+          <!-- <a class="read-more" href="/ruby/2024/05/29/Ruby%E6%89%93%E5%8C%85%E6%8A%80%E6%9C%AF%E4%B9%8B%E6%97%85.html"></a> -->
+        </p> 
+      </div>
+      <footer class="post_meta">
+
+
+        
+        
+        <!-- 
+        <a href="/category/Ruby">
+          <data data-icon="ei-tag"></data>
+          Ruby</a>
+         -->
+       
+
+        
+        <!-- 
+        <span class="author_meta">
+          <img src="/assets/img/Mark24.jpg"></img>
+          <span>Mark24</span>
+        </span>
+         -->
+       
+
+        <p class="readmore">
+          <a href="/ruby/2024/05/29/Ruby%E6%89%93%E5%8C%85%E6%8A%80%E6%9C%AF%E4%B9%8B%E6%97%85.html"><data data-icon="ei-arrow-right"></data>Read this article  </a>
+        </p>
+      </footer>
+      <hr/>
+    </article>
+    
+
+    <article class="post_card post">
+      <header class="post_header">
+        <h2 class="post_title"><a href="/ruby/2024/05/27/%E4%BD%BF%E7%94%A8Ruby-build-%E5%9C%A8-MacOS%E4%B8%8A-%E7%BC%96%E8%AF%91-Portable-ruby.html">使用Ruby-build 在 MacOS上 编译 Portable ruby</a></h2>
+        <time class="post_date">27 May 2024, Monday</time>
+      </header>
+      <div class="post_excerpt">
+        <p>
+          
+          我的 Blog
+
+大家好，我是 Mark24。
+
+分享下我的笔记，使用 Ruby-build 在 MacOS 上 编译 Portable ruby
+
+设想一下，如果 ruby 可以变成 portable 的，放在 U 盘上就可以带走，传输到任何一台电脑上就可以执行。
+
+Portable Ruby + 你的 Ruby 代码 的 zip 包，就像一个行走的独立软件。就像 Go 打包的一样。
+
+你还可以把他们塞入 一些壳软件里。就像 Electron 那样运行（内部是个浏览器）。
+
+当然 Rub...
+           
+          <!-- <a class="read-more" href="/ruby/2024/05/27/%E4%BD%BF%E7%94%A8Ruby-build-%E5%9C%A8-MacOS%E4%B8%8A-%E7%BC%96%E8%AF%91-Portable-ruby.html"></a> -->
+        </p> 
+      </div>
+      <footer class="post_meta">
+
+
+        
+        
+        <!-- 
+        <a href="/category/Ruby">
+          <data data-icon="ei-tag"></data>
+          Ruby</a>
+         -->
+       
+
+        
+        <!-- 
+        <span class="author_meta">
+          <img src="/assets/img/Mark24.jpg"></img>
+          <span>Mark24</span>
+        </span>
+         -->
+       
+
+        <p class="readmore">
+          <a href="/ruby/2024/05/27/%E4%BD%BF%E7%94%A8Ruby-build-%E5%9C%A8-MacOS%E4%B8%8A-%E7%BC%96%E8%AF%91-Portable-ruby.html"><data data-icon="ei-arrow-right"></data>Read this article  </a>
+        </p>
+      </footer>
+      <hr/>
+    </article>
+    
+
+    <div class="pagination older-post"><a href="/posts"><data data-icon="ei-archive"></data> All Posts </a></div>
+    <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+  </div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

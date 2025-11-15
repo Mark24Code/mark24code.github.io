@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Ruby中的方法我的总结</title>
+  <meta name="description" content="一切围绕方法的哲学Ruby的一切，可以说是 —— 一切围绕方法。面向对象是 数据+方法 的封装。而Ruby的变量不像JavaScript、Python允许自由的访问，必须在方法中通过设置 getter、setter来进行访问。可以说 方法是 Ruby工作的基石。Ruby的方法有三大部分组成：  实例方法  类方法...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/2022/02/08/Ruby%E4%B8%AD%E7%9A%84%E6%96%B9%E6%B3%95%E6%88%91%E7%9A%84%E6%80%BB%E7%BB%93.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">Ruby中的方法我的总结</h1>
+    <p class="artilce_meta"><time datetime="2022-02-08T23:21:13+08:00" itemprop="datePublished">Feb 8, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="一切围绕方法的哲学">一切围绕方法的哲学</h1>
+
+<p>Ruby的一切，可以说是 —— 一切围绕方法。</p>
+
+<p>面向对象是 数据+方法 的封装。而Ruby的变量不像JavaScript、Python允许自由的访问，必须在方法中通过设置 getter、setter来进行访问。可以说 方法是 Ruby工作的基石。</p>
+
+<p>Ruby的方法有三大部分组成：</p>
+
+<ol>
+  <li>实例方法</li>
+  <li>类方法/单例方法</li>
+  <li>匿名函数方法</li>
+</ol>
+
+<p>简单建立起概念，这三个基本方法，有自己的内涵边界。下面分别说明。</p>
+
+<h1 id="实例方法和类方法单例方法一起构成了面向对象系统">实例方法和类方法/单例方法，一起构成了面向对象系统</h1>
+
+<p>1.实例方法，非常容易理解。就是一般意义上的面向对象的为生成实例准备的方法。</p>
+
+<p>表现形式是 class中直接定义的 def 方法。</p>
+
+<p>1.1 实例方法和 inlcude</p>
+
+<p>1) 继承关系
+可以把一组方法，放入模块 比如 module B，然后 比如 class A   include B。 这样在祖先链上会形成  A -&gt; B 的关系。</p>
+
+<p>1.2 搜索方法</p>
+
+<p>实例搜索方法，当在A中无法找到的时候，会搜索B。</p>
+
+<p>优先级顺序可以从 instance.class.ancestors 的返回中查看</p>
+
+<p>1.3 覆盖方法</p>
+
+<p>如果在A中定义的实例方法，会覆盖祖先方法，或者 module的mixin方法。</p>
+
+<p>2.类方法/单例方法</p>
+
+<p>严格意义上来说，应该是单例方法。</p>
+
+<p>在类中，有很多中定义方式：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">A</span>
+
+  <span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="nb">self</span>
+    <span class="k">def</span> <span class="nf">f</span>
+    <span class="k">end</span>
+
+  <span class="k">end</span>
+
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">f</span>
+
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nc">A</span><span class="o">.</span><span class="nf">f</span>
+
+  <span class="k">end</span>
+
+<span class="k">end</span>
+
+
+<span class="k">def</span> <span class="nc">A</span><span class="o">.</span><span class="nf">f</span>
+
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>这四种形式，定义的方法，都是 在单例类中保存方法。</p>
+
+<p>对于类来说，结果的形式，就像是其他语言的类的静态方法。</p>
+
+<p>所以直接理解为 类的静态方法，类方法，更加干脆清晰。</p>
+
+<p>只不过 单例方法可以给任何对象定义。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">obj</span> <span class="o">=</span> <span class="no">Object</span><span class="p">.</span><span class="nf">new</span>
+
+<span class="k">def</span> <span class="nc">obj</span><span class="o">.</span><span class="nf">f</span>
+
+<span class="k">end</span>
+
+
+</code></pre></div></div>
+
+<p>这样子的定义是成立的。</p>
+
+<p>2.1 extend 与 单例方法</p>
+
+<p>和include对应，有个 extend关键字可以把 module中收集的方法，批量挂载到class上</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">module</span> <span class="nn">B</span>
+
+  <span class="k">def</span> <span class="nf">f</span>
+
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">A</span>
+  <span class="kp">extend</span> <span class="n">f</span>
+
+  <span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="nb">self</span>
+
+    <span class="k">def</span> <span class="nf">f</span>
+      <span class="c1"># 这会覆盖 extend</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>2.2 覆盖</p>
+
+<p>extend可以批量挂载类方法，class A 内部独立声明的 类方法会覆盖调 extend</p>
+
+<p>2.3 搜索顺序</p>
+
+<p>搜索顺序  instance.singleton_class.ancestors</p>
+
+<hr />
+
+<h2 id="对比总结下">对比总结下</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>特点\方法</th>
+      <th>实例方法</th>
+      <th>类方法/单例方法</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>说明</td>
+      <td>对象的实例的方法</td>
+      <td>可以认为是类的静态方法</td>
+    </tr>
+    <tr>
+      <td>拓展</td>
+      <td>include Module</td>
+      <td>extend Module</td>
+    </tr>
+    <tr>
+      <td>继承方式</td>
+      <td>instance.class.ancestors</td>
+      <td>instance.singleton_class.ancestors</td>
+    </tr>
+    <tr>
+      <td>覆盖</td>
+      <td>内部定义可覆盖 include</td>
+      <td>内部定义可覆盖 extend</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h1 id="匿名函数">匿名函数</h1>
+
+<p>匿名函数在Ruby里面呈现出很多形式</p>
+
+<ol>
+  <li>块（block）</li>
+  <li>Proc类</li>
+  <li>lambda</li>
+  <li>method</li>
+</ol>
+
+<p>这里细分的有点繁琐，但是总之他们就像匿名函数一样的存在。分别介绍下：</p>
+
+<h3 id="1块block">1.块（block）</h3>
+
+<p>一般是代码字面书写形式，具体有两种形式</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">xxx</span> <span class="k">do</span> 
+
+
+<span class="k">end</span>
+
+
+<span class="n">xxx</span> <span class="p">{</span> <span class="p">}</span>
+
+</code></pre></div></div>
+
+<h3 id="2proc">2.Proc</h3>
+
+<p>与块对应的代码对象，有 Proc类，它相当于代码层面上的块，和lambda的区别在于，Proc类内部的return就像代码的return会直接带着环境返回，终止运行。</p>
+
+<h3 id="3lambda">3.lambda</h3>
+
+<p>lambda 是特殊的Proc的实现，他表现的就像一个函数。是真正意义上和其他语言等价的 lambda 函数 —— 匿名函数</p>
+
+<h3 id="4method">4.method</h3>
+
+<p>可以把一个对象实例的方法 unbind， 或者 通过 get method 的方式获得 一个类的具体方法，得到的就像一个匿名函数。</p>
+
+<p>而且可以通过 binding 携带上下文执行。</p>
+
+<p>拿JavaScript类比就像 function的call或者 apply</p>
+
+<hr />
+
+<h1 id="高级部分">高级部分</h1>
+
+<p>Roda中看到的技巧。</p>
+
+<p>include部分、extend部分，他们彼此可以互相覆盖，比如</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">A</span>
+
+  <span class="kp">include</span> <span class="no">B1</span>
+  <span class="kp">include</span> <span class="no">B2</span>
+  <span class="kp">include</span> <span class="no">B3</span>
+
+  <span class="kp">extend</span> <span class="no">C1</span>
+  <span class="kp">extend</span> <span class="no">C2</span>
+  <span class="kp">extend</span> <span class="no">C3</span>
+
+<span class="k">end</span>
+
+</code></pre></div></div>
+
+<p>这里，站在实例的角度 B1 B2 B3 等同于拓展 A 实例方法的插件。</p>
+
+<p>站在类角度  C1 C2 C3 是拓展 A类方法的插件。</p>
+
+<p>围绕着覆盖和根据约定使用核心方法，可以制造 —— “插件模式”。</p>
+
+<h1 id="总结">总结</h1>
+
+<p>Ruby高度自由的动态性，元编程特性，主要focus在改变语言的构件。</p>
+
+<p>而这些构件中，最最重要的就是 方法本身。</p>
+
+<p>大部分的程序构建都在围绕  块/匿名函数方法、类方法、实例方法  展开。最复杂的部分也就是这样了。</p>
+
+<p>一切万物归一，事情又变的非常简单。</p>
+
+<h1 id="其他讨论">其他讨论</h1>
+
+<h3 id="1为什么要建立那么多方法的概念">1.为什么要建立那么多方法的概念？</h3>
+
+<p>我理解是为了封装</p>
+
+<h3 id="2是否存在实例的实例方法">2.是否存在实例的实例方法？</h3>
+
+<p>其实大可不必钻牛角尖。</p>
+
+<p>可以理解为，实例方法、类静态方法就是 90%的情况了。</p>
+
+<p>单例类不可见。我们没法在上下文中优雅的为他们建立方法。于是一切就此打住，只有2层需要担心而已。</p>
+
+<p>而复杂的继承模型可以通过 ancestors 相关的自省明确查找顺序。</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/2022/02/08/Ruby中的方法我的总结';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>所以，你想移除 GVL？</title>
+  <meta name="description" content="  作者：Jean Boussier  译者：Mark24  原文: so-you-want-to-remove-the-gvl我想写一篇关于 Pitchfork 的文章，解释它的起源、为什么它会是这个样子，以及我对其未来的看法。但在达到这一点之前，我认为我需要分享我对一些事情的思维模型，在这个例子中，是 Rub...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/2025/02/08/%E6%89%80%E4%BB%A5-%E4%BD%A0%E6%83%B3%E7%A7%BB%E9%99%A4-GVL.html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">所以，你想移除 GVL？</h1>
+    <p class="artilce_meta"><time datetime="2025-02-08T13:05:24+08:00" itemprop="datePublished">Feb 8, 2025</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <ul>
+  <li>作者：<a href="https://github.com/byroot">Jean Boussier</a></li>
+  <li>译者：<a href="https://github.com/Mark24Code">Mark24</a></li>
+  <li>原文: <a href="https://byroot.github.io/ruby/performance/2025/01/29/so-you-want-to-remove-the-gvl.html">so-you-want-to-remove-the-gvl</a></li>
+</ul>
+
+<p>我想写一篇关于 <a href="https://rubygems.org/gems/pitchfork">Pitchfork</a> 的文章，解释它的起源、为什么它会是这个样子，以及我对其未来的看法。但在达到这一点之前，我认为我需要分享我对一些事情的思维模型，在这个例子中，是 Ruby 的 GVL。</p>
+
+<p>长期以来，人们常说 Rails 应用程序主要是 I/O 密集型，因此 Ruby 的 GVL （全局解释器锁）并不是什么大问题，这也影响了 Ruby 基础设施中一些基础组件的设计，如 Puma 和 Sidekiq。正如我在<a href="https://byroot.github.io/ruby/performance/2025/01/23/the-mythical-io-bound-rails-app.html">之前的文章中解释的那样</a>，我认为对于大多数 Rails 应用程序来说，这并不完全正确。不管怎样，<a href="https://byroot.github.io/ruby/performance/2025/01/25/why-does-everyone-hate-fork.html">GVL 的存在仍然要求这些线程化系统使用 fork(2)</a> 才能充分利用服务器的所有核心：每个核心一个进程。为了避免所有这些问题，有些人呼吁简单地移除 GVL。</p>
+
+<p>但这真的这么简单吗？</p>
+
+<h1 id="gvl-和线程安全">GVL 和线程安全</h1>
+
+<p>如果你阅读有关 GVL 的帖子，你可能听说过它不是为了保护你的代码免受竞态条件的影响，而是为了保护 Ruby 虚拟机免受你的代码影响。换句话说，无论是否有 GVL，你的代码都可能受到竞态条件的影响，这是绝对正确的。</p>
+
+<p><strong>但这并不意味着 GVL 不是您应用程序中 Ruby 代码线程安全的重要组件。</strong> 让我们用一个简单的代码示例来说明：</p>
+
+<blockquote>
+  <p>译者注：这里表达很英语，比较绕口。中文的意思就是想表达：GVL 其实也会影响到你 Ruby 代码的线程安全。下面举例说明。</p>
+</blockquote>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">QUOTED_COLUMN_NAMES</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="k">def</span> <span class="nf">quote_column_name</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+  <span class="no">QUOTED_COLUMN_NAMES</span><span class="p">[</span><span class="nb">name</span><span class="p">]</span> <span class="o">||=</span> <span class="n">quote</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>您说这段代码是线程安全的吗？还是不是？</p>
+
+<p>嗯，如果你回答“它是线程安全的”，你并不完全正确。但如果你回答“它不是线程安全的”，你也不完全正确。</p>
+
+<p>实际答案是：“视情况而定”。</p>
+
+<p>首先，这取决于你对线程安全的定义有多严格，然后取决于那个 quote 方法是否是幂等的，最后还取决于你使用的 Ruby 解释器的实现。</p>
+
+<p>让我解释一下。</p>
+
+<p>首先， <code class="language-plaintext highlighter-rouge">||=</code> 是一种语法糖，它隐藏了这段代码实际工作方式的一些细节，所以让我们去掉它的语法糖：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">QUOTED_COLUMN_NAMES</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="k">def</span> <span class="nf">quote_column_name</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+  <span class="n">quoted</span> <span class="o">=</span> <span class="no">QUOTED_COLUMN_NAMES</span><span class="p">[</span><span class="nb">name</span><span class="p">]</span>
+
+  <span class="c1"># Ruby 可以在这里切换线程</span>
+
+  <span class="k">if</span> <span class="n">quoted</span>
+    <span class="n">quoted</span>
+  <span class="k">else</span>
+    <span class="no">QUOTED_COLUMN_NAMES</span><span class="p">[</span><span class="nb">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">quote</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>在这个形式下，更容易看出 <code class="language-plaintext highlighter-rouge">||=</code> 并不是一个单一的操作，而是多个操作。因此，即使在 MRI（即 CRuby 解释器）上，存在全局解释器锁（GVL），从技术上来说，Ruby在计算 <code class="language-plaintext highlighter-rouge">quoted = ...</code> 之后，也有可能抢占一个线程，并恢复另一个线程，而这个线程可能会带着相同的参数进入同一个方法。</p>
+
+<p>换句话说，即使有 GVL，此代码也受竞态条件影响。更准确地说，它受“检查-执行（check-then-act）” 竞态条件影响。</p>
+
+<blockquote>
+  <p>译者注：“Check-then-act”是一种常见的操作模式，指的是先检查某个条件，然后根据检查结果执行相应操作。然而，这种模式在多线程环境下容易引发竞态条件（Race Condition），因为检查和执行之间存在时间间隔，在此期间其他线程可能改变相关状态，导致基于过时的检查结果执行操作。 作者这里就想表达这个经典的情况。</p>
+</blockquote>
+
+<p>如果它存在竞态条件，你可以逻辑上推断出它不是线程安全的。但在这里，情况又有所不同。如果 <code class="language-plaintext highlighter-rouge">quote(name)</code> 是幂等的，技术上确实存在竞态条件，但它又没有实际的负面影响。<code class="language-plaintext highlighter-rouge">quote(name)</code> 可能会被执行两次而不是一次，其中一个结果会被丢弃，谁会在乎呢？这就是为什么在我看来，上述代码实际上仍然是线程安全的，不管怎样。</p>
+
+<blockquote>
+  <p>译者注：“幂等”（Idempotent）是一个数学和计算机科学中的概念，指的是一个操作或函数在多次执行后，其效果与执行一次相同。换句话说，无论执行多少次，结果都不会改变。幂等性在很多领域都有重要的应用，尤其是在分布式系统、数据库操作和网络协议中。</p>
+</blockquote>
+
+<p>我们可以通过使用几个线程来实验验证这一点：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">QUOTED_COLUMN_NAMES</span> <span class="o">=</span> <span class="mi">20</span><span class="p">.</span><span class="nf">times</span><span class="p">.</span><span class="nf">to_h</span> <span class="p">{</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span> <span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="p">}</span>
+
+<span class="k">def</span> <span class="nf">quote_column_name</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+  <span class="no">QUOTED_COLUMN_NAMES</span><span class="p">[</span><span class="nb">name</span><span class="p">]</span> <span class="o">||=</span> <span class="s2">"`</span><span class="si">#{</span><span class="nb">name</span><span class="p">.</span><span class="nf">to_s</span><span class="p">.</span><span class="nf">gsub</span><span class="p">(</span><span class="s1">'`'</span><span class="p">,</span> <span class="s1">'``'</span><span class="p">)</span><span class="si">}</span><span class="s2">`"</span><span class="p">.</span><span class="nf">freeze</span>
+<span class="k">end</span>
+
+<span class="n">threads</span> <span class="o">=</span> <span class="mi">4</span><span class="p">.</span><span class="nf">times</span><span class="p">.</span><span class="nf">map</span> <span class="k">do</span>
+  <span class="no">Thread</span><span class="p">.</span><span class="nf">new</span> <span class="k">do</span>
+    <span class="mi">10_000</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span>
+      <span class="k">if</span> <span class="n">quote_column_name</span><span class="p">(</span><span class="s2">"foo"</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"`foo`"</span>
+        <span class="k">raise</span> <span class="s2">"There was a bug"</span>
+      <span class="k">end</span>
+      <span class="no">QUOTED_COLUMN_NAMES</span><span class="p">.</span><span class="nf">delete</span><span class="p">(</span><span class="s2">"foo"</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">threads</span><span class="p">.</span><span class="nf">each</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:join</span><span class="p">)</span>
+
+</code></pre></div></div>
+<p>如果您使用 MRI 运行此脚本，它将正常运行，不会崩溃，并且 <code class="language-plaintext highlighter-rouge">quote_column_name</code> 将始终返回您预期的结果。</p>
+
+<p>然而，如果您尝试使用 TruffleRuby 或 JRuby 运行它，它们是 Ruby 的替代实现，没有 GVL，您将得到<a href="https://gist.github.com/byroot/1470a8fc71c2712a1f3ae875a9a40710">大约 300 行错误</a>：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>ruby <span class="nt">-v</span> /tmp/quoted.rb
+truffleruby 24.1.2, like ruby 3.2.4, Oracle GraalVM Native <span class="o">[</span>arm64-darwin20]
+java.lang.RuntimeException: Ruby Thread <span class="nb">id</span><span class="o">=</span>51 from /tmp/quoted.rb:20 terminated with internal error:
+    at org.truffleruby.core.thread.ThreadManager.printInternalError<span class="o">(</span>ThreadManager.java:316<span class="o">)</span>
+    ... 20 more
+Caused by: java.lang.NullPointerException
+    at org.truffleruby.core.hash.library.PackedHashStoreLibrary.getHashed<span class="o">(</span>PackedHashStoreLibrary.java:78<span class="o">)</span>
+    ... 120 more
+java.lang.RuntimeException: Ruby Thread <span class="nb">id</span><span class="o">=</span>52 from /tmp/quoted.rb:20 terminated with internal error:
+    at org.truffleruby.core.thread.ThreadManager.printInternalError<span class="o">(</span>ThreadManager.java:316<span class="o">)</span>
+    ... 20 more
+... etc
+</code></pre></div></div>
+
+<p>错误并不总是完全相同，有时似乎比其他时候更严重。但总的来说，它会在 TruffleRuby 或 JRuby 解释器内部深处崩溃，因为对同一哈希的并发访问导致它们遇到 <code class="language-plaintext highlighter-rouge">NullPointerException</code> 。</p>
+
+<p>因此，我们可以说在 Ruby 的参考实现中这段代码是线程安全的，但在 Ruby 的所有实现中并不都是线程安全的。</p>
+
+<p>该方式之所以如此，是因为在 MRI 中，线程调度器只能在执行纯 Ruby 代码时切换运行中的线程。每次调用实现于 C 的内置方法时，你都会隐式地受到 GVL 的保护。因此，所有实现于 C 的方法本质上都是“原子的”，除非它们明确释放 GVL。但一般来说，只有 IO 方法会释放它。</p>
+
+<p>这就是为什么，这段从 <a href="https://github.com/rails/rails/blob/0643592211dec558f93e57451a34393941144c8e/activerecord/lib/active_record/connection_adapters/sqlite3/quoting.rb#L9">Active Record 摘取的代码</a>，没有使用 <code class="language-plaintext highlighter-rouge">Hash</code> 但使用了 <code class="language-plaintext highlighter-rouge">Concurrent::Map</code>。</p>
+
+<p>在 MRI 中，<code class="language-plaintext highlighter-rouge">Concurrent::Map</code> 几乎只是 Hash 的一个别名，但在 JRuby 和 TruffleRuby 中，它被定义为带有互斥锁的散列表。官方 Rails 不支持 TruffleRuby 或 JRuby，但在实际生产中，我们倾向于通过这种小改动来完成支持。</p>
+
+<h1 id="直接移除不就好了么">直接移除不就好了么</h1>
+
+<p>这就是为什么会有“移除 GVL”和“真的移除 GVL”。</p>
+
+<p>简单的方法可以像 TruffleRuby 和 JRuby 那样：什么也不做，或者说是几乎什么也不做。</p>
+
+<p>由于TruffleRuby、JRuby 实现是基于 Java 虚拟机（JVM）的，而 JVM 是内存安全的，因此它们将这种情况下“失败但不会直接崩溃”的艰巨任务委托给了 JVM 运行时。鉴于 MRI 是用 C 语言实现的，而 C 语言以“不支持内存安全”而闻名，如果仅仅移除 GVL，当你的代码触发这种竞态条件时，虚拟机可能会遇到段错误（segmentation fault）或者更糟糕的情况，因此事情并没有那么简单。</p>
+
+<p>Ruby 需要在每个可能发生竞态条件的对象上实现类似于 JVM 的做法，为每个对象设置某种原子计数器。每次访问对象时，你都会增加它并检查它是否设置为 1 ，以确保没有其他人正在使用它。</p>
+
+<p>这本身是一项相当具有挑战性的任务，因为它意味着要检查 C 语言中实现的所有方法（包括 Ruby 本身以及流行的 C 扩展），以插入所有这些原子递增和递减操作。</p>
+
+<p>它还需要在大多数 Ruby 对象中为那个新计数器额外占用一些空间，可能是 4 或 8 个字节，因为原子操作在小整数类型上不容易完成。除非当然有一些我不知情的巧妙技巧。</p>
+
+<p>这也会导致虚拟机的速度变慢，因为所有这些原子递增和递减很可能会有明显的开销，因为原子操作意味着 CPU 必须确保所有核心同时看到这个操作，所以它实际上锁定了 CPU 缓存的那部分。我不会尝试猜测这种开销在实践中会有多少，但肯定不是免费的。</p>
+
+<p>然后结果就是，很多原本是线程安全的纯 Ruby 代码，将不再具备这种特性。因此，除了 ruby-core 需要做的工作之外，Ruby 用户可能还需要在他们的代码、gem 等中调试大量线程安全问题。</p>
+
+<p>因此，尽管 JRuby 和 TruffleRuby 团队努力使其与 MRI 尽可能兼容，但由于缺少 GVL 这一特性，大多数非平凡代码库在它们之上运行前可能至少需要进行一些调试。这并不一定需要大量努力，这取决于情况，但比您平均每年的 Ruby 升级要麻烦得多。</p>
+
+<h1 id="移除gvl-的替代品方案">移除GVL 的替代品方案</h1>
+
+<p>但是，这并不是移除 GVL 的唯一方法，另一种常见的设想是用无数的小锁来替换一个全局锁，每个可变对象一个锁。</p>
+
+<p>关于需要完成的工作，它与之前的方法相当相似，你需要遍历所有 C 代码，并在每次接触可变对象时显式插入锁定和解锁语句。这还需要在每个对象上占用一些空间，可能比仅仅一个计数器要多一些。</p>
+
+<p>采用这种方法，C 扩展可能仍需要一些工作，但纯 Ruby 代码将保持完全兼容。</p>
+
+<p>如果您听说过最近半途而废的尝试移除 Python 的 GIL（相当于 Python 版本的 GVL），那么他们就是用的这种方法。那么，让我们看看他们做了哪些改动，<a href="https://github.com/python/cpython/blob/180ee43bde99b8ce4c4f1d5237ab191e26118061/Include/object.h#L109-L162">从他们定义在 object.h 的基础对象布局开始</a>。</p>
+
+<p>它有很多仪式性代码（Ceremonial Code），所以这里有一个简化版本：</p>
+
+<blockquote>
+  <p>译者注：“仪式代码”（Ceremonial Code）是指在编程过程中，为了满足某些框架、语言特性或规范要求而必须编写的一些额外代码，这些代码本身对核心功能的实现并没有直接帮助，但却是必要的步骤。</p>
+</blockquote>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* Nothing is actually declared to be a PyObject, but every pointer to
+ * a Python object can be cast to a PyObject*.  This is inheritance built by hand.
+ */</span>
+<span class="cp">#ifndef Py_GIL_DISABLED
+</span><span class="k">struct</span> <span class="n">_object</span> <span class="p">{</span>
+    <span class="n">Py_ssize_t</span> <span class="n">ob_refcnt</span>
+    <span class="n">PyTypeObject</span> <span class="o">*</span><span class="n">ob_type</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="cp">#else
+</span><span class="c1">// Objects that are not owned by any thread use a thread id (tid) of zero.</span>
+<span class="c1">// This includes both immortal objects and objects whose reference count</span>
+<span class="c1">// fields have been merged.</span>
+<span class="cp">#define _Py_UNOWNED_TID             0
+</span>
+<span class="k">struct</span> <span class="n">_object</span> <span class="p">{</span>
+    <span class="c1">// ob_tid stores the thread id (or zero). It is also used by the GC and the</span>
+    <span class="c1">// trashcan mechanism as a linked list pointer and by the GC to store the</span>
+    <span class="c1">// computed "gc_refs" refcount.</span>
+    <span class="kt">uintptr_t</span> <span class="n">ob_tid</span><span class="p">;</span>
+    <span class="kt">uint16_t</span> <span class="n">ob_flags</span><span class="p">;</span>
+    <span class="n">PyMutex</span> <span class="n">ob_mutex</span><span class="p">;</span>           <span class="c1">// per-object lock</span>
+    <span class="kt">uint8_t</span> <span class="n">ob_gc_bits</span><span class="p">;</span>         <span class="c1">// gc-related state</span>
+    <span class="kt">uint32_t</span> <span class="n">ob_ref_local</span><span class="p">;</span>      <span class="c1">// local reference count</span>
+    <span class="n">Py_ssize_t</span> <span class="n">ob_ref_shared</span><span class="p">;</span>   <span class="c1">// shared (atomic) reference count</span>
+    <span class="n">PyTypeObject</span> <span class="o">*</span><span class="n">ob_type</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="cp">#endif
+</span>
+</code></pre></div></div>
+
+<p>那里有相当多的内容，让我来概括下。简单起见，我的整个解释都将假设 64 位架构。</p>
+
+<p>也请注意，虽然我曾经是 Pythonista ，那是在 15 年前，而现在我只是从远处观察 Python 的发展。总之，我会尽力准确描述他们正在做的事情，但完全有可能我会有些地方描述错误。</p>
+
+<blockquote>
+  <p>译者注：Pythonista 是指那些对 Python 编程语言非常热爱和精通的人，通常是对代码质量和编程风格有较高追求的开发者。</p>
+</blockquote>
+
+<p>无论如何，当 GIL（Python 的全局解释器锁）没有被编译禁用的时候，每个 Python 对象都以 <code class="language-plaintext highlighter-rouge">16B</code> 开头，第一个 <code class="language-plaintext highlighter-rouge">8B</code> 称为 <code class="language-plaintext highlighter-rouge">ob_refcnt</code> 用于引用计数，正如其名，但实际上只使用 <code class="language-plaintext highlighter-rouge">4B</code> 作为计数器，其他 <code class="language-plaintext highlighter-rouge">4B</code> 用作位图来设置对象上的标志，就像在 Ruby 中一样。然后剩余的 <code class="language-plaintext highlighter-rouge">8B</code> 只是一个指向对象类的指针。</p>
+
+<p>与比较，Ruby 的对象头称为 <code class="language-plaintext highlighter-rouge">struct RBasic</code> 也是 <code class="language-plaintext highlighter-rouge">16B</code> 。同样，它有一个指向类的指针，另一个 <code class="language-plaintext highlighter-rouge">8B</code> 用作存储许多不同的大位图(big bitmap)。</p>
+
+<p>然而，当在编译期间禁用 GIL 时，对象头现在是 <code class="language-plaintext highlighter-rouge">32B</code> ，大小加倍。它以 <code class="language-plaintext highlighter-rouge">8B ob_tid</code> 开头，用于线程 <code class="language-plaintext highlighter-rouge">ID</code>，存储哪个线程拥有该特定对象。然后 <code class="language-plaintext highlighter-rouge">ob_flags</code> 被显式布局，但已缩减到 <code class="language-plaintext highlighter-rouge">2B</code> ，为 <code class="language-plaintext highlighter-rouge">1B ob_mutex</code> 腾出空间，并为一些我不太了解的 GC 状态腾出另一个 <code class="language-plaintext highlighter-rouge">1B</code> 。</p>
+
+<p>该 <code class="language-plaintext highlighter-rouge">4B ob_refcnt</code> 字段仍然存在，但这次命名为 <code class="language-plaintext highlighter-rouge">ob_ref_local</code> ，并且还有一个 <code class="language-plaintext highlighter-rouge">8B ob_ref_shared</code> ，最后是对象类的指针。</p>
+
+<p>仅通过对象布局的改变，你就能感受到额外的复杂性，以及内存开销。每个对象额外 16 个字节不是微不足道的。</p>
+
+<p>现在，正如你可能从 <code class="language-plaintext highlighter-rouge">refcnt</code>(ref count) 字段中猜到的，Python 的内存主要通过引用计数来管理。它们还有一个标记和清除收集器，但它只是为了处理循环引用。在这方面，它与 Ruby 相当不同，但看看他们为了使这个线程安全而必须做的事情仍然很有趣。</p>
+
+<p>让我们看看在 <a href="https://github.com/python/cpython/blob/180ee43bde99b8ce4c4f1d5237ab191e26118061/Include/refcount.h#L245-L294">refcount.h 中定义的 Py_INCREF</a> 。在这里，它充满了针对各种架构的 ifdef ，所以这里有一个简化版本，只包含当 GIL 激活时执行的代码，并移除了一些调试代码：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="cp">#define _Py_IMMORTAL_MINIMUM_REFCNT ((Py_ssize_t)(1L &lt;&lt; 30))
+</span>
+<span class="k">static</span> <span class="kr">inline</span> <span class="n">Py_ALWAYS_INLINE</span> <span class="kt">int</span> <span class="nf">_Py_IsImmortal</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">op</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">op</span><span class="o">-&gt;</span><span class="n">ob_refcnt</span> <span class="o">&gt;=</span> <span class="n">_Py_IMMORTAL_MINIMUM_REFCNT</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kr">inline</span> <span class="n">Py_ALWAYS_INLINE</span> <span class="kt">void</span> <span class="nf">Py_INCREF</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">op</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">_Py_IsImmortal</span><span class="p">(</span><span class="n">op</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">op</span><span class="o">-&gt;</span><span class="n">ob_refcnt</span><span class="o">++</span><span class="p">;</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+<p>它非常简单，即使你不熟悉 C 语言，也应该能够读懂它。但基本上，它会检查引用计数是否设置为标记永生对象的魔法值，如果不是永生的，它就简单地执行一个常规的、非原子的、因此非常便宜的计数器递增。</p>
+
+<p>关于“永生对象”（Immortal Objects）的补充说明，这是一个由 <a href="https://instagram-engineering.com/copy-on-write-friendly-python-garbage-collection-ad6ed5233ddf">Instagram 工程师引入的非常酷的概念</a>，我也一直想将其引入到 Ruby 中。如果你对类似“写时复制”（Copy-on-Write）和内存节省这类话题感兴趣，那么它绝对值得一读。</p>
+
+<p>现在让我们看看移除 GIL 后的相同 <code class="language-plaintext highlighter-rouge">Py_INCREF</code> 函数：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define _Py_IMMORTAL_REFCNT_LOCAL UINT32_MAX
+# define _Py_REF_SHARED_SHIFT        2
+</span>
+<span class="k">static</span> <span class="kr">inline</span> <span class="n">Py_ALWAYS_INLINE</span> <span class="kt">int</span> <span class="nf">_Py_IsImmortal</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">op</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">_Py_atomic_load_uint32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">op</span><span class="o">-&gt;</span><span class="n">ob_ref_local</span><span class="p">)</span> <span class="o">==</span>
+            <span class="n">_Py_IMMORTAL_REFCNT_LOCAL</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kr">inline</span> <span class="n">Py_ALWAYS_INLINE</span> <span class="kt">int</span>
+<span class="nf">_Py_IsOwnedByCurrentThread</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">ob</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">ob</span><span class="o">-&gt;</span><span class="n">ob_tid</span> <span class="o">==</span> <span class="n">_Py_ThreadId</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kr">inline</span> <span class="n">Py_ALWAYS_INLINE</span> <span class="kt">void</span> <span class="nf">Py_INCREF</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">op</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">uint32_t</span> <span class="n">local</span> <span class="o">=</span> <span class="n">_Py_atomic_load_uint32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">op</span><span class="o">-&gt;</span><span class="n">ob_ref_local</span><span class="p">);</span>
+    <span class="kt">uint32_t</span> <span class="n">new_local</span> <span class="o">=</span> <span class="n">local</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">new_local</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// local is equal to _Py_IMMORTAL_REFCNT_LOCAL: do nothing</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">_Py_IsOwnedByCurrentThread</span><span class="p">(</span><span class="n">op</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">_Py_atomic_store_uint32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">op</span><span class="o">-&gt;</span><span class="n">ob_ref_local</span><span class="p">,</span> <span class="n">new_local</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="n">_Py_atomic_add_ssize</span><span class="p">(</span><span class="o">&amp;</span><span class="n">op</span><span class="o">-&gt;</span><span class="n">ob_ref_shared</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">_Py_REF_SHARED_SHIFT</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这是现在更加复杂。首先，需要原子地加载 <code class="language-plaintext highlighter-rouge">ob_ref_local</code> ，正如之前提到的，这比正常加载要昂贵，因为它需要 CPU 缓存同步。然后，我们仍然有对不朽对象的检查，没有新内容。</p>
+
+<p>有趣的部分是最后的 if ，因为有两种不同的情况，一种是对象由当前线程拥有，另一种则不是。因此，第一步是比较 <code class="language-plaintext highlighter-rouge">ob_tid</code> 和 <code class="language-plaintext highlighter-rouge">_Py_ThreadId()</code> 。这个函数太大，无法在这里包含，但你可以检查 <code class="language-plaintext highlighter-rouge">object.h</code> 中的实现，在大多数平台上，这基本上是免费的，因为线程 ID 总是存储在 CPU 寄存器中。</p>
+
+<p>当对象由当前线程拥有时，Python 可以通过先进行非原子性增加后进行原子性存储来避免问题。而在相反的情况下，整个增加操作必须原子性，这要昂贵得多，因为它涉及到比较和交换操作。这意味着在发生竞态条件的情况下，CPU 将重试增加操作，直到在没有竞态条件的情况下完成。</p>
+
+<p>用 Ruby 伪代码描述，它可能看起来像这样：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">atomic_compare_and_swap</span><span class="p">(</span><span class="n">was</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
+  <span class="c1"># 假设这个方法是一个 原子性 CPU 操作</span>
+  <span class="k">if</span> <span class="vi">@memory</span> <span class="o">==</span> <span class="n">was</span>
+    <span class="vi">@memory</span> <span class="o">=</span> <span class="n">now</span>
+    <span class="k">return</span> <span class="kp">true</span>
+  <span class="k">else</span>
+    <span class="k">return</span> <span class="kp">false</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">atomic_increment</span><span class="p">(</span><span class="n">add</span><span class="p">)</span>
+  <span class="kp">loop</span> <span class="k">do</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">atomic_load</span><span class="p">(</span><span class="vi">@memory</span><span class="p">)</span>
+    <span class="k">break</span> <span class="k">if</span> <span class="n">atomic_compare_and_swap</span><span class="p">(</span><span class="n">value</span> <span class="o">+</span> <span class="n">add</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>因此，您可以看到，曾经是一个非常平凡的操作，即一个主要的 Python 热点，变成了一个明显更复杂的过程。Ruby 不使用引用计数，所以如果尝试移除 GVL，这个特定的情况不会立即翻译成 Ruby，但 Ruby 仍然有一系列非常频繁调用的类似例程，会受到类似的影响。</p>
+
+<p>例如，因为 Ruby 的垃圾回收是代际和增量式的，当两个对象之间创建新的引用时，比如从 A 到 B ，Ruby 可能需要标记 A 为需要重新扫描，这是通过在位图中翻转一个位来完成的。这是需要使用原子操作进行更改的一个例子。</p>
+
+<p>但我们还没有谈到实际的锁定。当我第一次听说 Python 试图移除它们的 GIL 时，我本以为他们会利用现有的引用计数 API 来将锁定放入其中，但显然，他们并没有这样做。我不确定为什么，但我猜因为语义并不完全匹配。</p>
+
+<p>相反，他们必须做我之前提到的事情，即检查 C 中实现的所有方法，以添加显式的加锁和解锁调用。为了说明，我们可以看看 <code class="language-plaintext highlighter-rouge">list.clear()</code> 方法，它是 <code class="language-plaintext highlighter-rouge">Array#clear</code> 的 Python 等价方法。</p>
+
+<p>在移除 GIL 的努力之前，它看起来是这样的：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span>
+<span class="nf">PyList_Clear</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">self</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">PyList_Check</span><span class="p">(</span><span class="n">self</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">PyErr_BadInternalCall</span><span class="p">();</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">list_clear</span><span class="p">((</span><span class="n">PyListObject</span><span class="o">*</span><span class="p">)</span><span class="n">self</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>它看起来比实际要简单，因为大部分复杂性都在 <code class="language-plaintext highlighter-rouge">list_clear</code> 例程中，但无论如何，它相当直接。</p>
+
+<p>项目开始一段时间后，<a href="https://github.com/python/cpython/issues/127536">Python 开发者注意到他们忘记给 list.clear 和其他几个方法添加锁</a>，因此他们进行了修改：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span>
+<span class="nf">PyList_Clear</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">self</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">PyList_Check</span><span class="p">(</span><span class="n">self</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">PyErr_BadInternalCall</span><span class="p">();</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">Py_BEGIN_CRITICAL_SECTION</span><span class="p">(</span><span class="n">self</span><span class="p">);</span>
+    <span class="n">list_clear</span><span class="p">((</span><span class="n">PyListObject</span><span class="o">*</span><span class="p">)</span><span class="n">self</span><span class="p">);</span>
+    <span class="n">Py_END_CRITICAL_SECTION</span><span class="p">();</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>不太糟糕，他们设法将其全部封装在两个宏中，当 Python 启用 GIL 时，这些宏只是空操作。</p>
+
+<p>我不会解释 <code class="language-plaintext highlighter-rouge">Py_BEGIN_CRITICAL_SECTION</code> 中发生的一切，有些东西我无论如何也理解不了，但简而言之，它最终会进入 <code class="language-plaintext highlighter-rouge">_PyCriticalSection_BeginMutex</code> ，其中有一个快速路径和一个慢速路径：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">static</span> <span class="kr">inline</span> <span class="kt">void</span>
+<span class="nf">_PyCriticalSection_BeginMutex</span><span class="p">(</span><span class="n">PyCriticalSection</span> <span class="o">*</span><span class="n">c</span><span class="p">,</span> <span class="n">PyMutex</span> <span class="o">*</span><span class="n">m</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">PyMutex_LockFast</span><span class="p">(</span><span class="n">m</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">PyThreadState</span> <span class="o">*</span><span class="n">tstate</span> <span class="o">=</span> <span class="n">_PyThreadState_GET</span><span class="p">();</span>
+        <span class="n">c</span><span class="o">-&gt;</span><span class="n">_cs_mutex</span> <span class="o">=</span> <span class="n">m</span><span class="p">;</span>
+        <span class="n">c</span><span class="o">-&gt;</span><span class="n">_cs_prev</span> <span class="o">=</span> <span class="n">tstate</span><span class="o">-&gt;</span><span class="n">critical_section</span><span class="p">;</span>
+        <span class="n">tstate</span><span class="o">-&gt;</span><span class="n">critical_section</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uintptr_t</span><span class="p">)</span><span class="n">c</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="n">_PyCriticalSection_BeginSlow</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">m</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>快速路径所做的，是假设对象的 ob_mutex 字段设置为 0 ，并尝试通过原子比较和交换将其设置为 1 ：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//_Py_UNLOCKED is defined as 0 and _Py_LOCKED as 1 in Include/cpython/lock.h</span>
+<span class="k">static</span> <span class="kr">inline</span> <span class="kt">int</span>
+<span class="nf">PyMutex_LockFast</span><span class="p">(</span><span class="n">PyMutex</span> <span class="o">*</span><span class="n">m</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">uint8_t</span> <span class="n">expected</span> <span class="o">=</span> <span class="n">_Py_UNLOCKED</span><span class="p">;</span>
+    <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">lock_bits</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">m</span><span class="o">-&gt;</span><span class="n">_bits</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">_Py_atomic_compare_exchange_uint8</span><span class="p">(</span><span class="n">lock_bits</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">expected</span><span class="p">,</span> <span class="n">_Py_LOCKED</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>如果那样可以工作，它知道物体已被解锁，因此只需进行一点账目管理即可。</p>
+
+<p>如果这种方法不起作用，那么它就会进入慢速路径，而在这里情况开始变得相当复杂。但为了快速描述一下，它首先会使用一个自旋锁（spin-lock），并且进行40次迭代。所以，在某种程度上，它会连续不断地执行40次比较和交换逻辑，寄希望于最终能够成功。如果这仍然不起作用，它就会将线程“挂起”（park），并等待一个信号来恢复运行。如果你对了解更多感兴趣，可以查看 <code class="language-plaintext highlighter-rouge">Python/lock.c</code> <code class="language-plaintext highlighter-rouge">中的_PyMutex_LockTimed</code> 函数，并从那里跟踪代码。然而，对于我们的当前话题来说，互斥锁代码本身并没有那么有趣，因为假设大多数对象只被单个线程访问，所以快速路径才是最重要的。</p>
+
+<p>但除了这条快速路径的成本之外，如何将锁定和解锁语句集成到现有代码库中也很重要。如果你忘记了一个 <code class="language-plaintext highlighter-rouge">lock()</code> ，可能会导致虚拟机崩溃，而如果你忘记了一个 <code class="language-plaintext highlighter-rouge">unlock() </code>，可能会导致虚拟机死锁，这可以说是更糟糕的情况。</p>
+
+<p>所以，让我们回到那个 <code class="language-plaintext highlighter-rouge">list.clear()</code> 例子：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span>
+<span class="nf">PyList_Clear</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">self</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">PyList_Check</span><span class="p">(</span><span class="n">self</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">PyErr_BadInternalCall</span><span class="p">();</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">Py_BEGIN_CRITICAL_SECTION</span><span class="p">(</span><span class="n">self</span><span class="p">);</span>
+    <span class="n">list_clear</span><span class="p">((</span><span class="n">PyListObject</span><span class="o">*</span><span class="p">)</span><span class="n">self</span><span class="p">);</span>
+    <span class="n">Py_END_CRITICAL_SECTION</span><span class="p">();</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>您可能已经注意到 Python 是如何进行错误检查的。当发现一个不良的前置条件时，它通过一个 <code class="language-plaintext highlighter-rouge">PyErr_*</code> 函数生成一个异常，并返回 -1 。这是因为 <code class="language-plaintext highlighter-rouge">list.clear()</code> 总是返回 None （Python 的 <code class="language-plaintext highlighter-rouge">nil</code> ），所以其 C 实现的返回类型只是一个 int 。对于一个返回 Ruby 对象的函数，在错误条件下，它会返回一个 <code class="language-plaintext highlighter-rouge">NULL</code> 指针。</p>
+
+<p>例如 <code class="language-plaintext highlighter-rouge">list.__getitem__</code> ，它是 Python 中的 <code class="language-plaintext highlighter-rouge">Array#fetch</code> 的等价物，定义为：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PyObject</span> <span class="o">*</span>
+<span class="nf">PyList_GetItem</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">op</span><span class="p">,</span> <span class="n">Py_ssize_t</span> <span class="n">i</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">PyList_Check</span><span class="p">(</span><span class="n">op</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">PyErr_BadInternalCall</span><span class="p">();</span>
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">valid_index</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">Py_SIZE</span><span class="p">(</span><span class="n">op</span><span class="p">)))</span> <span class="p">{</span>
+        <span class="n">_Py_DECLARE_STR</span><span class="p">(</span><span class="n">list_err</span><span class="p">,</span> <span class="s">"list index out of range"</span><span class="p">);</span>
+        <span class="n">PyErr_SetObject</span><span class="p">(</span><span class="n">PyExc_IndexError</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">_Py_STR</span><span class="p">(</span><span class="n">list_err</span><span class="p">));</span>
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="p">((</span><span class="n">PyListObject</span> <span class="o">*</span><span class="p">)</span><span class="n">op</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ob_item</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>您可以在尝试使用越界索引访问 Python 列表时看到该错误：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> a <span class="o">=</span> <span class="o">[]</span>
+<span class="o">&gt;&gt;&gt;</span> a[12]
+Traceback <span class="o">(</span>most recent call last<span class="o">)</span>:
+  File <span class="s2">"&lt;stdin&gt;"</span>, line 1, <span class="k">in</span> &lt;module&gt;
+IndexError: list index out of range
+</code></pre></div></div>
+<p>您可以识别相同的 <code class="language-plaintext highlighter-rouge">IndexError</code> 和相同的 <code class="language-plaintext highlighter-rouge">list index out of range</code> 消息。</p>
+
+<p>所以在这两种情况下，当用 C 实现的 Python 方法需要抛出异常时，它们会构建异常对象，将其存储在某些线程局部状态中，然后返回一个特定的值以让解释器知道发生了异常。当解释器注意到函数的返回值是这些特殊值之一时，它开始回溯堆栈。从某种意义上说，Python 异常是经典 <code class="language-plaintext highlighter-rouge">if (error) { return error }</code> 模式的语法糖。</p>
+
+<p>现在让我们看看 Ruby 的 <code class="language-plaintext highlighter-rouge">Array#fetch</code> ，看看你是否注意到在处理越界情况时有什么不同：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">static</span> <span class="n">VALUE</span>
+<span class="nf">rb_ary_fetch</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="n">VALUE</span> <span class="o">*</span><span class="n">argv</span><span class="p">,</span> <span class="n">VALUE</span> <span class="n">ary</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// snip...</span>
+    <span class="kt">long</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">NUM2LONG</span><span class="p">(</span><span class="n">pos</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">RARRAY_LEN</span><span class="p">(</span><span class="n">ary</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">idx</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">block_given</span><span class="p">)</span> <span class="k">return</span> <span class="n">rb_yield</span><span class="p">(</span><span class="n">pos</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">rb_raise</span><span class="p">(</span><span class="n">rb_eIndexError</span><span class="p">,</span> <span class="s">"index %ld outside of..."</span><span class="p">,</span> <span class="cm">/* snip... */</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">ifnone</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">RARRAY_AREF</span><span class="p">(</span><span class="n">ary</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>你注意到在 rb_raise 之后没有明确的 <code class="language-plaintext highlighter-rouge">return</code> 吗？</p>
+
+<p>这是因为 Ruby 异常与 Python 异常非常不同，因为它们依赖于 <code class="language-plaintext highlighter-rouge">setjmp(3)</code>和 <code class="language-plaintext highlighter-rouge">longjmp(3)</code> 。</p>
+
+<p>不深入细节，这两个函数本质上允许你为堆栈设置一个“保存点”并跳转回它。当它们被使用时，有点像非局部跳转 <code class="language-plaintext highlighter-rouge">goto</code> ，你直接跳转回父函数，所有中间函数都不会返回。</p>
+
+<p>因此，Ruby 中的等效操作需要调用 <code class="language-plaintext highlighter-rouge">setjmp</code> ，并使用 <code class="language-plaintext highlighter-rouge">EC_PUSH_TAG</code> 宏将相关的检查点推送到执行上下文（本质上当前纤程），因此本质上每个核心方法现在都需要一个 <code class="language-plaintext highlighter-rouge">rescue</code> 子句，这并非免费。这是可行的，但可能比 <code class="language-plaintext highlighter-rouge">Py_BEGIN_CRITICAL_SECTION</code> 更昂贵。</p>
+
+<h1 id="我们继续">我们继续</h1>
+
+<p>但我们过于专注于是否能够移除 GVL，以至于我们没有停下来思考是否应该这么做。</p>
+
+<p>在 Python 的情况下，据我所知，推动移除 GIL 的努力主要来自机器学习社区，很大程度上是因为高效地喂养显卡需要相当高的并行度，而 <code class="language-plaintext highlighter-rouge">fork(2)</code> 并不适合。</p>
+
+<p>然而，根据我的理解，Python Web 社区，如 Django 用户，似乎对 <code class="language-plaintext highlighter-rouge">fork(2)</code> 满意，尽管 Python 在 Copy-on-Write（写时复制）方面相对于 Ruby 处于重大劣势，因为正如我们之前所看到的，它的引用计数实现意味着大多数对象不断被写入，因此 CoW 页面很快就会失效。</p>
+
+<p>另一方面，Ruby 的标记-清除 GC 对写时复制（Copy-On-Write）非常友好，因为几乎所有 GC 跟踪数据都不是存储在对象本身中，而是在外部位图中。因此，GVL 无锁线程的主要论点之一，即减少内存使用，在 Ruby 的情况下就不那么重要了。</p>
+
+<p>鉴于 Ruby（无论好坏）主要用于 Web 应用，这至少可以部分解释为什么移除 GVL 的压力不像 Python 那样强烈。同样，Node.js 和 PHP 也没有自由线程(free threading)，但据我所知，它们各自的社区对此并没有太多抱怨，除非我错过了什么。</p>
+
+<p>如果 Ruby 要采用某种形式的自由线程，它可能需要在所有对象中添加某种形式的锁，并且会频繁地修改它，这可能会严重降低写时复制（Copy-on-Write）的效率。因此，这不会是一个纯粹的附加功能。</p>
+
+<p>类似地，移除 Python GIL 的主要障碍之一一直是其对单线程性能的负面影响。当你处理易于并行化的算法时，即使单线程性能下降，通过使用更多的并行性，你可能仍然能够取得优势。但如果你使用 Python 的场景并行化困难，那么自由线程可能对你来说并不特别有吸引力。</p>
+
+<p>历史上，Guido van Rossum 对移除 GIL 的立场是，只要它不影响单线程性能，他就欢迎这样做，这就是为什么它从未发生。现在，随着 Guido 不再是 Python 的仁慈独裁者，Python 指导委员会似乎愿意接受单线程性能的一些退步，但还不清楚这实际上会有多大。有一些数字在流传，但大多是来自合成基准测试等。我个人很想知道这种变化对 Web 应用的影响，在对此类变化发生在 Ruby 上感到热情之前。同时，需要注意的是，<a href="https://peps.python.org/pep-0703/">移除已被接受，但有一些前提条件</a>，所以它还没有完成，他们可能在某个时候决定回头也是有可能的。</p>
+
+<p>另一个需要考虑的问题是，对 Ruby 的性能影响可能比对 Python 更严重，因为需要额外开销的对象是可变对象，而与 Python 不同的是，Ruby 中的字符串也属于可变对象。想想一个普通的 Web 应用程序会执行多少次字符串操作。</p>
+
+<p>另一方面，我想到的一个支持移除 GVL 的论点就是 YJIT。鉴于 YJIT 生成的本地代码及其关联的元数据仅限于进程范围，不再依赖 <code class="language-plaintext highlighter-rouge">fork(2)</code> 进行并行处理，仅通过共享所有这些内存，就能节省相当多的内存。然而，移除 GVL 也会让 YJIT 的工作变得更加困难，因此这也可能阻碍其进展。</p>
+
+<p>另一个支持自由线程的论点是，派生的进程难以共享连接。因此，当您开始将 Rails 应用程序扩展到大量 CPU 核心时，您将比具有自由线程的堆栈拥有更多连接到您的数据存储，这可能会成为一个大瓶颈，尤其是在一些像 PostgreSQL 这样的具有昂贵连接的数据库中。目前，这主要通过使用外部连接池器来解决，如 PgBouncer 或 ProxySQL，我知道它们并不完美。这又是一个可能出错的新组件，但我认为这比自由线程要少很多麻烦。</p>
+
+<p>最后，我想指出，GVL 并不是全部。如果目标是替换 fork(2) 为多线程，即使移除了 GVL，我们可能仍然不完全达到目标，因为 Ruby 的 GC 是“暂停世界（stop the world）”，所以随着单个进程中代码执行量的增加，因此分配也会更多，我们可能会发现它将成为新的竞争点。所以，我个人更愿意在希望移除 GVL 之前，先实现一个完全并发的 GC。</p>
+
+<blockquote>
+  <p>译者注：暂停世界（stop the world） ：因为 GC（垃圾回收） 的时候会暂停所有程序的执行，进行对游离变量的盘点、回收，再恢复执行。所以使用 GC 语言可能会很慢、甚至无法预测的卡住。高性能的游戏领域会用 C、C++ 这种手动控制内存回收的语言，避免这种特点。</p>
+</blockquote>
+
+<h1 id="所以保持现状">所以，保持现状？</h1>
+
+<p>在这个时候，有些人可能觉得我好像在试图洗脑人们，让他们认为 GVL 永远不会成为问题，但那并不是我的真实想法。</p>
+
+<p>我绝对认为 GVL 目前在实际应用中造成了一些非常真实的问题，即竞争。但这与想要移除 GVL 是截然不同的，我相信情况可以通过其他方式显著改善。</p>
+
+<p>如果您已经阅读了我<a href="https://byroot.github.io/ruby/performance/2025/01/23/io-instrumentation.html">关于如何在 Ruby 中正确测量 IO 时间</a>的短文，您可能已经熟悉了 GVL 竞争问题，但让我在这里包含相同的测试脚本：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s2">"bundler/inline"</span>
+
+<span class="n">gemfile</span> <span class="k">do</span>
+  <span class="n">gem</span> <span class="s2">"bigdecimal"</span> <span class="c1"># for trilogy</span>
+  <span class="n">gem</span> <span class="s2">"trilogy"</span>
+  <span class="n">gem</span> <span class="s2">"gvltools"</span>
+<span class="k">end</span>
+
+<span class="no">GVLTools</span><span class="o">::</span><span class="no">LocalTimer</span><span class="p">.</span><span class="nf">enable</span>
+
+<span class="k">def</span> <span class="nf">measure_time</span>
+  <span class="n">realtime_start</span> <span class="o">=</span> <span class="no">Process</span><span class="p">.</span><span class="nf">clock_gettime</span><span class="p">(</span><span class="no">Process</span><span class="o">::</span><span class="no">CLOCK_MONOTONIC</span><span class="p">,</span> <span class="ss">:float_millisecond</span><span class="p">)</span>
+  <span class="n">gvl_time_start</span> <span class="o">=</span> <span class="no">GVLTools</span><span class="o">::</span><span class="no">LocalTimer</span><span class="p">.</span><span class="nf">monotonic_time</span>
+  <span class="k">yield</span>
+
+  <span class="n">realtime</span> <span class="o">=</span> <span class="no">Process</span><span class="p">.</span><span class="nf">clock_gettime</span><span class="p">(</span><span class="no">Process</span><span class="o">::</span><span class="no">CLOCK_MONOTONIC</span><span class="p">,</span> <span class="ss">:float_millisecond</span><span class="p">)</span> <span class="o">-</span> <span class="n">realtime_start</span>
+  <span class="n">gvl_time</span> <span class="o">=</span> <span class="no">GVLTools</span><span class="o">::</span><span class="no">LocalTimer</span><span class="p">.</span><span class="nf">monotonic_time</span> <span class="o">-</span> <span class="n">gvl_time_start</span>
+  <span class="n">gvl_time_ms</span> <span class="o">=</span> <span class="n">gvl_time</span> <span class="o">/</span> <span class="mf">1_000_000.0</span>
+  <span class="n">io_time</span> <span class="o">=</span> <span class="n">realtime</span> <span class="o">-</span> <span class="n">gvl_time_ms</span>
+  <span class="nb">puts</span> <span class="s2">"io: </span><span class="si">#{</span><span class="n">io_time</span><span class="p">.</span><span class="nf">round</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">ms, gvl_wait: </span><span class="si">#{</span><span class="n">gvl_time_ms</span><span class="p">.</span><span class="nf">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">ms"</span>
+<span class="k">end</span>
+
+<span class="n">trilogy</span> <span class="o">=</span> <span class="no">Trilogy</span><span class="p">.</span><span class="nf">new</span>
+
+<span class="c1"># Measure a first time with just the main thread</span>
+<span class="n">measure_time</span> <span class="k">do</span>
+  <span class="n">trilogy</span><span class="p">.</span><span class="nf">query</span><span class="p">(</span><span class="s2">"SELECT 1"</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">fibonacci</span><span class="p">(</span> <span class="n">n</span> <span class="p">)</span>
+  <span class="k">return</span>  <span class="n">n</span>  <span class="k">if</span> <span class="p">(</span> <span class="mi">0</span><span class="o">..</span><span class="mi">1</span> <span class="p">).</span><span class="nf">include?</span> <span class="n">n</span>
+  <span class="p">(</span> <span class="n">fibonacci</span><span class="p">(</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">)</span> <span class="o">+</span> <span class="n">fibonacci</span><span class="p">(</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">2</span> <span class="p">)</span> <span class="p">)</span>
+<span class="k">end</span>
+
+<span class="c1"># Spawn 5 CPU-heavy threads</span>
+<span class="n">threads</span> <span class="o">=</span> <span class="mi">5</span><span class="p">.</span><span class="nf">times</span><span class="p">.</span><span class="nf">map</span> <span class="k">do</span>
+  <span class="no">Thread</span><span class="p">.</span><span class="nf">new</span> <span class="k">do</span>
+    <span class="kp">loop</span> <span class="k">do</span>
+      <span class="n">fibonacci</span><span class="p">(</span><span class="mi">25</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="c1"># Measure again with the background threads</span>
+<span class="n">measure_time</span> <span class="k">do</span>
+  <span class="n">trilogy</span><span class="p">.</span><span class="nf">query</span><span class="p">(</span><span class="s2">"SELECT 1"</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+<p>如果您运行它，您应该会得到类似的结果：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>realtime: 0.22ms, gvl_wait: 0.0ms, io: 0.2ms
+realtime: 549.29ms, gvl_wait: 549.22ms, io: 0.1ms
+</code></pre></div></div>
+
+<p>本脚本演示了 GVL 竞争如何对应用程序的延迟造成破坏。即使您使用像 Unicorn 或 Pitchfork 这样的单线程服务器，这也并不意味着应用程序只使用单个线程。拥有各种后台线程来执行一些服务任务，如监控，是非常常见的。其中一个例子是 <code class="language-plaintext highlighter-rouge">statsd-instrument</code> gem。当您发出一个指标时，它会在内存中收集，然后一个后台线程负责批量序列化和发送这些指标。它应该主要是 IO 工作，因此不应该对主线程有太大影响，但在实践中，可能会发生这些类型的后台线程比您希望的更长时间地持有 GVL。</p>
+
+<p>所以，尽管我的演示脚本非常极端，你绝对可以在生产环境中体验到一定程度的 GVL 竞争，无论你使用什么服务器。</p>
+
+<p>但我认为尝试移除 GVL 并不一定是解决这个问题的最佳方法，因为这需要多年的泪水和汗水，才能获得点好处。</p>
+
+<p>在 2006 年之前，多核 CPU 基本上不存在，然而，你仍然能够以相对顺畅的方式在电脑上多任务处理，比如在 Excel 中处理数字的同时在 Winamp 中播放音乐，而且这一切都不需要并行处理。</p>
+
+<p>那是因为即使是 Windows 95 也有一个相当不错的线程调度器，但 Ruby 还没有。当 Ruby 中的线程准备好执行并需要等待 GVL 时，它会将其放入一个 FIFO 队列中，每当正在运行的线程释放 GVL，无论是由于进行了某些 I/O 操作还是因为运行了分配的 100 毫秒后，Ruby 的线程调度器就会弹出下一个线程。</p>
+
+<p>没有任何优先级的概念。一个半不错的调度器应该能够注意到一个线程主要是 IO，打断当前线程来更快地调度 IO 密集型线程可能是值得的。</p>
+
+<p>在尝试移除 GVL 之前，尝试实现一个合适的线程调度器是值得的。这个想法归功于 <a href="https://github.com/jhawthorn/">John Hawthorn</a>。</p>
+
+<p>与此同时，<a href="https://github.com/tenderlove">Aaron Patterson(tenderlove)</a> 在 <a href="https://bugs.ruby-lang.org/issues/20861">Ruby 3.4 中发布了一个更改，允许通过环境变量减少 100 毫秒的量子</a>。这并不能解决所有问题，但可能已经在某些情况下有所帮助，所以这是一个开始。</p>
+
+<blockquote>
+  <p>译者注：量子（quantum）是 Ruby 解释器中的一个超时时间，默认100毫秒，Ruby 3.4 可以被轻松设置。解释器在执行线程的时候，如果超过了这个时间，就会回收 GVL，切换另一个线程执行。主要用来调度多个线程工作使用。当降低这个时间，可以更精细的切分正在执行的函数，加快多个线程排队轮转执行的速度，可以提高 IO 密集型应用的性能。</p>
+</blockquote>
+
+<p>另一个约翰在我们的一次对话中分享的想法是，允许在 GVL 释放时进行更多的 CPU 操作。目前，大多数数据库客户端只在 IO 时真正释放 GVL，把它想象成这样：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+  <span class="n">response</span> <span class="o">=</span> <span class="kp">nil</span>
+  <span class="n">request</span> <span class="o">=</span> <span class="n">build_network_packet</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+
+  <span class="n">release_gvl</span> <span class="k">do</span>
+    <span class="n">socket</span><span class="p">.</span><span class="nf">write</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">socket</span><span class="p">.</span><span class="nf">read</span>
+  <span class="k">end</span>
+
+  <span class="n">parse_db_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>对于返回大量数据的简单查询，很可能你在持有 GVL（全局解释器锁）的情况下构建 Ruby 对象所花费的时间，比在释放 GVL 的情况下等待数据库响应的时间要多得多。</p>
+
+<p>这是因为非常非常少的 Ruby C API 可以使用 GVL 释放，特别是任何分配对象或可能抛出异常的内容都必须获取 GVL。</p>
+
+<p>如果取消这一限制，使得你可以在释放 GVL 的情况下创建基本的 Ruby 对象（如字符串、数组和哈希表），那么很可能会让 GVL 释放的时间更长，并显著减少线程竞争。</p>
+
+<h1 id="结论">结论</h1>
+
+<p>我本人并不真正支持取消 GVL，我认为这种权衡并不值得，至少目前还不值得，我也不认为它将像一些人想象的那样成为一个巨大的变革。</p>
+
+<p>如果它对经典（主要是单线程）性能没有影响，我可能不会介意，但它几乎肯定会显著降低单线程性能，因此这感觉有点像“多得不如现得”的论点。</p>
+
+<blockquote>
+  <p>译者注：a bird in the hand is worth two in the bush（一鸟在手胜过双鸟在林）。这里翻译为：多得不如现得。到手才是真的，落袋为安的意思。</p>
+</blockquote>
+
+<p>相反，我认为我们可以对 Ruby 进行一些更容易和更小的改动，这将能在更短的时间内以及更少的努力下改善情况，既对 Ruby 核心也对 Ruby 用户来说都是如此。</p>
+
+<p>当然，这只是单一 Ruby 用户的观点，主要考虑的是我自己的使用场景，最终决定权在 Matz 手中，根据他认为社区想要和需要什么来决定。</p>
+
+<p>目前，Matz 不想移除 GVL，而是接受了 Ractor 的提议。也许他的观点有一天会改变，我们拭目以待。</p>
+
+<p>Ractor 我本想在这篇帖子中讨论的，但已经太长了，所以可能下次再说。</p>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/2025/02/08/所以，你想移除 GVL？';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

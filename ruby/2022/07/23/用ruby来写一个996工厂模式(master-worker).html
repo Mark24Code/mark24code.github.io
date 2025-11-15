@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>用Ruby讲从创业到996公司的故事(戏说master-worker模式)</title>
+  <meta name="description" content="前言阅读大概需要 20 分钟。假设你希望了解 线程、线程池、集群模式/Master-Worker 模式、调度器。需要了解 Ruby 基本的用法和面向对象思想。本文戏说，无须严肃对待。勿对号入座。个人也没有严肃观点。个人观点和所有人没有关系。本文博客地址完整代码示例github:rb-master-worker-d...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/2022/07/23/%E7%94%A8ruby%E6%9D%A5%E5%86%99%E4%B8%80%E4%B8%AA996%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F(master-worker).html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">用Ruby讲从创业到996公司的故事(戏说master-worker模式)</h1>
+    <p class="artilce_meta"><time datetime="2022-07-23T18:58:41+08:00" itemprop="datePublished">Jul 23, 2022</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <h1 id="前言">前言</h1>
+
+<p>阅读大概需要 20 分钟。</p>
+
+<p>假设你希望了解 线程、线程池、集群模式/Master-Worker 模式、调度器。</p>
+
+<p>需要了解 Ruby 基本的用法和面向对象思想。</p>
+
+<p>本文戏说，无须严肃对待。勿对号入座。个人也没有严肃观点。个人观点和所有人没有关系。</p>
+
+<p><a href="https://mark24code.github.io/ruby/2022/07/23/%E7%94%A8ruby%E6%9D%A5%E5%86%99%E4%B8%80%E4%B8%AA996%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F(master-worker).html">本文博客地址</a></p>
+
+<h2 id="完整代码示例">完整代码示例</h2>
+
+<p><a href="https://github.com/Mark24Code/rb-master-worker-demo">github:rb-master-worker-demo</a></p>
+
+<h1 id="master-worker-模式">Master Worker 模式</h1>
+
+<p>MasterWorker 模式，也有翻译成作集群模式、也叫 Master-Slave 模式。</p>
+
+<blockquote>
+  <p>Git 不许使用 master 了，换成了 main ，Master/Slave 具有政治不正确的歧视色彩。不过这不重要了。其实这个名字很能表达这个模式的特点。</p>
+</blockquote>
+
+<p>主要思想就是由一个 Master 抽象对象来调度 Worker 对象来工作。</p>
+
+<h2 id="ruby-文学编程用代码讲故事">Ruby 文学编程，用代码讲故事</h2>
+
+<p>其实这也非常像现实中的工作模型。Ruby 天生面向对象，表达的文学性，我们可以很方便的来使用代码模拟这种现实情况。
+我们来用 Ruby 模拟下现实中这种情况，顺便学下如何实现这个模式。</p>
+
+<h2 id="约定">约定</h2>
+
+<p>会出现几个类：</p>
+
+<ul>
+  <li>Master 代表 “领导”，不干活，主要工作任务是分配任务，这是 Master 类的特征。</li>
+  <li>Worker 代表 “打工人”，工作和创造价值的主体。主要任务就是干活。</li>
+  <li>Workshop 代表 “公司”，主要是负责接单。</li>
+</ul>
+
+<p>故事的思路：</p>
+
+<p>我们自己是客户，把“任务”订单交给“公司”，这些任务会转交给“领导”手中，然后“领导”会排期，把工作布置给“打工人”。最终“打工人”乐此不疲的完成任务。</p>
+
+<h2 id="实现-打工人-worker-类">实现 打工人 Worker 类</h2>
+
+<h3 id="step1-给员工工号">step1 给员工工号</h3>
+
+<p>首先我们建立一个 Worker 类，我们给他一个名字属性。<code class="language-plaintext highlighter-rouge">attr</code> 暴露出 <code class="language-plaintext highlighter-rouge">name</code> 属性。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Workshop.rb</span>
+
+<span class="k">class</span> <span class="nc">Worker</span>
+  <span class="kp">attr</span> <span class="ss">:name</span>
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+    <span class="vi">@name</span> <span class="o">=</span> <span class="s2">"worker@</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>我们采用 TDD 方式来逐步实现我们的想法：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">#Workshop_test.rb</span>
+<span class="nb">require</span> <span class="s1">'minitest/autorun'</span>
+<span class="nb">require_relative</span> <span class="s1">'../lib/Workshop'</span>
+
+<span class="n">describe</span> <span class="no">Worker</span> <span class="k">do</span>
+  <span class="n">it</span> <span class="s2">"check worker name"</span> <span class="k">do</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="no">Worker</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s2">"ruby01"</span><span class="p">)</span>
+    <span class="n">assert_equal</span> <span class="n">w</span><span class="p">.</span><span class="nf">name</span><span class="p">,</span> <span class="s2">"worker@ruby01"</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>很快，我们知道这名打工人他叫 “ruby01” 员工。</p>
+
+<h2 id="step2-给员工-kpiokr">step2 给员工 KPI/OKR</h2>
+
+<p>我们不希望打工人每次只能做一件事，你必须得推着他才能工作。他最好学会“成长”会自己努力的工作。
+其实就是一堆任务，我们希望他们一直忙。给他 N 件事情，他一个一个自己做。
+我们要给他一个目标，也就是 KPI 或者 OKR 随便吧，实际上这是一个队列对吧。我们用队列实现。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s1">'thread'</span>
+
+<span class="k">class</span> <span class="nc">Worker</span>
+  <span class="kp">attr</span> <span class="ss">:name</span>
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+    <span class="vi">@name</span> <span class="o">=</span> <span class="s2">"worker@</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span>
+    <span class="vi">@queue</span> <span class="o">=</span> <span class="no">Queue</span><span class="p">.</span><span class="nf">new</span>
+    <span class="vi">@thr</span> <span class="o">=</span> <span class="no">Thread</span><span class="p">.</span><span class="nf">new</span> <span class="p">{</span> <span class="n">perfom</span> <span class="p">}</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">&lt;&lt;</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+    <span class="vi">@queue</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">join</span>
+    <span class="vi">@thr</span><span class="p">.</span><span class="nf">join</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">perfom</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">job</span> <span class="o">=</span> <span class="vi">@queue</span><span class="p">.</span><span class="nf">deq</span><span class="p">)</span>
+      <span class="k">break</span> <span class="k">if</span> <span class="n">job</span> <span class="o">==</span> <span class="ss">:done</span>
+      <span class="nb">puts</span> <span class="s2">"worker@</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">: job:</span><span class="si">#{</span><span class="n">job</span><span class="si">}</span><span class="s2">"</span>
+      <span class="n">job</span><span class="p">.</span><span class="nf">call</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">size</span>
+    <span class="vi">@queue</span><span class="p">.</span><span class="nf">size</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>现在打工人变得充实了许多，他自从来了公司培训之后，就拥有了很多属性和方法。</p>
+
+<ul>
+  <li>属性说明：</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">@queue</code> 就是他的 OKR 清单，他必须完成所有的工作任务。</p>
+
+<p><code class="language-plaintext highlighter-rouge">@thr</code> 意思是 thread 缩写，这里是会使用一个线程来调用 <code class="language-plaintext highlighter-rouge">perform</code> 我们在用线程模拟打工人干活这件事。可以理解为 <code class="language-plaintext highlighter-rouge">@thr</code> 就是打工人的灵魂。</p>
+
+<ul>
+  <li>方法说明：</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">&lt;&lt;</code> 是一个 push 方法的语法糖，就给给自己的 OKR 里添加任务。</p>
+
+<p><code class="language-plaintext highlighter-rouge">perform</code>
+可能要说下 perform 方法, 这里是 “运行”的意思哈，不是“表演” :P。
+打工人怎么干活呢？这得说道说道。我们得指导他如何“成长”。</p>
+
+<p>我们前面说了 <code class="language-plaintext highlighter-rouge">@queue</code> 就是他的 OKR, 他必须从自己的 OKR 中取出任务然后执行。这里我用了 <code class="language-plaintext highlighter-rouge">job.call</code>。
+暗示，这必须是一个 callable 对象，在 ruby 里也就是拥有 <code class="language-plaintext highlighter-rouge">call</code> 方法的对象。可以是 lambda、或者实现 call 的。
+这也很合理，需求必须能做才会做。没法做的需求，做不了就是做不了。</p>
+
+<p>但是如果给了一个 <code class="language-plaintext highlighter-rouge">:done</code> 另说。循环会结束，这个线程会消失。(裁员了 :P)</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">def</span> <span class="nf">perfom</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">job</span> <span class="o">=</span> <span class="vi">@queue</span><span class="p">.</span><span class="nf">deq</span><span class="p">)</span>
+      <span class="k">break</span> <span class="k">if</span> <span class="n">job</span> <span class="o">==</span> <span class="ss">:done</span>
+      <span class="nb">puts</span> <span class="s2">"worker@</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">: job:</span><span class="si">#{</span><span class="n">job</span><span class="si">}</span><span class="s2">"</span>
+      <span class="n">job</span><span class="p">.</span><span class="nf">call</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>其实 Queue 这个对象很有意思，Ruby 做了一些工作。Queue 在空的时候，虚拟机会让线程进入睡眠等待。如果队列里有任务，就会继续工作。Ruby 很贴心，果然是程序员的好朋友啊。 其实我不知道其他语言什么样，懒得查了。</p>
+</blockquote>
+
+<p><code class="language-plaintext highlighter-rouge">join</code> 方法是一个 Thread 的线程方法，主要的作用是告诉主线程你要等待每一个子线程（自己）的完成。如果不写这句，主线程如果比所有子线程提前结束。那么子线程会被全部关闭。简而言之 <code class="language-plaintext highlighter-rouge">join</code> 就是同步等待线程结果。</p>
+
+<p>让我们来看看 TDD:</p>
+
+<p>我们可以加一段验证工号 ruby02 的打工人是不是如期的完成了工作。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># ....</span>
+  <span class="n">it</span> <span class="s2">"check worekr do sth job"</span> <span class="k">do</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="no">Worker</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s2">"ruby02"</span><span class="p">)</span>
+
+    <span class="n">finished</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">w</span> <span class="o">&lt;&lt;</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">"do job 1"</span><span class="p">;</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span> <span class="s2">"job1"</span><span class="p">}</span>
+    <span class="n">w</span> <span class="o">&lt;&lt;</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">"do job 2"</span><span class="p">;</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span> <span class="s2">"job2"</span><span class="p">}</span>
+    <span class="n">w</span> <span class="o">&lt;&lt;</span> <span class="ss">:done</span>
+    <span class="n">w</span><span class="p">.</span><span class="nf">join</span>
+
+    <span class="n">assert_equal</span> <span class="n">finished</span><span class="p">,</span> <span class="p">[</span><span class="s2">"job1"</span><span class="p">,</span><span class="s2">"job2"</span><span class="p">]</span>
+  <span class="k">end</span>
+
+<span class="c1"># ....</span>
+</code></pre></div></div>
+
+<p>其实到这里，一个合格的打工人就打造完毕了。打工人很简单，只要吃苦耐劳，一切都 OK。
+下面我们要实现下 Workshop 公司类。</p>
+
+<h2 id="实现-公司-workshop-类">实现 公司 Workshop 类</h2>
+
+<h3 id="在此之前我们先实现创业公司-miniworkshop-类">在此之前，我们先实现：创业公司 MiniWorkshop 类</h3>
+
+<p>其实我打算过渡下，首先实现一个 “创业公司” <code class="language-plaintext highlighter-rouge">MiniWorkshop</code>。
+创业公司刚起步，一般是只有“打工人”，没有真正意义上的中层出现。
+这一时期非常简单，伊甸园时期。有活大家一起干，大家都是兄弟。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">MiniWorkshop</span>
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+    <span class="vi">@worker_count</span> <span class="o">=</span> <span class="n">count</span> <span class="c1"># 打工人数量</span>
+    <span class="vi">@workers</span> <span class="o">=</span> <span class="vi">@worker_count</span><span class="p">.</span><span class="nf">times</span><span class="p">.</span><span class="nf">map</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span> <span class="c1"># 根据数量生成(招聘)打工人</span>
+      <span class="no">Worker</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="c1"># 给个工号</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 初创公司分配任务</span>
+  <span class="k">def</span> <span class="nf">&lt;&lt;</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">job</span> <span class="o">==</span> <span class="ss">:done</span>
+      <span class="vi">@workers</span><span class="p">.</span><span class="nf">map</span> <span class="p">{</span><span class="o">|</span><span class="n">m</span><span class="o">|</span> <span class="n">m</span> <span class="o">&lt;&lt;</span> <span class="n">job</span><span class="p">}</span>
+    <span class="k">else</span>
+      <span class="c1"># 随机选择一个打工人，接活</span>
+      <span class="vi">@workers</span><span class="p">.</span><span class="nf">sample</span> <span class="o">&lt;&lt;</span> <span class="n">job</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">join</span>
+    <span class="vi">@workers</span><span class="p">.</span><span class="nf">map</span> <span class="p">{</span><span class="o">|</span><span class="n">m</span><span class="o">|</span> <span class="n">m</span><span class="p">.</span><span class="nf">join</span><span class="p">}</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>这里可能说下</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">def</span> <span class="nf">&lt;&lt;</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">job</span> <span class="o">==</span> <span class="ss">:done</span>
+      <span class="vi">@workers</span><span class="p">.</span><span class="nf">map</span> <span class="p">{</span><span class="o">|</span><span class="n">m</span><span class="o">|</span> <span class="n">m</span> <span class="o">&lt;&lt;</span> <span class="n">job</span><span class="p">}</span>
+    <span class="k">else</span>
+      <span class="c1"># 随机选择一个打工人，接活</span>
+      <span class="vi">@workers</span><span class="p">.</span><span class="nf">sample</span> <span class="o">&lt;&lt;</span> <span class="n">job</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+</code></pre></div></div>
+
+<p>这里干活的模式可能不好，因为我们竟然 <code class="language-plaintext highlighter-rouge">Array#sample</code> 方式。这是一个随机方法。随机选择一个。
+看似不合理，实际上也合情合理。</p>
+
+<p>创业公司初期虽然是草根，可是大家哪个不是大佬。所以活来了谁都行，问题不大。</p>
+
+<p>没事我们后面再改进好了。</p>
+
+<p>TDD:</p>
+
+<p>我们的单元测试其实描述了一个故事。一家创业公司，只有 2 个人。接到了一个订单是 4 个工作内容。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># ...</span>
+  <span class="n">it</span> <span class="s2">"check MiniWorkshop work"</span> <span class="k">do</span>
+    <span class="n">ws</span> <span class="o">=</span> <span class="no">MiniWorkshop</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">finished</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">"job1"</span><span class="p">;</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span> <span class="s2">"job1"</span><span class="p">}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">"job2"</span><span class="p">;</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span> <span class="s2">"job2"</span><span class="p">}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">"job3"</span><span class="p">;</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span> <span class="s2">"job3"</span><span class="p">}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">"job4"</span><span class="p">;</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span> <span class="s2">"job4"</span><span class="p">}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="ss">:done</span>
+
+    <span class="n">ws</span><span class="p">.</span><span class="nf">join</span>
+
+    <span class="n">assert_equal</span> <span class="n">finished</span><span class="p">.</span><span class="nf">size</span><span class="p">,</span> <span class="mi">4</span>
+  <span class="k">end</span>
+<span class="c1"># ...</span>
+</code></pre></div></div>
+
+<p>我们回过头再看 <code class="language-plaintext highlighter-rouge">MiniWorkshop</code> 类，初始化的时候创建了两个员工。任务来了就随机分配给一个员工。
+很符合小作坊的模式。</p>
+
+<h2 id="实现上市公司">实现上市公司</h2>
+
+<p>公司变大了，就不止 2 个员工了。可能四五百号，随机交给一个员工，不现实。中层管理出现。中层出现意味着我们公司的类也要进行改变，公司需要改革。</p>
+
+<p>我们先实现一个改革之后的 Workshop 公司类。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Workshop</span>
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">master_name</span><span class="p">)</span>
+    <span class="vi">@worker_count</span> <span class="o">=</span> <span class="n">count</span>
+    <span class="vi">@workers</span> <span class="o">=</span> <span class="vi">@worker_count</span><span class="p">.</span><span class="nf">times</span><span class="p">.</span><span class="nf">map</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+      <span class="no">Worker</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">end</span>
+    <span class="vi">@master</span> <span class="o">=</span> <span class="no">Master</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="vi">@workers</span><span class="p">)</span> <span class="c1"># 新增角色</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">&lt;&lt;</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">job</span> <span class="o">==</span> <span class="ss">:done</span>
+      <span class="vi">@workers</span><span class="p">.</span><span class="nf">map</span> <span class="p">{</span><span class="o">|</span><span class="n">m</span><span class="o">|</span> <span class="n">m</span> <span class="o">&lt;&lt;</span> <span class="n">job</span><span class="p">}</span>
+    <span class="k">else</span>
+      <span class="vi">@master</span><span class="p">.</span><span class="nf">assign</span><span class="p">(</span><span class="n">job</span><span class="p">)</span> <span class="c1"># master分配任务</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">join</span>
+    <span class="vi">@workers</span><span class="p">.</span><span class="nf">map</span> <span class="p">{</span><span class="o">|</span><span class="n">m</span><span class="o">|</span> <span class="n">m</span><span class="p">.</span><span class="nf">join</span><span class="p">}</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>可以看到，我们在初始化函数里新增了 <code class="language-plaintext highlighter-rouge">@master</code> 他接受 <code class="language-plaintext highlighter-rouge">@workers</code> 作为参数。毕竟领导要点兵啊。</p>
+
+<p><code class="language-plaintext highlighter-rouge">&lt;&lt;</code>方法也进行了改进，由以前的 直接让 @workers 接收任务，变成 <code class="language-plaintext highlighter-rouge">@master.assign</code> 分配任务。</p>
+
+<p>让我们来看下 Master 类</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Master</span>
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">workers</span><span class="p">)</span>
+    <span class="vi">@workers</span> <span class="o">=</span> <span class="n">workers</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+    <span class="vi">@workers</span><span class="p">.</span><span class="nf">sort</span><span class="p">{</span><span class="o">|</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="o">|</span> <span class="n">a</span><span class="p">.</span><span class="nf">size</span> <span class="o">&lt;=&gt;</span> <span class="n">b</span><span class="p">.</span><span class="nf">size</span><span class="p">}.</span><span class="nf">first</span> <span class="o">&lt;&lt;</span> <span class="n">job</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>其实也不复杂。我们保持了 @workers 的指针， <code class="language-plaintext highlighter-rouge">assign</code> 方法更像是把以前分配的逻辑接过来实现了一遍。</p>
+
+<p>这次我们改了分配任务的方式，我们要根据 <code class="language-plaintext highlighter-rouge">Worker#size</code> 忙碌程度来分配任务。</p>
+
+<p>毕竟嘛，领导有个方法论，会比小作坊高级很多。</p>
+
+<h2 id="多重领导">多重领导</h2>
+
+<p>一个领导就足够了么？不。</p>
+
+<p>现实中我们见过形形色色的领导，有的是自己培养，有的是留过洋，有的是大厂空降。他们拥有不同的“方法论”，也就是 <code class="language-plaintext highlighter-rouge">Master#assign</code> 的方式可能不同。</p>
+
+<p>我们给公司再加两个领导。</p>
+
+<h3 id="无限方法论">无限方法论</h3>
+
+<p>996ICU 领导：</p>
+
+<p>我们使用了 <code class="language-plaintext highlighter-rouge">Array#cycle</code> 的方式，这是一个迭代器。比如 <code class="language-plaintext highlighter-rouge">[1,2,3].cycle</code> 每次 <code class="language-plaintext highlighter-rouge">.next</code> 会产生 <code class="language-plaintext highlighter-rouge">1、2、3、1、2、3、1、2、3 .....</code> 无限循环。</p>
+
+<p>这个方法论就是 996 方法论，只要干不死就往死里干。人海战术，把人轮番填上。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ICU996Master</span>
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">workers</span><span class="p">)</span>
+    <span class="vi">@current_worker</span> <span class="o">=</span> <span class="n">workers</span><span class="p">.</span><span class="nf">cycle</span> <span class="c1"># 迭代器</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+    <span class="vi">@current_worker</span><span class="p">.</span><span class="nf">next</span> <span class="o">&lt;&lt;</span> <span class="n">job</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<h3 id="分组任务方法论">分组任务方法论</h3>
+
+<p>等我们的公司变大了，我们的业务也会变得丰富，任务不是那么单一。很多工作要添加上组别 group_id，分门别类的交给不同工种的打工人，比如 开发、产品、测试、设计、运营。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">GroupMaster</span>
+  <span class="no">GROUPS</span> <span class="o">=</span> <span class="p">[</span><span class="ss">:group1</span><span class="p">,</span> <span class="ss">:group2</span><span class="p">,</span> <span class="ss">:group3</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">workers</span><span class="p">)</span>
+    <span class="vi">@workers</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">workers_per_group</span> <span class="o">=</span> <span class="n">workers</span><span class="p">.</span><span class="nf">length</span> <span class="o">/</span> <span class="no">GROUPS</span><span class="p">.</span><span class="nf">size</span>
+    <span class="n">workers</span><span class="p">.</span><span class="nf">each_slice</span><span class="p">(</span><span class="n">workers_per_group</span><span class="p">).</span><span class="nf">each_with_index</span> <span class="k">do</span> <span class="o">|</span><span class="n">slice</span><span class="p">,</span> <span class="n">index</span><span class="o">|</span>
+      <span class="n">group_id</span> <span class="o">=</span> <span class="no">GROUPS</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+      <span class="vi">@workers</span><span class="p">[</span><span class="n">group_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">slice</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+    <span class="n">worker</span> <span class="o">=</span> <span class="vi">@workers</span><span class="p">[</span><span class="n">job</span><span class="p">.</span><span class="nf">group</span><span class="p">].</span><span class="nf">sort_by</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:size</span><span class="p">).</span><span class="nf">first</span>
+    <span class="n">worker</span> <span class="o">&lt;&lt;</span> <span class="n">job</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>然后我们可以把不同风格的领导班子集中起来</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">Masters</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="ss">normal: </span><span class="no">NormalMaster</span><span class="p">,</span>
+  <span class="no">ICU996</span><span class="p">:</span> <span class="no">ICU996Master</span><span class="p">,</span>
+  <span class="ss">group: </span><span class="no">GroupMaster</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>我们改造下 <code class="language-plaintext highlighter-rouge">Workshop</code> 毕竟这个词是一个 工作室的意思，其实是个小部门。</p>
+
+<p>我们改造之后，我们的小部门可以按照风格不同的领导进行分派工作。</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Workshop</span>
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">master_name</span><span class="p">)</span> <span class="c1"># 新增 master_name 指定</span>
+    <span class="vi">@worker_count</span> <span class="o">=</span> <span class="n">count</span>
+    <span class="vi">@workers</span> <span class="o">=</span> <span class="vi">@worker_count</span><span class="p">.</span><span class="nf">times</span><span class="p">.</span><span class="nf">map</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+      <span class="no">Worker</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">end</span>
+    <span class="c1"># 匹配 master</span>
+    <span class="vi">@master</span> <span class="o">=</span> <span class="no">Masters</span><span class="p">[</span><span class="n">master_name</span><span class="p">].</span><span class="nf">new</span><span class="p">(</span><span class="vi">@workers</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">&lt;&lt;</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">job</span> <span class="o">==</span> <span class="ss">:done</span>
+      <span class="vi">@workers</span><span class="p">.</span><span class="nf">map</span> <span class="p">{</span><span class="o">|</span><span class="n">m</span><span class="o">|</span> <span class="n">m</span> <span class="o">&lt;&lt;</span> <span class="n">job</span><span class="p">}</span>
+    <span class="k">else</span>
+      <span class="vi">@master</span><span class="p">.</span><span class="nf">assign</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">join</span>
+    <span class="vi">@workers</span><span class="p">.</span><span class="nf">map</span> <span class="p">{</span><span class="o">|</span><span class="n">m</span><span class="o">|</span> <span class="n">m</span><span class="p">.</span><span class="nf">join</span><span class="p">}</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>我们来看看不同部门的 TDD</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">it</span> <span class="s2">"check Workshop@ normal master"</span> <span class="k">do</span>
+    <span class="n">ws</span> <span class="o">=</span> <span class="no">Workshop</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="ss">:normal</span><span class="p">)</span>
+
+    <span class="n">finished</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">"job1"</span><span class="p">;</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span> <span class="s2">"job1"</span><span class="p">}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">"job2"</span><span class="p">;</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span> <span class="s2">"job2"</span><span class="p">}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">"job3"</span><span class="p">;</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span> <span class="s2">"job3"</span><span class="p">}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">"job4"</span><span class="p">;</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span> <span class="s2">"job4"</span><span class="p">}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="ss">:done</span>
+
+    <span class="n">ws</span><span class="p">.</span><span class="nf">join</span>
+
+    <span class="n">assert_equal</span> <span class="n">finished</span><span class="p">.</span><span class="nf">size</span><span class="p">,</span> <span class="mi">4</span>
+  <span class="k">end</span>
+
+  <span class="n">it</span> <span class="s2">"check Workshop@ ICU996 master"</span> <span class="k">do</span>
+    <span class="n">ws</span> <span class="o">=</span> <span class="no">Workshop</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="ss">:ICU996</span><span class="p">)</span>
+
+    <span class="n">finished</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">"job1"</span><span class="p">;</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span> <span class="s2">"job1"</span><span class="p">}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">"job2"</span><span class="p">;</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span> <span class="s2">"job2"</span><span class="p">}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">"job3"</span><span class="p">;</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span> <span class="s2">"job3"</span><span class="p">}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">"job4"</span><span class="p">;</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span> <span class="s2">"job4"</span><span class="p">}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="ss">:done</span>
+
+    <span class="n">ws</span><span class="p">.</span><span class="nf">join</span>
+
+    <span class="n">assert_equal</span> <span class="n">finished</span><span class="p">.</span><span class="nf">size</span><span class="p">,</span> <span class="mi">4</span>
+  <span class="k">end</span>
+
+  <span class="n">it</span> <span class="s2">"check Workshop@ group master"</span> <span class="k">do</span>
+    <span class="n">ws</span> <span class="o">=</span> <span class="no">Workshop</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="ss">:group</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">GroupJob</span>
+      <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">group_id</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">b</span><span class="p">)</span>
+        <span class="vi">@group_id</span> <span class="o">=</span> <span class="n">group_id</span>
+        <span class="vi">@blk</span> <span class="o">=</span> <span class="n">b</span>
+      <span class="k">end</span>
+
+      <span class="c1"># 任务分组</span>
+      <span class="k">def</span> <span class="nf">group</span>
+        <span class="s2">"group</span><span class="si">#{</span><span class="vi">@group_id</span><span class="si">}</span><span class="s2">"</span><span class="p">.</span><span class="nf">to_sym</span>
+      <span class="k">end</span>
+
+      <span class="k">def</span> <span class="nf">call</span>
+
+        <span class="vi">@blk</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="vi">@group_id</span><span class="p">)</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="n">finished</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="no">GroupJob</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">group_id</span><span class="o">|</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="n">group_id</span><span class="p">)}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="no">GroupJob</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">group_id</span><span class="o">|</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="n">group_id</span><span class="p">)}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="no">GroupJob</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">group_id</span><span class="o">|</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="n">group_id</span><span class="p">)}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="no">GroupJob</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">group_id</span><span class="o">|</span> <span class="n">finished</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="n">group_id</span><span class="p">)}</span>
+    <span class="n">ws</span> <span class="o">&lt;&lt;</span> <span class="ss">:done</span>
+
+    <span class="n">ws</span><span class="p">.</span><span class="nf">join</span>
+
+    <span class="n">assert_equal</span> <span class="n">finished</span><span class="p">.</span><span class="nf">size</span><span class="p">,</span> <span class="mi">4</span>
+  <span class="k">end</span>
+
+</code></pre></div></div>
+
+<h1 id="总结-master-worker-模式">总结 Master-Worker 模式</h1>
+
+<p>好吧，戏说不是胡说，改编不是乱编。</p>
+
+<p>我们从现实的故事中走出来。</p>
+
+<ul>
+  <li>调度器(Scheduler)</li>
+</ul>
+
+<p>其实在这里 Master 类，可能会被叫做 <code class="language-plaintext highlighter-rouge">Scheduler</code> 即调度器。内部的方法主要是使用不同的策略来分配任务。</p>
+
+<p>而不同的 Master 实现的 assign 方法就是 调度策略。</p>
+
+<ul>
+  <li>线程池(Thread Pool)</li>
+</ul>
+
+<p>Workshop 其实 持有 <code class="language-plaintext highlighter-rouge">@workers</code>，也就是说汇聚了实际工作线程的对象。他们可能会有另一个名字 —— 线程池（Thread Pool)</p>
+
+<p>故事讲完了，你有没有学会呢？ :D</p>
+
+<h1 id="示例代码">示例代码：</h1>
+
+<ul>
+  <li><a href="https://github.com/Mark24Code/rb-master-worker-demo">rb-master-worker-demo</a></li>
+</ul>
+
+<h1 id="参考资料">参考资料：</h1>
+
+<ul>
+  <li><a href="https://devdocs.io/ruby~3.1/thread">Ruby3 Doc: Thread</a></li>
+  <li><a href="https://devdocs.io/ruby~3.1/thread/queue">Ruby3 Doc: Thread#Queue</a></li>
+  <li><a href="https://hspazio.github.io/2017/worker-pool/">worker-pool</a></li>
+</ul>
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/2022/07/23/用ruby来写一个996工厂模式(master-worker)';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

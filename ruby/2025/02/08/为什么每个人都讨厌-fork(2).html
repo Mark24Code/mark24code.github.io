@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>为什么每个人都讨厌 fork(2) ？</title>
+  <meta name="description" content="  作者：Jean Boussier  译者：Mark24  原文: why-does-everyone-hate-fork我想写一篇关于 Pitchfork 的文章，解释它的起源、为什么它会是现在这个样子，以及我对其未来的看法。但在达到这一点之前，我认为我需要解释一些事情，fork 被认为是一种过时的旧物，甚至...">
+  <!-- evil icon -->
+
+  <link rel="stylesheet" href="/assets/evil-icons.min.css">
+  <script src="/assets/evil-icons.min.js"></script>
+
+  <!-- todo: include this into main.css -->
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="https://mark24code.github.io/ruby/2025/02/08/%E4%B8%BA%E4%BB%80%E4%B9%88%E6%AF%8F%E4%B8%AA%E4%BA%BA%E9%83%BD%E8%AE%A8%E5%8E%8C-fork(2).html">
+  <link rel="alternate" type="application/rss+xml" title="Mark24" href="https://mark24code.github.io/feed.xml">
+
+  
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5H3S9CQNF0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5H3S9CQNF0');
+</script>
+
+
+</head>
+
+  <body>
+    <div class="page-content">
+      <div class="container">
+        <div class="three columns">
+          <header class="site-header">
+
+  <h2 class="logo"><a href="/">Mark24</a></h2>
+  <div class="description">记录灵感、技术、思考</div>
+
+  <div class="nav">
+    
+    <label for="menu-toggle" class="menu-icon">
+        <!--div data-icon="ei-navicon"></div-->
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+    </label>
+    <input type="checkbox" id="menu-toggle">
+
+    <div class="site-nav">
+      <nav>
+        <ul class="page-link">
+          <li><a href="/">Home</a></li>
+          <li><a href="/posts">Posts</a></li>
+          <li><a href="/art">Art</a></li>
+          <li><a href="https://speakerdeck.com/mark24code">Sliders</a></li>
+          <li><a href="/sites">Sites</a></li>
+          <li><a href="/feed.xml">RSS</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <section class="small-font">
+      
+      <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+      
+      
+    </section>
+  </div>
+</header>
+
+        </div>
+
+        <div class="nine columns" style="z-index:100;">
+          <div class="wrapper">
+            <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="artilce_header">
+    <h1 class="artilce_title" itemprop="name headline">为什么每个人都讨厌 fork(2) ？</h1>
+    <p class="artilce_meta"><time datetime="2025-02-08T17:26:39+08:00" itemprop="datePublished">Feb 8, 2025</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Mark24</span></span></p>
+  </header>
+
+  <div class="article-content" itemprop="articleBody">
+    <ul>
+  <li>作者：<a href="https://github.com/byroot">Jean Boussier</a></li>
+  <li>译者：<a href="https://github.com/Mark24Code">Mark24</a></li>
+  <li>原文: <a href="https://byroot.github.io/ruby/performance/2025/01/25/why-does-everyone-hate-fork.html">why-does-everyone-hate-fork</a></li>
+</ul>
+
+<p>我想写一篇关于 <a href="https://rubygems.org/gems/pitchfork">Pitchfork</a> 的文章，解释它的起源、为什么它会是现在这个样子，以及我对其未来的看法。但在达到这一点之前，我认为我需要解释一些事情，fork 被认为是一种过时的旧物，甚至可以说是“恶魔的创造”。然而，在 Ruby 生态系统中，它却无处不在。</p>
+
+<p>请注意，如果您有一些系统编程经验，您在这里可能学不到太多。</p>
+
+<p>如果您曾经部署过 Ruby 应用程序到生产环境，那么您几乎肯定已经与 <code class="language-plaintext highlighter-rouge">fork(2)</code> 打过交道，无论您是否意识到。您是否配置过 Puma 的 worker 设置？嗯，Puma 使用 <code class="language-plaintext highlighter-rouge">fork(2)</code> 来启动这些工作进程，更准确地说，是 Ruby 的 <a href="https://devdocs.io/ruby~3.4/process#method-c-_fork">Process.fork</a> 方法，这是 Ruby API 对底层 <code class="language-plaintext highlighter-rouge">fork(2)</code> 系统调用的封装。</p>
+
+<p>即使你不是 Ruby 开发者，如果你使用过 PHP、Nginx、Apache HTTPd、Redis 等，你也使用了一个高度依赖 <code class="language-plaintext highlighter-rouge">fork(2)</code> 的系统。</p>
+
+<p>然而，许多人会认为 <code class="language-plaintext highlighter-rouge">fork(2)</code> 是邪恶的，不应该被使用。我个人有点既同意又不同意这种观点，我将尝试解释原因。</p>
+
+<h1 id="一点历史">一点历史</h1>
+
+<p>根据维基百科，fork 概念首次出现可以追溯到 1962 年，由提出<a href="https://en.wikipedia.org/wiki/Conway%27s_law">康威定律(Conway’s law)</a>的同一个人提出，后来在 UNIX 的第一个版本中引入。</p>
+
+<p>最初，它被设计为一种用于创建新进程的原语。你会调用 <code class="language-plaintext highlighter-rouge">fork(2)</code> 来复制当前进程，然后从那里开始将这个新进程修改为你想要的样子，紧接着调用 <code class="language-plaintext highlighter-rouge">exec(2)</code> ，我们一般这样使用。直到今天，你仍然可以在 Ruby 中这样做。</p>
+
+<blockquote>
+  <p>译者注：一切不懂这方面的读者可能觉得莫名其妙。这地方介绍的不清楚，我补充一点。 这是 Unix/Linux 操作系统,创建子进程的标准方法。先调用 fork 这样会迅速的从当前进程复制一份出来，然后紧接着执行 exec 传入具体 bash 的命令。这样就创建了一个子进程，并且关联了当前进程为父进程。exec 执行内容会占据 之前 fork 的进程，作为一个独立进程执行。 这样设计存在历史原因，也相当聪明，等于复制模版，再更改模板内的内容。</p>
+</blockquote>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="n">child_pid</span> <span class="o">=</span> <span class="no">Process</span><span class="p">.</span><span class="nf">fork</span><span class="p">)</span>
+  <span class="c1"># We're in the parent process, and we know the child process ID.</span>
+  <span class="c1"># We can wait for the child to exit or send signals etc.</span>
+  <span class="no">Process</span><span class="p">.</span><span class="nf">wait</span><span class="p">(</span><span class="n">child_pid</span><span class="p">)</span>
+<span class="k">else</span>
+  <span class="c1"># We're in the child process.</span>
+  <span class="c1"># We can change the current user and other attributes.</span>
+  <span class="no">Process</span><span class="p">.</span><span class="nf">uid</span> <span class="o">=</span> <span class="mi">1</span>
+  <span class="c1"># And then we can replace the current program with another.</span>
+  <span class="no">Process</span><span class="p">.</span><span class="nf">exec</span><span class="p">(</span><span class="s2">"echo"</span><span class="p">,</span> <span class="s2">"hello"</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+<p>从某种意义上说，这种设计相当优雅。你拥有少量简单的基础组件，可以将它们组合在一起以获得你所需要的精确行为，而不是一个庞大的函数，需要传递无数个参数。</p>
+
+<p>但这种方法也非常低效，因为完全复制一个进程来创建一个新的进程通常是小题大做。在上面的例子中，如果你想象我们的父程序有数GB字节的可寻址内存，那么将所有这些内存复制过来，然后几乎立刻将其全部丢弃，以便用一个极其小的程序（如/bin/echo）来替换，这是一种巨大的浪费。</p>
+
+<p>当然，现代操作系统实际上并不会复制所有这些内容，而是使用写时复制（Copy-on-Write），但这仍然非常昂贵，如果父进程很大，很容易就需要数百毫秒。</p>
+
+<p>这是因为使用 <code class="language-plaintext highlighter-rouge">fork(2)</code> 来启动其他程序的历史用法现在大多被认为是过时的，大多数新的软件将使用更现代的 API，如 <code class="language-plaintext highlighter-rouge">posix_spawn(3)</code> 或 <code class="language-plaintext highlighter-rouge">vfork(2)+exec(2)</code> 。</p>
+
+<p>但 <code class="language-plaintext highlighter-rouge">fork(2)</code> 的用途并不仅限于此。我不知道这是否从一开始就被设计好了，还是后来才逐渐形成的一种用法，但我前面提到的所有软件都使用了 <code class="language-plaintext highlighter-rouge">fork(2)</code>，而且从未在其后调用过 <code class="language-plaintext highlighter-rouge">exec(2)</code>。</p>
+
+<h1 id="fork-作为并行原语">Fork 作为并行原语</h1>
+
+<p>再次，我甚至不是在七十年代初出生的，所以我不太确定这种做法究竟是从什么时候开始的，但某个时候 <code class="language-plaintext highlighter-rouge">fork(2)</code> 开始被用作并行性原语，尤其是在服务器方面。</p>
+
+<p>让我们假设您想从头开始实现一个简单的“echo”服务器，在 Ruby 中可能看起来像这样：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s1">'socket'</span>
+
+<span class="n">server</span> <span class="o">=</span> <span class="no">TCPServer</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s1">'localhost'</span><span class="p">,</span> <span class="mi">8000</span><span class="p">)</span>
+
+<span class="k">while</span> <span class="n">socket</span> <span class="o">=</span> <span class="n">server</span><span class="p">.</span><span class="nf">accept</span>
+  <span class="k">while</span> <span class="n">line</span> <span class="o">=</span> <span class="n">socket</span><span class="p">.</span><span class="nf">gets</span>
+    <span class="n">socket</span><span class="p">.</span><span class="nf">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="n">socket</span><span class="p">.</span><span class="nf">close</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>该脚本首先在端口 8000 上打开一个监听套接字，然后阻塞在 <code class="language-plaintext highlighter-rouge">accept(2)</code> 系统调用上等待客户端连接。当该方法返回时，它给我们一个双向套接字，我们可以从中读取，在这种情况下使用 <code class="language-plaintext highlighter-rouge">#gets</code> ，也可以向客户端写回。</p>
+
+<p>虽然这使用了现代 Ruby，那与当时各种服务器的编写方式非常相似，但过于简化。</p>
+
+<p>如果您想玩它，可以使用 <code class="language-plaintext highlighter-rouge">telnet localhost 8000</code> 开始编写内容。</p>
+
+<p>但是那个服务器有一个大问题：它只支持单个并发用户。如果你尝试同时开启两个 <code class="language-plaintext highlighter-rouge">telnet</code> 会话，你会看到第二个无法连接。</p>
+
+<p>所以人们开始利用 <code class="language-plaintext highlighter-rouge">fork(2)</code> 来支持更多用户：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s1">'socket'</span>
+
+<span class="n">server</span> <span class="o">=</span> <span class="no">TCPServer</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s1">'localhost'</span><span class="p">,</span> <span class="mi">8000</span><span class="p">)</span>
+<span class="n">children</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">while</span> <span class="n">socket</span> <span class="o">=</span> <span class="n">server</span><span class="p">.</span><span class="nf">accept</span>
+  <span class="c1"># prune exited children</span>
+  <span class="n">children</span><span class="p">.</span><span class="nf">reject!</span> <span class="p">{</span> <span class="o">|</span><span class="n">pid</span><span class="o">|</span> <span class="no">Process</span><span class="p">.</span><span class="nf">wait</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="no">Process</span><span class="o">::</span><span class="no">WNOHANG</span><span class="p">)}</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">child_pid</span> <span class="o">=</span> <span class="no">Process</span><span class="p">.</span><span class="nf">fork</span><span class="p">)</span>
+    <span class="n">children</span> <span class="o">&lt;&lt;</span> <span class="n">child_pid</span>
+    <span class="n">socket</span><span class="p">.</span><span class="nf">close</span>
+  <span class="k">else</span>
+    <span class="k">while</span> <span class="n">line</span> <span class="o">=</span> <span class="n">socket</span><span class="p">.</span><span class="nf">gets</span>
+      <span class="n">socket</span><span class="p">.</span><span class="nf">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">end</span>
+    <span class="n">socket</span><span class="p">.</span><span class="nf">close</span>
+    <span class="no">Process</span><span class="p">.</span><span class="nf">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>逻辑与之前相同，但现在一旦 <code class="language-plaintext highlighter-rouge">accept(2)</code> 返回一个套接字，我们不再在它上面阻塞，而是 <code class="language-plaintext highlighter-rouge">fork(2)</code> 一个新的子进程，并让那个子进程执行阻塞操作，直到客户端关闭连接。</p>
+
+<p>如果您是一位敏锐的读者（或者您已经对 <code class="language-plaintext highlighter-rouge">fork(2)</code> 语义有所了解），您可能已经注意到在调用 <code class="language-plaintext highlighter-rouge">fork</code> 之后，父进程和新的子进程都可以访问套接字。这是因为，在 UNIX 中，套接字是“文件”，因此由“文件描述符”表示，而 <code class="language-plaintext highlighter-rouge">fork(2)</code> 语义的一部分是所有文件描述符都可以继承。</p>
+
+<p>这就是为什么重要的是让父进程关闭套接字，否则，它将在父进程中永远保持打开状态(技术上，一旦对象被垃圾回收，Ruby 会自动关闭它，但你明白了这个意思)，这也是许多人讨厌 fork(2) 的第一个原因之一。</p>
+
+<h1 id="一把双刃剑">一把双刃剑</h1>
+
+<p>如上所示，子进程继承所有打开的文件描述符的事实允许实现一些非常有用的事情，但如果你忘记关闭一个你不想共享的文件描述符，这也可能导致灾难性的错误。</p>
+
+<p>例如，如果您正在 fork 一个与 SQL 数据库有活动连接的进程，并且您在两个进程中都继续使用该连接，会发生奇怪的事情：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s2">"bundler/inline"</span>
+<span class="n">gemfile</span> <span class="k">do</span>
+  <span class="n">gem</span> <span class="s2">"trilogy"</span>
+  <span class="n">gem</span> <span class="s2">"bigdecimal"</span> <span class="c1"># for trilogy</span>
+<span class="k">end</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="no">Trilogy</span><span class="p">.</span><span class="nf">new</span>
+<span class="n">client</span><span class="p">.</span><span class="nf">ping</span>
+
+<span class="k">if</span> <span class="n">child_pid</span> <span class="o">=</span> <span class="no">Process</span><span class="p">.</span><span class="nf">fork</span>
+  <span class="nb">sleep</span> <span class="mf">0.1</span> <span class="c1"># Give some time to the child</span>
+
+  <span class="mi">5</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+    <span class="nb">p</span> <span class="n">client</span><span class="p">.</span><span class="nf">query</span><span class="p">(</span><span class="s2">"SELECT </span><span class="si">#{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">).</span><span class="nf">first</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+  <span class="k">end</span>
+  <span class="no">Process</span><span class="p">.</span><span class="nf">kill</span><span class="p">(</span><span class="ss">:KILL</span><span class="p">,</span> <span class="n">child_pid</span><span class="p">)</span>
+  <span class="no">Process</span><span class="p">.</span><span class="nf">wait</span><span class="p">(</span><span class="n">child_pid</span><span class="p">)</span>
+<span class="k">else</span>
+  <span class="kp">loop</span> <span class="k">do</span>
+    <span class="n">client</span><span class="p">.</span><span class="nf">query</span><span class="p">(</span><span class="s1">'SELECT "oops"'</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>这里脚本使用 trilogy 客户端连接到 MySQL，然后在一个循环中无限查询 SELECT “oops” ，然后创建一个子进程。一旦子进程被创建，父进程发出 5 个查询，每个查询应该返回一个从 0 到 4 的单个数字，并打印其结果。</p>
+
+<p>如果您运行此脚本，您将得到一些随机的输出，类似于这样：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s2">"oops"</span>
+1
+<span class="s2">"oops"</span>
+<span class="s2">"oops"</span>
+3
+</code></pre></div></div>
+
+<p>这里发生的情况是，两个进程都在同一个套接字内写入。对于 MySQL 服务器来说，这不是什么大问题，因为我们的查询很小，所以它们会被“原子性地”写入套接字。如果我们发出更大的查询，两个查询可能会交错，这会导致服务器以某种协议错误的形式关闭连接。</p>
+
+<p>但是对客户来说，这真的很糟糕。因为两个进程的响应都通过同一个套接字发送回来，每个客户端都在发出 <code class="language-plaintext highlighter-rouge">read(2)</code> ，可能会收到它刚刚发出的查询的响应，但也可能收到另一个由其他进程发出的无关查询的响应。</p>
+
+<p>当两个进程尝试在同一个套接字上 <code class="language-plaintext highlighter-rouge">read(2)</code> 时，它们各自获取部分数据，但你无法正确控制哪个进程获取什么，尝试同步这两个进程以使它们各自获得预期的响应是不切实际的。</p>
+
+<p>考虑到这一点，你可以想象在调用 <code class="language-plaintext highlighter-rouge">fork(2)</code> 之前正确关闭应用程序的所有套接字和其他打开的文件会有多大的麻烦。也许你在自己的代码中会非常勤奋，但你可能正在使用一些可能不会期望调用 <code class="language-plaintext highlighter-rouge">fork(2)</code> 并且不允许你关闭它们的文件描述符的库。</p>
+
+<p>对于 <code class="language-plaintext highlighter-rouge">fork+exec</code> 用例，有一个很棒的功能让这变得容易得多，你可以在调用 <code class="language-plaintext highlighter-rouge">exec</code> 时标记一个文件描述符需要关闭，操作系统会为你处理这个， <code class="language-plaintext highlighter-rouge">O_CLOEXEC</code> （在 exec 时关闭），在 Ruby 中方便地作为 IO 类上的一个方法公开：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">STDIN</span><span class="p">.</span><span class="nf">close_on_exec</span> <span class="o">=</span> <span class="kp">true</span>
+</code></pre></div></div>
+
+<p>但是，当它后面没有跟随着一个 <code class="language-plaintext highlighter-rouge">exec</code> 时， <code class="language-plaintext highlighter-rouge">fork</code> 系统调用就没有这样的标志。或者更准确地说，有一个， <code class="language-plaintext highlighter-rouge">O_CLOFORK</code> ，它存在于一些 UNIX 系统上，主要是 IBM 的系统，并在 2020 年添加到了 POSIX 规范中。但今天它并不被广泛支持，最重要的是 Linux 不支持它。有人在 2011 年提交了一个补丁，将其添加到 Linux 中，但似乎对此没有太多兴趣，另一个人在 2020 年又尝试了一次，但遇到了一些强烈的反对，这很遗憾，因为它会非常有用。</p>
+
+<p>相反，大多数想要实现分支安全的代码所做的是，它尝试通过持续检查当前进程 ID 来检测是否发生了分支：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">query</span>
+  <span class="k">if</span> <span class="no">Process</span><span class="p">.</span><span class="nf">pid</span> <span class="o">!=</span> <span class="vi">@old_pid</span>
+    <span class="vi">@connection</span><span class="p">.</span><span class="nf">close</span>
+    <span class="vi">@connection</span> <span class="o">=</span> <span class="kp">nil</span>
+    <span class="vi">@old_pid</span> <span class="o">=</span> <span class="no">Process</span><span class="p">.</span><span class="nf">pid</span>
+  <span class="k">end</span>
+
+  <span class="vi">@connection</span> <span class="o">||=</span> <span class="n">connect</span>
+  <span class="vi">@connection</span><span class="p">.</span><span class="nf">query</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>或者依赖某些 <code class="language-plaintext highlighter-rouge">at_fork</code> 回调，在 C 语言中通常是指 <code class="language-plaintext highlighter-rouge">pthread_atfork</code> ，自从 Ruby 3.1 以来，你可以封装 <code class="language-plaintext highlighter-rouge">Process._fork</code> （注意 _ ）：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">module</span> <span class="nn">MyLibraryAtFork</span>
+  <span class="k">def</span> <span class="nf">_fork</span>
+    <span class="n">pid</span> <span class="o">=</span> <span class="k">super</span>
+    <span class="k">if</span> <span class="n">pid</span> <span class="o">==</span> <span class="mi">0</span>
+      <span class="c1"># in child</span>
+    <span class="k">else</span>
+      <span class="c1"># in parent</span>
+      <span class="no">MyLibrary</span><span class="p">.</span><span class="nf">close_all_ios</span>
+    <span class="k">end</span>
+    <span class="n">pid</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+<span class="no">Process</span><span class="p">.</span><span class="nf">singleton_class</span><span class="p">.</span><span class="nf">prepend</span><span class="p">(</span><span class="no">MyLibraryAtFork</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>由于 <code class="language-plaintext highlighter-rouge">fork(2)</code> 在 Ruby 中非常普遍，许多处理套接字的流行库，如 <code class="language-plaintext highlighter-rouge">Active Record</code> 或 <code class="language-plaintext highlighter-rouge">redis</code> gem，都尽力透明地处理这个问题，所以你不必担心。因此，在大多数 Ruby 程序中，它只是正常工作。</p>
+
+<p>但是，对于本地语言来说，这可能会相当繁琐，这也是许多人绝对讨厌 <code class="language-plaintext highlighter-rouge">fork(2)</code> 的原因之一。任何使用文件或套接字的代码在调用 <code class="language-plaintext highlighter-rouge">fork(2)</code> 之后可能会完全损坏，除非特别关注了 fork 安全性，而这很少是情况。</p>
+
+<h1 id="一些您的线程可能会死亡">一些您的线程可能会死亡</h1>
+
+<p>回到我们的echo服务器，你可能想知道为什么在这里使用 <code class="language-plaintext highlighter-rouge">fork(2)</code> 而不是线程。再次强调，我当时并不在那里，但我的理解是线程在后来的某个时候才成为了一件事（八十年代末？），而且即使它们存在了，也需要相当长的时间才能标准化和解决，因此才能跨平台使用。</p>
+
+<p>也存在这样的观点，使用 <code class="language-plaintext highlighter-rouge">fork(2)</code> 进行多进程处理更容易理解。每个进程都有自己的内存空间，因此你不必过多担心竞态条件和其他线程陷阱，所以我明白为什么即使线程成为了一种选择，有些人可能还是更喜欢坚持使用 <code class="language-plaintext highlighter-rouge">fork(2)</code> 。</p>
+
+<p>但是，由于线程是在 fork(2) 之后很久才被创造的，因此负责实现和标准化它们的人遇到了一些麻烦，没有找到让它们两者都能良好协作的方法。</p>
+
+<p>这里 <a href="https://pubs.opengroup.org/onlinepubs/009696799/functions/fork.html">POSIX 标准 fork 条目</a>关于该内容的说明是：</p>
+
+<blockquote>
+  <p>一个进程应使用单个线程创建。如果一个多线程进程调用 <code class="language-plaintext highlighter-rouge">fork()</code>，新进程应包含调用线程的副本及其整个地址空间，可能包括互斥锁和其他资源的状态。因此，为了避免错误，子进程只能在调用 <code class="language-plaintext highlighter-rouge">exec</code> 函数之前执行异步信号安全的操作。</p>
+</blockquote>
+
+<p>换句话说，标准承认经典的 <code class="language-plaintext highlighter-rouge">fork + exec</code> 模式可以在多线程进程中实现，但对于不带着 <code class="language-plaintext highlighter-rouge">exec</code> 的 <code class="language-plaintext highlighter-rouge">fork</code> 使用，标准则显得有些置身事外。他们建议仅使用异步信号安全的操作，而这实际上只是很小一部分功能。<strong>所以，根据标准，如果你在创建了一些线程之后调用 <code class="language-plaintext highlighter-rouge">fork(2)</code>，且并不打算立即调用 <code class="language-plaintext highlighter-rouge">exec</code> ，那么这里就充满了潜在的危险</strong>。</p>
+
+<p>原因在于，只有调用 <code class="language-plaintext highlighter-rouge">fork(2)</code> 的线程在子进程中保持存活，其他线程虽然存在，但已经死亡。如果另一个线程曾经锁定了一个互斥锁（mutex）或其他类似的资源，那么这个锁将永远保持锁定状态，如果新线程尝试获取它的话，这可能会导致死锁。</p>
+
+<p>该标准还包括一个关于为什么是这样的原因说明部分，这部分内容有点长但很有趣：</p>
+
+<blockquote>
+  <p>在多线程世界中使 fork()工作通常存在的问题是如何处理所有线程。有两种选择。一种是将所有线程复制到新进程中。这导致程序员或实现必须处理那些在系统调用上挂起的线程，或者那些可能即将执行不应该在新进程中执行的系统调用的线程。另一种选择是只复制调用 fork()的线程。这造成了一个困难，即进程本地资源的状态通常保存在进程内存中。如果一个不调用 fork()的线程持有一个资源，那么在子进程中这个资源永远不会被释放，因为负责释放资源的线程在子进程中不存在。</p>
+
+  <p>当程序员编写多线程程序时， […] fork() 函数仅用于运行新程序，而在调用 fork() 和调用 exec 函数之间调用需要某些资源的函数的效果是未定义的。</p>
+
+  <p>将 forkall()函数加入标准中被考虑过并拒绝了。</p>
+</blockquote>
+
+<p>所以他们确实考虑了拥有另一个版本的 <code class="language-plaintext highlighter-rouge">fork(2)</code> ，称为 <code class="language-plaintext highlighter-rouge">forkall()</code> ，这个版本也会复制其他线程，但他们无法想出一个清晰的语义（semantic）来解释在某些情况下会发生什么。</p>
+
+<p>相反，他们为用户提供了一种方法，在 <code class="language-plaintext highlighter-rouge">fork</code> 附近调用回调以恢复状态，例如，重新初始化互斥锁。然而，如果你去看那个回调手册页 <a href="https://man7.org/linux/man-pages/man3/pthread_atfork.3.html">pthread_atfork(3)</a> ，你可以读到：</p>
+
+<blockquote>
+  <p>pthread_atfork()的最初意图是允许子进程恢复到一个一致的状态。 […] 实际上，这项任务通常过于困难，难以实现。</p>
+</blockquote>
+
+<p>所以尽管 <code class="language-plaintext highlighter-rouge">pthread_atfork</code> 仍然存在并且可以使用，但标准承认正确使用它是非常困难的。</p>
+
+<p>这就是为什么许多系统程序员会告诉你永远不要将 <code class="language-plaintext highlighter-rouge">fork(2)</code> 与多线程程序混合使用，或者至少在创建线程后永远不要调用 <code class="language-plaintext highlighter-rouge">fork(2)</code> ，因为那时，一切都不确定了。因此，你多少必须选择你的阵营，看来线程明显赢了。</p>
+
+<p>但这是针对 C 或 C++ 程序员的。</p>
+
+<p>在今天的 Ruby 程序员的情况下，使用 <code class="language-plaintext highlighter-rouge">fork(2)</code> 而不是线程的原因是，这是在 MRI 上获得真正并行性的唯一方式(是的，从某种程度上来说也有 Ractors，但这将是下一篇帖子的主题) ，MRI 是 Ruby 的默认且最常用的实现。由于臭名昭著的 GVL，Ruby 线程只允许并行化 IO 操作，不能并行化 Ruby 代码执行，因此几乎所有的 Ruby 应用服务器都以某种方式集成了 <code class="language-plaintext highlighter-rouge">fork(2)</code> ，以便它们可以利用超过单个 CPU 核心。</p>
+
+<p>幸运的是，Ruby 缓解了将线程与 <code class="language-plaintext highlighter-rouge">fork(2)</code> 混合使用的一些陷阱。例如，由于它们的实现方式，Ruby 互斥锁在所有者死亡时会自动释放。在伪 Ruby 代码中，它们看起来像这样：</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Mutex</span>
+  <span class="k">def</span> <span class="nf">lock</span>
+    <span class="k">if</span> <span class="vi">@owner</span> <span class="o">==</span> <span class="no">Fiber</span><span class="p">.</span><span class="nf">current</span>
+      <span class="k">raise</span> <span class="no">ThreadError</span><span class="p">,</span> <span class="s2">"deadlock; recursive locking"</span>
+    <span class="k">end</span>
+
+    <span class="k">while</span> <span class="vi">@owner</span><span class="o">&amp;</span><span class="p">.</span><span class="nf">alive?</span>
+      <span class="nb">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="vi">@owner</span> <span class="o">=</span> <span class="no">Fiber</span><span class="p">.</span><span class="nf">current</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>当然，在现实中它们并不是在循环中睡眠以等待，它们使用一种更高效的方式来阻塞，但这只是为了给你一个大致的概念。重要的一点是，Ruby 互斥锁会保留对获取锁的 纤维（因此是线程）的引用，并在其死亡时自动忽略它。因此，在 <code class="language-plaintext highlighter-rouge">fork</code> 之后，所有由后台线程持有的互斥锁会立即释放，这避免了大多数死锁场景。</p>
+
+<p>当然，这并不完美，如果一个线程在持有互斥锁时死亡，它很可能留下了由互斥锁保护的资源处于不一致的状态，在实践中我从未遇到过这样的情况，当然，这可能是因为全局解释器锁（GVL）的存在在一定程度上减少了对互斥锁的需求。</p>
+
+<p>现在，Ruby 线程并非完全不受这些陷阱的影响，因为归根结底在 MRI 上，Ruby 线程是由本地线程支持的，所以如果另一个线程释放了 GVL 并调用了一个锁定互斥锁的 C API，你最终可能会遇到一个棘手的死锁问题。</p>
+
+<p>尽管我从未得到确凿的证据，但我怀疑这对一些 Ruby 用户来说正在发生，因为据我了解，Ruby 用来解析主机名的 glibc 的 <a href="https://man7.org/linux/man-pages/man3/getaddrinfo.3.html">getaddrinfo(3)</a> 确实使用了全局互斥锁，而 Ruby 在释放 GVL 的情况下调用它，允许并发发生 fork。</p>
+
+<p>为了防止这种情况，<a href="https://bugs.ruby-lang.org/issues/20590">我在 MRI 中增加了另一个锁</a>，以防止在进行 <code class="language-plaintext highlighter-rouge">getaddrinfo(3)</code> 调用时发生 <code class="language-plaintext highlighter-rouge">Process.fork</code> 。这远非完美，但考虑到 Ruby 多么依赖 <code class="language-plaintext highlighter-rouge">Process.fork</code> ，这似乎是一个明智的做法。</p>
+
+<p>依赖 fork 的 Ruby 程序在 macOS 上崩溃并不罕见，因为许多 macOS 系统 API 会隐式地创建线程或锁定互斥锁，而 macOS 选择在发生这种情况时一致性地崩溃。</p>
+
+<p>所以即使使用纯 Ruby 代码，你偶尔也会遇到 <code class="language-plaintext highlighter-rouge">fork(2)</code> 的陷阱，你不能随意使用它。</p>
+
+<h1 id="结论">结论</h1>
+
+<p>所以回答标题中的问题， <code class="language-plaintext highlighter-rouge">fork(2)</code> 被讨厌的原因是它组合性不好，特别是在原生代码中。如果你想使用它，你必须非常小心你正在编写和链接的代码。每当你使用一个库时，你必须确保它不会生成一些线程，或者持有文件描述符，并且在 <code class="language-plaintext highlighter-rouge">fork(2)</code> 和线程之间选择时，大多数系统程序员会选择线程。它们有自己的陷阱，但它们组合性更好，而且很可能你正在调用的 API 在后台使用线程，所以这个选择在某种程度上已经为你做好了。</p>
+
+<p>但 Ruby 代码的情况远没有这么糟糕，因为它使得编写安全的代码变得更加容易，而且 Ruby 的理念使得像 Active Record 这样的库会为你处理这些复杂的细节。所以问题主要出现在你想要绑定到一些会生成线程的本地库时，比如 grpc 或 libvips ，因为它们通常不期望 <code class="language-plaintext highlighter-rouge">fork(2)</code> 会发生，并且通常不接受它作为一个约束。</p>
+
+<p>尤其是因为 fork 大多在应用程序初始化结束时使用，即使技术上不是 fork 安全的库也会工作，因为它们通常在第一次请求时才懒洋洋地初始化它们的线程和文件描述符。</p>
+
+<p>无论如何，即使你仍然认为 <code class="language-plaintext highlighter-rouge">fork(2)</code> 是邪恶的，但在 Ruby 提供另一个可用的原语来实现真正的并行性（这应该是下一篇文章的主题）之前，它将仍然是一个必要的邪恶。</p>
+
+
+  </div>
+
+  <footer class="article-footer">
+
+  <!-- <section class="share">
+  <a class="share-link" href="" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+    Twitter
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+    Facebook
+  </a>
+  <a class="share-link" href="" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530'); return false;">
+    Google+
+  </a> 
+</section>
+ -->
+
+
+  <section class="author">
+  <div class="authorimage box" style="background: url(/assets/img/Mark24.jpg)"></div>
+  <div class="authorinfo box">
+    <p>Mark24</p>
+    <p class="bio">Everything can Mix.</p>
+  </div>
+</section>
+
+
+  </footer>
+
+  <!-- disque 评论系统 -->
+  <!-- 
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname  = 'mark24code';
+    var disqus_identifier = '/ruby/2025/02/08/为什么每个人都讨厌 fork(2)？';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+
+ -->
+
+  <!-- github comments -->
+  <script src="https://utteranc.es/client.js" repo="Mark24Code/mark24code.github.io" issue-term="title" theme="github-light"
+    crossorigin="anonymous" async>
+  </script>
+
+</article>
+
+          </div>
+        </div>
+      </div>
+      <footer class="site-footer">
+  <div class="container" style="padding: 10px 32px;">
+    <div class="footer left column one-half">
+      <section class="small-font">
+        © 2021
+        Powered by <a href="https://github.com/jekyll/jekyll">jekyll</a>
+      </section>
+    </div>
+
+    <!-- <div class="footer right column one-half">
+      <section class="small-font">
+        
+        <a href="https://github.com/Mark24Code"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span></a>
+
+        
+        
+      </section>
+    </div> -->
+  </div>
+</footer>
+
+    </div>
+    <script>
+      (function() {
+        var pre = document.getElementsByTagName('pre'),
+            pl = pre.length;
+        for (var i = 0; i < pl; i++) {
+          pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+          var num = pre[i].innerHTML.split(/\n/).length;
+          for (var j = 0; j < (num - 1); j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1) + '</span>';
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>
